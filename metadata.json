@@ -1,0 +1,8 @@
+{
+  "name": "GVT 11/01 2026 Mestre nos negócios v6.0",
+  "description": "Plataforma de treinamento para tornar alunos Mestre nos Negócios com acesso a produtos, treinamento e suporte IA e humanizado.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
