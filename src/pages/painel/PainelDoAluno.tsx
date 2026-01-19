@@ -25,6 +25,7 @@ import SupportPage from '../SupportPage';
 import FinancialPage from '../FinancialPage';
 import NexusAdsPage from '../NexusAdsPage'; // Import
 import HealthMindDiaryPage from '../HealthMindDiaryPage';
+import KnowledgePracticePage from '../KnowledgePracticePage';
 
 // Local Sections
 import { InicioSection } from './sections/InicioSection';
@@ -134,6 +135,7 @@ export const PainelDoAluno: React.FC<PainelDoAlunoProps> = ({ activePage, naviga
             case 'recharge': return <RechargeSection />;
             case 'health_diary': return <HealthMindDiaryPage />;
             case 'diario_alimentar': return <HealthMindDiaryPage />;
+            case 'knowledge_practice': return <KnowledgePracticePage />;
             default: return <InicioSection navigateTo={navigateTo} />;
         }
     };
@@ -203,14 +205,23 @@ export const PainelDoAluno: React.FC<PainelDoAlunoProps> = ({ activePage, naviga
                 className="mt-6"
             >
                 {/* Temporary FAB for Testing Niche Pages */}
-                <div className="fixed bottom-24 right-8 z-[100] md:bottom-8">
+                <div className="fixed bottom-24 right-8 z-[100] md:bottom-8 flex flex-col gap-3 items-end">
+                    <button
+                        onClick={() => navigateTo('knowledge_practice')}
+                        className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black uppercase text-[10px] px-4 py-3 rounded-full shadow-2xl shadow-blue-600/40 hover:scale-110 active:scale-95 transition-all border-2 border-white/20"
+                        title="Teste: Sabedoria & Prática"
+                    >
+                        <span className="text-xl">🦉</span>
+                        <span className="hidden lg:block">Nova Area: Jurídico/Humanas</span>
+                    </button>
+
                     <button
                         onClick={() => navigateTo('health_diary')}
                         className="flex items-center gap-2 bg-gradient-to-r from-brand-primary to-purple-600 text-black font-black uppercase text-[10px] px-4 py-3 rounded-full shadow-2xl shadow-brand-primary/40 hover:scale-110 active:scale-95 transition-all border-2 border-white/20"
                         title="Teste: Diário Health & Mind"
                     >
                         <HeartPulse className="w-4 h-4" />
-                        <span className="hidden lg:block">Testar Diário</span>
+                        <span className="hidden lg:block">Testar Diário (Saúde)</span>
                     </button>
                 </div>
 

@@ -45,7 +45,7 @@ import { WinningProductProfile } from '../types/nexus';
 import { toast } from 'react-hot-toast';
 
 // --- HELPERS ---
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const loadJSON = <T>(key: string, def: T): T => {
     try {
@@ -1121,7 +1121,10 @@ const DEFAULT_TOOL_COSTS: ToolCost[] = [
     { toolId: 'ads_persona_analysis', toolName: 'Análise Persona', costPerTask: 0.10, realCostEstimate: 0.02, complexity: 'medium' },
     { toolId: 'ads_bid_optimization', toolName: 'Otimização Bids', costPerTask: 0.20, realCostEstimate: 0.05, complexity: 'high' },
     { toolId: 'ads_dark_post_gen', toolName: 'Criar Dark Post', costPerTask: 0.12, realCostEstimate: 0.03, complexity: 'medium' },
-    { toolId: 'ads_opp_intelligence', toolName: 'Intel. Oportunidades', costPerTask: 0.08, realCostEstimate: 0.01, complexity: 'medium' }
+    { toolId: 'ads_opp_intelligence', toolName: 'Intel. Oportunidades', costPerTask: 0.08, realCostEstimate: 0.01, complexity: 'medium' },
+    // Mestre IA New Tools
+    { toolId: 'blindagem_legal', toolName: 'Blindagem Legal (Anti-Bloqueio)', costPerTask: 0.15, realCostEstimate: 0.02, complexity: 'medium' },
+    { toolId: 'raio_x_metricas', toolName: 'Raio-X de Métricas (ROI)', costPerTask: 0.25, realCostEstimate: 0.05, complexity: 'high' }
 ];
 
 export const getToolCosts = async (): Promise<ToolCost[]> => {
@@ -1162,17 +1165,28 @@ export const saveToolCost = async (t: ToolCost) => {
     saveJSON('mockToolCosts', list);
 };
 
-export const getCreditCombos = async () => loadJSON<CreditCombo[]>('mockCreditCombos', []);
+const INITIAL_CREDIT_COMBOS: CreditCombo[] = [
+    // Main Combos
+    { id: 'combo_maquina', name: 'Máquina de Vendas (600 Créditos)', credits: 600, price: 97.00, active: true, salesCount: 124 },
+    { id: 'combo_fabrica', name: 'Fábrica de Vídeos (300 Créditos)', credits: 300, price: 57.00, active: true, salesCount: 85 },
+    { id: 'combo_especialista', name: 'Especialista (1000 Créditos)', credits: 1000, price: 147.00, active: true, salesCount: 42 },
+
+    // Standalone (Avulsos)
+    { id: 'credit_50', name: 'Recarga Rápida (50 Créditos)', credits: 50, price: 19.90, active: true, salesCount: 15 },
+    { id: 'credit_200', name: 'Pack Básico (200 Créditos)', credits: 200, price: 39.90, active: true, salesCount: 30 }
+];
+
+export const getCreditCombos = async () => loadJSON<CreditCombo[]>('mockCreditCombos_v2', INITIAL_CREDIT_COMBOS);
 export const saveCreditCombo = async (c: CreditCombo) => {
     const list = await getCreditCombos();
     const idx = list.findIndex(x => x.id === c.id);
     if (idx !== -1) list[idx] = c;
     else list.push(c);
-    saveJSON('mockCreditCombos', list);
+    saveJSON('mockCreditCombos_v2', list);
 };
 export const deleteCreditCombo = async (id: string) => {
     const list = await getCreditCombos();
-    saveJSON('mockCreditCombos', list.filter(x => x.id !== id));
+    saveJSON('mockCreditCombos_v2', list.filter(x => x.id !== id));
 };
 
 export const purchaseCombo = async (uid: string, combo: CreditCombo) => {
@@ -1443,6 +1457,20 @@ export const consumeCredits = async (
                 } else {
                     return { success: false, message: "Saldo insuficiente. Recarregue seus créditos." };
                 }
+            }
+        }
+
+        // Check for Producer (Admin/Partner) Debit
+        if (userId === mockProducerWallet.producerId || userId === 'user-123' || forceWallet) { // Simple mock check
+            const success = await debitWallet(amount, narrative, 'service_usage');
+            if (success) {
+                // Log usage statistics if needed
+                const tools = await getToolCosts();
+                const tool = tools.find(t => t.toolId === toolId);
+                if (tool) incrementUsageCost(tool.realCostEstimate); // Track Platform Cost
+                return { success: true, message: "Debitado da Carteira do Produtor" };
+            } else {
+                return { success: false, message: "Saldo em Carteira Insuficiente (Produtor)" };
             }
         }
 
@@ -2141,9 +2169,9 @@ let mockProducerWallet: ProducerWallet = {
     producerId: 'user-123',
     balance: 450.00,
     transactions: [
-        { id: 'tx-now', producerId: 'user-123', type: 'credit', amount: 200, description: 'Recarregar via PIX', category: 'purchase', timestamp: Date.now() },
+        { id: 'tx-now', producerId: 'user-123', type: 'credit', amount: 200, description: 'Recarregar via PIX', category: 'purchase', timestamp: Date.now(), gatewayId: 'pi_3M9uCK...' },
         { id: 'tx-2d', producerId: 'user-123', type: 'debit', amount: 50, description: 'Análise de Funil - Nexus IA', category: 'service_usage', timestamp: Date.now() - 86400000 * 2 },
-        { id: 'tx-8d', producerId: 'user-123', type: 'credit', amount: 1000, description: 'Campanha de Premiação Afiliados', category: 'bonus', timestamp: Date.now() - 86400000 * 8 },
+        { id: 'tx-8d', producerId: 'user-123', type: 'credit', amount: 1000, description: 'Campanha de Premiação Afiliados', category: 'bonus', timestamp: Date.now() - 86400000 * 8, gatewayId: 'pi_3L8vAB...' },
         { id: 'tx-20d', producerId: 'user-123', type: 'debit', amount: 150, description: 'Automação WhatsApp (300 disparos)', category: 'service_usage', timestamp: Date.now() - 86400000 * 20 },
         { id: 'tx-45d', producerId: 'user-123', type: 'credit', amount: 500, description: 'Bônus de Boas-vindas Nexus', category: 'bonus', timestamp: Date.now() - 86400000 * 45 }
     ]
@@ -2251,7 +2279,8 @@ export const buyCredits = async (target: 'student' | 'producer', amount: number,
             amount,
             description,
             category: 'purchase',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            gatewayId: `pi_live_${Math.random().toString(36).substr(2, 9)}`
         });
         return true;
     } else {
@@ -2270,6 +2299,7 @@ export const buyCredits = async (target: 'student' | 'producer', amount: number,
                 toolId: 'shop',
                 description,
                 timestamp: Date.now(),
+                gatewayId: `pi_live_${Math.random().toString(36).substr(2, 9)}`,
                 pocketUsed: 'global',
                 balanceSnapshot: student.creditBalance
             });
@@ -3171,8 +3201,8 @@ export const getStudentDeepAudit = async (studentId: string) => {
         purchasedCoursesCount: 4,
         productsPublishedCount: 1, // Example: Aluno also has his own product
         creditHistory: [
-            { date: '2025-10-10', amount: 500, value: 450 },
-            { date: '2025-11-20', amount: 1000, value: 900 }
+            { date: '2025-10-10', amount: 500, value: 450, gatewayId: 'pi_3M9uCK...' },
+            { date: '2025-11-20', amount: 1000, value: 900, gatewayId: 'pi_3L8vAB...' }
         ],
         apiUsageMetrics: {
             gpt4: 120,

@@ -17,11 +17,11 @@ export const FinancialView: React.FC = () => {
     const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
 
     const transactions = [
-        { id: 'TRX-982145', date: '22/01/2026', product: 'Mestre do Tráfego 15X', value: 197.00, commission: 19.70, status: 'Aprovado', color: 'text-green-400' },
-        { id: 'TRX-982142', date: '21/01/2026', product: 'Mentoria Elite 50X', value: 997.00, commission: 99.70, status: 'Pendente', color: 'text-yellow-400' },
-        { id: 'TRX-982139', date: '20/01/2026', product: 'Ebook Viral 3.0', value: 47.00, commission: 4.70, status: 'Aprovado', color: 'text-green-400' },
-        { id: 'TRX-982131', date: '19/01/2026', product: 'Mestre do Tráfego 15X', value: 197.00, commission: 19.70, status: 'Reembolsado', color: 'text-red-400' },
-        { id: 'TRX-982125', date: '18/01/2026', product: 'Mentoria Elite 50X', value: 997.00, commission: 99.70, status: 'Aprovado', color: 'text-green-400' },
+        { id: 'TRX-982145', gatewayId: 'pi_3M9u...', date: '22/01/2026', product: 'Mestre do Tráfego 15X', value: 197.00, commission: 19.70, status: 'Aprovado', color: 'text-green-400' },
+        { id: 'TRX-982142', gatewayId: 'pi_3M8x...', date: '21/01/2026', product: 'Mentoria Elite 50X', value: 997.00, commission: 99.70, status: 'Pendente', color: 'text-yellow-400' },
+        { id: 'TRX-982139', gatewayId: 'pi_3M7v...', date: '20/01/2026', product: 'Ebook Viral 3.0', value: 47.00, commission: 4.70, status: 'Aprovado', color: 'text-green-400' },
+        { id: 'TRX-982131', gatewayId: 're_1N2...', date: '19/01/2026', product: 'Mestre do Tráfego 15X', value: 197.00, commission: 19.70, status: 'Reembolsado', color: 'text-red-400' },
+        { id: 'TRX-982125', gatewayId: 'pi_3M6k...', date: '18/01/2026', product: 'Mentoria Elite 50X', value: 997.00, commission: 99.70, status: 'Aprovado', color: 'text-green-400' },
     ];
 
     const handleWithdrawRequest = () => {
@@ -44,7 +44,13 @@ export const FinancialView: React.FC = () => {
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 h-full overflow-y-auto pb-20 custom-scrollbar pr-2">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                    <Wallet className="w-7 h-7 text-green-500" /> Painel de Comissões
+                    <Wallet className="w-7 h-7 text-green-500" />
+                    <div>
+                        Painel de Comissões
+                        <span className="block text-[9px] text-gray-500 font-normal tracking-wide mt-1 flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> Split Automático via Stripe Connect
+                        </span>
+                    </div>
                 </h2>
                 <Button onClick={handleWithdrawRequest} className="!py-4 !px-8 !bg-green-600 hover:!bg-green-500 text-white font-black uppercase text-xs shadow-lg shadow-green-900/20 flex items-center gap-2">
                     <DollarSign className="w-5 h-5" /> Solicitar Saque PIX
@@ -96,6 +102,7 @@ export const FinancialView: React.FC = () => {
                         <thead className="bg-black/20 text-gray-500 text-[10px] font-black uppercase border-b border-gray-800">
                             <tr>
                                 <th className="p-4">ID Transação</th>
+                                <th className="p-4">Gateway ID</th>
                                 <th className="p-4">Data</th>
                                 <th className="p-4">Produto</th>
                                 <th className="p-4">Status</th>
@@ -106,6 +113,7 @@ export const FinancialView: React.FC = () => {
                             {transactions.map((tx, idx) => (
                                 <tr key={idx} className="hover:bg-white/5 transition-colors group">
                                     <td className="p-4 text-gray-400 font-mono text-[10px] uppercase">{tx.id}</td>
+                                    <td className="p-4 text-gray-500 font-mono text-[9px]">{tx.gatewayId}</td>
                                     <td className="p-4 text-gray-500 text-xs">{tx.date}</td>
                                     <td className="p-4 text-white font-bold text-xs uppercase tracking-tight">{tx.product}</td>
                                     <td className="p-4">

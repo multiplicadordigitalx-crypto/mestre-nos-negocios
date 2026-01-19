@@ -10,7 +10,7 @@ export interface SystemToolExtended {
     label: string;
     costUSD: number;
     baseUnit: string;
-    billingType: 'execution' | 'monthly' | 'volume_pack';
+    billingType: 'execution' | 'monthly' | 'volume_pack' | 'internal_cost';
     description?: string;
 }
 
@@ -106,8 +106,8 @@ export const SYSTEM_MODULES: SystemModuleExtended[] = [
         icon: <BookOpen className="w-5 h-5 text-blue-400" />,
         description: 'Ferramentas para orquestração de cursos e materiais.',
         tools: [
-            { id: 'hosting_traditional', label: 'Hospedagem e Banda (Curso Tradicional)', costUSD: 1.500, baseUnit: "Por Aluno/Mês", billingType: 'monthly', description: 'Custos de CDN para Streaming e Armazenamento.' },
-            { id: 'hosting_ai_course', label: 'Hospedagem Nexus Player & IA', costUSD: 3.500, baseUnit: "Por Aluno/Mês", billingType: 'monthly', description: 'Custo fixo de infraestrutura (Vector DB), Tokens do Mentor IA e Voz Neural.' },
+            { id: 'hosting_traditional', label: 'Hospedagem e Banda (Curso Tradicional)', costUSD: 1.500, baseUnit: "Por Aluno/Mês", billingType: 'internal_cost', description: 'Custos de CDN para Streaming e Armazenamento.' },
+            { id: 'hosting_ai_course', label: 'Hospedagem Nexus Player & IA', costUSD: 3.500, baseUnit: "Por Aluno/Mês", billingType: 'internal_cost', description: 'Custo fixo de infraestrutura (Vector DB), Tokens do Mentor IA e Voz Neural.' },
             { id: 'train_suggest_mentorship', label: 'Gerar Sugestão para Mentoria Personalizada', costUSD: 0.020, baseUnit: "1 Geração", billingType: 'execution' },
             { id: 'train_cover_ai', label: 'Gerar Capa com IA', costUSD: 0.060, baseUnit: "1 Capa", billingType: 'execution' },
             { id: 'train_logo_ai', label: 'Gerar Logo com IA', costUSD: 0.060, baseUnit: "1 Logo", billingType: 'execution' },
@@ -125,7 +125,9 @@ export const SYSTEM_MODULES: SystemModuleExtended[] = [
         tools: [
             { id: 'dna_produto', label: 'DNA do Produto', costUSD: 0.050, baseUnit: "1 Mapeamento", billingType: 'execution' },
             { id: 'support_ai', label: 'Suporte IA Automatizado', costUSD: 0.010, baseUnit: "1 Resposta", billingType: 'execution' },
-            { id: 'coach_session', label: 'Sessão Coach IA', costUSD: 0.020, baseUnit: "1 Chat", billingType: 'execution' }
+            { id: 'coach_session', label: 'Sessão Coach IA', costUSD: 0.020, baseUnit: "1 Chat", billingType: 'execution' },
+            { id: 'pixel_api', label: 'Pixel Data Sync API', costUSD: 0.001, baseUnit: "1 Evento", billingType: 'execution' },
+            { id: 'bot_automation', label: 'Automação de Recuperação (Bot)', costUSD: 0.005, baseUnit: "1 Msg Ativa", billingType: 'execution' }
         ]
     },
     {
@@ -155,8 +157,8 @@ export const SYSTEM_MODULES: SystemModuleExtended[] = [
         icon: <Activity className="w-5 h-5 text-red-400" />,
         description: 'Custos recorrentes de infraestrutura, armazenamento e consumo de IA pelos alunos.',
         tools: [
-            { id: 'maintenance_active_student', label: 'Manutenção Diária por Aluno (Infra)', costUSD: 0.005, baseUnit: "Por Aluno/Dia", billingType: 'monthly' },
-            { id: 'maintenance_storage_gb', label: 'Armazenamento de Vídeo/Arquivo (GB)', costUSD: 0.080, baseUnit: "Por GB/Mês", billingType: 'monthly' },
+            { id: 'maintenance_active_student', label: 'Manutenção Diária por Aluno (Infra)', costUSD: 0.005, baseUnit: "Por Aluno/Dia", billingType: 'internal_cost' },
+            { id: 'maintenance_storage_gb', label: 'Armazenamento de Vídeo/Arquivo (GB)', costUSD: 0.080, baseUnit: "Por GB/Mês", billingType: 'internal_cost' },
             { id: 'student_ai_chat', label: 'Chat com Mentor IA (Token Aluno)', costUSD: 0.010, baseUnit: "1 Mensagem", billingType: 'execution' },
             { id: 'student_voice_chat', label: 'Conversa por Voz (Audio Streaming)', costUSD: 0.030, baseUnit: "1 Minuto", billingType: 'execution' }
         ]

@@ -30,14 +30,7 @@ export const BodyMetricsCard: React.FC<BodyMetricsCardProps> = ({ hasPhysicalKit
         // We use contextId = 'global_health' so it shares a bucket if we want, or user unique bucket.
         const proceed = await checkAndConsume('health_metric_scan', 'Scan Métricas Corporais', {
             cost: 5, // Higher cost for OCR
-            dailyLimit: 3 * 5, // If 1 scan = 5 credits, then 3 scans = 15 credits limit? 
-            // WAIT. User said "100 Points Total".
-            // So I should just check against the global "daily_limit" of the user?
-            // If I pass "dailyLimit: 100", it creates a bucket "daily_usage_global_100".
-            // If the user has a Course with limit 100, we should reuse that?
-            // For now, Health is outside a Course context usually. 
-            // I will assume a default Platform Limit of 50 credits (points) for Health tools if not specified.
-            dailyLimit: 50, // 10 scans
+            dailyLimit: 50, // 10 scans (Default Platform Limit for Health tools)
             contextId: 'health_suite'
         });
 
@@ -85,16 +78,21 @@ export const BodyMetricsCard: React.FC<BodyMetricsCardProps> = ({ hasPhysicalKit
                         <div className="flex gap-3">
                             <Button
                                 onClick={() => { setLogType('weight'); setIsLogging(true); }}
-                                className="!bg-green-400 text-black font-black uppercase text-[10px] px-6 py-3 rounded-2xl shadow-xl shadow-green-500/20"
+                                className={(!isLogging || logType === 'weight')
+                                    ? "!bg-green-400 text-black font-black uppercase text-[10px] px-6 py-3 rounded-2xl shadow-xl shadow-green-500/20"
+                                    : "!bg-gray-900/50 border border-gray-700 text-gray-400 font-black uppercase text-[10px] px-6 py-3 rounded-2xl hover:text-white transition-colors"
+                                }
                             >
-                                <Scale className="w-3.5 h-3.5 mr-2" /> Pesar Agora
+                                <Scale className={`w-3.5 h-3.5 mr-2 ${(!isLogging || logType === 'weight') ? 'text-black' : 'text-gray-500'}`} /> Registrar Peso
                             </Button>
                             <Button
                                 onClick={() => { setLogType('measurements'); setIsLogging(true); }}
-                                variant="secondary"
-                                className="!bg-gray-900/50 border-gray-700 font-black uppercase text-[10px] px-6 py-3 rounded-2xl"
+                                className={(isLogging && logType === 'measurements')
+                                    ? "!bg-green-400 text-black font-black uppercase text-[10px] px-6 py-3 rounded-2xl shadow-xl shadow-green-500/20"
+                                    : "!bg-gray-900/50 border border-gray-700 text-gray-400 font-black uppercase text-[10px] px-6 py-3 rounded-2xl hover:text-white transition-colors"
+                                }
                             >
-                                <Ruler className="w-3.5 h-3.5 mr-2" /> Medir
+                                <Ruler className={`w-3.5 h-3.5 mr-2 ${(isLogging && logType === 'measurements') ? 'text-black' : 'text-gray-500'}`} /> Registrar Medidas
                             </Button>
                         </div>
                     </div>

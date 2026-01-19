@@ -12,6 +12,7 @@ import {
     File as FileIcon, Image as ImageIcon, RefreshCw
 } from '@/components/Icons';
 import Button from '@/components/Button';
+import { nexusCore } from '@/services/NexusCore'; // Import Nexus
 
 export type LeadFilter = 'mine' | 'new' | 'closed';
 
@@ -29,6 +30,7 @@ export const LeadsManagementView: React.FC<{ user: SalesPerson }> = ({ user }) =
     const [chatMessages, setChatMessages] = useState<WhatsAppMessage[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [isScriptsOpen, setIsScriptsOpen] = useState(false);
+    const [isBotActive, setIsBotActive] = useState(false); // Local state for demo
 
     // Multimedia states
     const [isRecording, setIsRecording] = useState(false);
@@ -98,6 +100,29 @@ export const LeadsManagementView: React.FC<{ user: SalesPerson }> = ({ user }) =
             type: 'text'
         }]);
         setChatInput('');
+    };
+
+    const handleToggleBot = async () => {
+        if (!isBotActive) {
+            // Check Subscription
+            const check = await nexusCore.ensureSubscriptionActive(user.uid, 'sales_bot_14');
+            if (!check) {
+                const confirm = window.confirm("Ativar Bot de Vendas 24/7?\n\nCusto: $0.020/mês (≈0.30 Créditos).\n\nDeseja assinar agora?");
+                if (!confirm) return;
+
+                const sub = await nexusCore.subscribe(user.uid, 'sales_bot_14');
+                if (!sub.success) {
+                    toast.error(sub.message);
+                    return;
+                }
+                toast.success("Assinatura do Bot Realizada!");
+            }
+            setIsBotActive(true);
+            toast.success("Bot de Vendas ATIVADO! Respondendo novos leads...");
+        } else {
+            setIsBotActive(false);
+            toast("Bot PAUSADO.");
+        }
     };
 
     // --- MULTIMEDIA HANDLERS ---
@@ -225,6 +250,17 @@ export const LeadsManagementView: React.FC<{ user: SalesPerson }> = ({ user }) =
                         </h3>
                         <span className="text-[9px] bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded font-black border border-blue-500/20">WHATSMEOW</span>
                     </div>
+
+                    <div className="mb-4">
+                        <button
+                            onClick={handleToggleBot}
+                            className={`w-full py-2 rounded-lg border flex items-center justify-center gap-2 text-xs font-bold transition-all ${isBotActive ? 'bg-green-600 border-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)]' : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'}`}
+                        >
+                            <Brain className={`w-4 h-4 ${isBotActive ? 'animate-pulse' : ''}`} />
+                            {isBotActive ? 'IA AUTÔNOMA: ON' : 'ATIVAR ROBÔ DE VENDAS'}
+                        </button>
+                    </div>
+
                     <div className="flex gap-2 p-1 bg-gray-800 rounded-xl">
                         {(['new', 'mine', 'closed'] as const).map(f => (
                             <button

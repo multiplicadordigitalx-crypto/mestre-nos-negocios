@@ -21,14 +21,16 @@ import SystemHealthPage from '../pages/SystemHealthPage';
 import NexusAIPage from '../pages/NexusAIPage';
 import NexusAdsPage from '../pages/NexusAdsPage'; // New Import
 import PurchaseButtonsView from '../pages/admin/views/PurchaseButtonsView';
+
 import PricesCreditsView from '../pages/admin/views/prices/PricesCreditsView';
+import LucPayDashboard from '../pages/admin/views/LucPayDashboard';
 
 import TeamManagementView from '../pages/admin/views/TeamManagementView';
 
 import {
     ShieldCheck, FileText, Crown, Megaphone, Link as LinkIcon,
     Filter, Mail, Rocket, MousePointer, HeartPulse, Cpu, Eye, ArrowLeft,
-    Coins, User, Users, Target, ChevronLeft, ChevronRight
+    Coins, User, Users, Target, ChevronLeft, ChevronRight, CreditCard
 } from '@/components/Icons';
 import { StudentPage } from '@/types';
 
@@ -49,6 +51,7 @@ type AdminPageType =
     | 'nexus_ai'
     | 'internal_campaigns'
     | 'purchase_buttons'
+    | 'lucpay'
 
 
 export const AdminLayout: React.FC = () => {
@@ -71,6 +74,12 @@ export const AdminLayout: React.FC = () => {
             label: 'Custos e Preços',
             icon: <Coins className="w-5 h-5" />,
             color: 'text-emerald-400'
+        },
+        {
+            id: 'lucpay',
+            label: 'LucPay (Stripe)',
+            icon: <CreditCard className="w-5 h-5" />,
+            color: 'text-indigo-500'
         },
         {
             id: 'training',
@@ -257,6 +266,7 @@ export const AdminLayout: React.FC = () => {
                             {currentPage === 'email' && <EmailPage />}
                             {currentPage === 'internal_campaigns' && <InternalCampaignsPage />}
                             {currentPage === 'purchase_buttons' && <PurchaseButtonsView />}
+                            {currentPage === 'lucpay' && <LucPayDashboard />}
                             {currentPage === 'system_health' && <SystemHealthPage />}
                             {currentPage === 'nexus_ai' && <NexusAIPage />}
                         </motion.div>

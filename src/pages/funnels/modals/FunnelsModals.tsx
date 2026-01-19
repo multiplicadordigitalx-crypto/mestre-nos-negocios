@@ -3,13 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
-import { X as XIcon, Zap, AlertTriangle, PlayCircle, Trash, ShoppingBag, Activity } from '../../../components/Icons';
+import { X as XIcon, Zap, AlertTriangle, PlayCircle, Trash, ShoppingBag, Activity, ShieldCheck } from '../../../components/Icons';
 import { Funnel } from '../types';
 import toast from 'react-hot-toast';
 
 // --- MESTRE FULL ACTIVATION MODAL ---
-export const MestreFullModal: React.FC<{ isOpen: boolean, onClose: () => void, onConfirm: () => void, currentBalance?: number, estimatedDailyCost?: number }> = ({ isOpen, onClose, onConfirm, currentBalance = 0, estimatedDailyCost = 25 }) => {
+export const MestreFullModal: React.FC<{ isOpen: boolean, onClose: () => void, onConfirm: () => void, currentBalance?: number, estimatedDailyCost?: number, activeSlots?: number, maxSlots?: number }> = ({ isOpen, onClose, onConfirm, currentBalance = 0, estimatedDailyCost = 25, activeSlots = 42, maxSlots = 50 }) => {
     if (!isOpen) return null;
+    const isFull = activeSlots >= maxSlots;
     return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
             <motion.div
@@ -45,6 +46,45 @@ export const MestreFullModal: React.FC<{ isOpen: boolean, onClose: () => void, o
                     )}
                 </div>
 
+                {/* --- RESERVA TÉCNICA ALERT --- */}
+                <div className="bg-yellow-900/20 border border-yellow-500/30 p-3 rounded-lg flex gap-3 mb-6">
+                    <ShieldCheck className="w-8 h-8 text-yellow-500 flex-shrink-0" />
+                    <div>
+                        <p className="text-yellow-400 font-bold text-xs uppercase mb-1">Reserva Técnica Obrigatória</p>
+                        <p className="text-gray-400 text-[10px] leading-relaxed">
+                            Para garantir operação autônoma por 24h, o sistema reservará <strong>{estimatedDailyCost} créditos</strong> do seu saldo.
+                            Se o saldo cair abaixo disso, o Mestre Full pausa automaticamente.
+                        </p>
+                    </div>
+                </div>
+
+
+                {/* --- SLOT LIMIT ALERT --- */}
+                <div className="flex justify-between items-center bg-gray-800 p-2 rounded-lg mb-4 border border-gray-700">
+                    <span className="text-xs text-gray-400 font-bold uppercase">Vagas Globais Ocupadas</span>
+                    <div className="flex items-center gap-2">
+                        <div className="w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div className={`h-full ${isFull ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${(activeSlots / maxSlots) * 100}%` }}></div>
+                        </div>
+                        <span className={`text-xs font-bold ${isFull ? 'text-red-500' : 'text-white'}`}>{activeSlots}/{maxSlots}</span>
+                    </div>
+                </div>
+
+                {
+                    isFull && (
+                        <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg flex gap-3 mb-6">
+                            <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0" />
+                            <div>
+                                <p className="text-red-400 font-bold text-xs uppercase mb-1">Vagas Esgotadas</p>
+                                <p className="text-gray-300 text-[10px]">
+                                    O Mestre Full atingiu o limite de {maxSlots} operações simultâneas para garantir a qualidade da IA.
+                                    <br /><span className="text-white font-bold cursor-pointer underline hover:text-red-300">Entrar na Lista de Espera</span>
+                                </p>
+                            </div>
+                        </div>
+                    )
+                }
+
                 <div className="bg-gray-800/50 p-4 rounded-xl border border-yellow-500/20 mb-6 text-left max-h-60 overflow-y-auto custom-scrollbar">
                     <p className="text-gray-300 text-sm font-bold mb-2">A IA assumirá o controle total:</p>
                     <ul className="text-xs text-gray-400 space-y-2 list-disc pl-4">
@@ -63,12 +103,17 @@ export const MestreFullModal: React.FC<{ isOpen: boolean, onClose: () => void, o
 
                 <div className="flex gap-3">
                     <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-                    <Button onClick={onConfirm} className="flex-1 !bg-yellow-500 hover:!bg-yellow-400 text-black font-black uppercase shadow-lg shadow-yellow-900/20">
-                        LIGAR MÁQUINA
+                    <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+                    <Button
+                        onClick={onConfirm}
+                        disabled={currentBalance < estimatedDailyCost || isFull}
+                        className={`flex-1 font-black uppercase shadow-lg ${(currentBalance < estimatedDailyCost || isFull) ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : '!bg-yellow-500 hover:!bg-yellow-400 text-black shadow-yellow-900/20'}`}
+                    >
+                        {isFull ? 'Vagas Esgotadas' : currentBalance < estimatedDailyCost ? 'Saldo Insuficiente' : 'Reservar & Ligar'}
                     </Button>
                 </div>
-            </motion.div>
-        </div>
+            </motion.div >
+        </div >
     );
 };
 

@@ -438,7 +438,12 @@ export const ProducerFinancePage: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-white">{tx.description}</p>
-                                                        <p className="text-xs text-gray-500">{new Date(tx.timestamp).toLocaleDateString()} às {new Date(tx.timestamp).toLocaleTimeString()}</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-xs text-gray-500">{new Date(tx.timestamp).toLocaleDateString()} às {new Date(tx.timestamp).toLocaleTimeString()}</p>
+                                                            {tx.gatewayId && (
+                                                                <span className="text-[9px] font-mono text-gray-600 bg-black/30 px-1.5 rounded">{tx.gatewayId}</span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <span className={`font-mono font-bold ${tx.type === 'credit' ? 'text-green-400' : 'text-red-400'}`}>

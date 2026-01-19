@@ -6,9 +6,14 @@ import {
     OperationsMetric,
     EscalationTicket,
     ToolCost,
-    WhatsAppInstance
+    WhatsAppInstance,
+    UserSubscription,
+    Student
 } from '../types/legacy';
-import { getSystemStatus, updateSystemStatus, getAppProducts, saveJSON, consumeCredits, getToolCosts } from './mockFirebase';
+import { consumeCredits, getStudents, updateStudent, getSystemStatus, updateSystemStatus, getToolCosts } from './mockFirebase';
+import { callMestreIA } from './mestreIaService';
+
+// ... rest of imports ...
 
 // ... (Rest of imports is implicitly kept if I target correctly, but replace_file_content replaces blocks.
 // I will just replace executeTask and add imports separately or use multi_replace if imports are far.)
@@ -140,15 +145,38 @@ class NexusCoreService {
         // --- BILLING LOGIC ---
         // 1. Identifica ferramenta associada à tarefa
         let toolId = 'mestre_dos_negocios'; // default fallback
+
+        // SPECIAL HANDLING FOR DARK POST ORCHESTRATION
+        if (task.type === 'dark_post_gen') {
+            await this.runDarkPostFlow(task);
+            return; // Orchestration handles its own billing/completion
+        }
+
         if (task.type === 'campaign_gen') toolId = 'vendas_hoje';
-        else if (task.type === 'content_creation') toolId = 'copy_generator';
+        else if (task.type === 'content_creation') toolId = 'ads_copy_gen'; // Mapped to valid tool
         else if (task.type === 'sales_recovery') toolId = 'bot_automation';
         else if (task.type === 'data_sync') toolId = 'pixel_api'; // Free usually
 
         // 2. Verifica Custo e Debita
         if (task.payload?.userId) {
+            // --- SUBSCRIPTION CHECK FOR MONTHLY TOOLS ---
             const tools = await getToolCosts();
             const toolConfig = tools.find(t => t.toolId === toolId);
+            const isMonthly = toolConfig?.billingType === 'monthly';
+
+            if (isMonthly) {
+                const access = await this.ensureSubscriptionActive(task.payload.userId, toolId);
+                if (!access) {
+                    task.status = 'failed';
+                    throw new Error(`SUBSCRIPTION_REQUIRED: Assinatura para ${toolId} expirada ou inexistente.`);
+                }
+                // Se for mensal, não cobra por execução, a menos que seja "Monthly + Usage"
+                // Assumindo puramente mensal por enquanto
+                task.status = 'completed';
+                return;
+            }
+
+            // --- EXECUTION BILLING ---
             const cost = toolConfig?.costPerTask || 0;
 
             if (cost > 0) {
@@ -158,23 +186,87 @@ class NexusCoreService {
                 if (!billing.success) {
                     task.status = 'failed';
                     console.error(`[Nexus Core] Fim da linha (Sem Créditos): ${billing.message}`);
-                    // Se for tarefa crítica do Mestre Full, deveria emitir um evento de "Parar Mestre Full"
                     throw new Error(`BILLING_FAILED: ${billing.message}`);
                 }
             }
         }
-        // ---------------------
 
-        // Simulação de execução
+        // Simulação de execução genérica
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Aqui chamaria os serviços reais (MestreIA, Firebase, etc.)
-        // Em um sistema real, haveria um switch case ou Map de handlers
+        // Actual execution mapping
+        if (task.type === 'campaign_gen') {
+            // ... (existing campaign logic if any, currently handled in component but ideally here)
+        }
 
         task.status = 'completed';
         // Log learning event
         if (task.type === 'sales_recovery') {
             this.learnFromEvent('sales', task.payload.niche, true);
+        }
+    }
+
+    /**
+     * ORCHESTRATOR: Dark Post Lifecycle
+     * Script ($0.02) -> Studio ($2.50) -> Distribution ($0.10)
+     */
+    private async runDarkPostFlow(task: NexusTask) {
+        const userId = task.payload.userId;
+
+        // 1. PRE-FLIGHT CHECK (Balance)
+        // Check if user has approx ~40 credits (USD 2.62 * 6 * 2.5) basically
+        // Since we debit step-by-step, we just ensure they have enough for the biggest chunk first? 
+        // Or we trust the step-by-step failures provided they are atomic enough.
+
+        logger.info(`[Nexus Orchestrator] Starting Dark Post Flow for ${userId}. Region: ${task.payload.region || 'BR-Gen'}`);
+
+        try {
+            // --- STEP 1: SCRIPT GENERATION ---
+            const scriptToolId = 'ugc_viral_scripts';
+            const scriptCost = await this.calculateServiceCost(scriptToolId);
+
+            // Debit Script
+            const billing1 = await consumeCredits(userId, scriptToolId, scriptCost.cost, `Nexus Dark Post: Script`);
+            if (!billing1.success) throw new Error(`Sem saldo para Roteiro: ${billing1.message}`);
+
+            // Execute Script Generation
+            // const scriptRes = await callMestreIA('ugc_viral_scripts', { product: task.payload.productName, niche: task.payload.niche, ... });
+            // For now mock the result based on region
+            const mockScript = `[Roteiro ${task.payload.region}]: "Fala galera..."`;
+            logger.info(`[Nexus Step 1] Script Generated: ${scriptCost.cost} Credits.`);
+
+
+            // --- STEP 2: STUDIO RENDER (Heavy Cost) ---
+            const studioToolId = 'ugc_studio_12';
+            const studioCost = await this.calculateServiceCost(studioToolId);
+
+            // Debit Studio
+            const billing2 = await consumeCredits(userId, studioToolId, studioCost.cost, `Nexus Dark Post: Studio Render`);
+            if (!billing2.success) throw new Error(`Sem saldo para Studio (${studioCost.cost} cr): ${billing2.message}`);
+
+            // Execute Render (Mock time)
+            await new Promise(r => setTimeout(r, 1000));
+            logger.info(`[Nexus Step 2] Studio Render Complete: ${studioCost.cost} Credits.`);
+
+
+            // --- STEP 3: DISTRIBUTION ---
+            const distToolId = 'ugc_dist_13';
+            const distCost = await this.calculateServiceCost(distToolId);
+
+            // Debit Dist
+            const billing3 = await consumeCredits(userId, distToolId, distCost.cost, `Nexus Dark Post: Distribution`);
+            if (!billing3.success) throw new Error(`Sem saldo para Distribuição: ${billing3.message}`);
+
+            // Execute Dist
+            logger.info(`[Nexus Step 3] Distribution Complete: ${distCost.cost} Credits.`);
+
+            task.status = 'completed';
+            task.payload.result = { status: 'published', platform: 'Dark Post Network' };
+
+        } catch (error: any) {
+            task.status = 'failed';
+            logger.error(`[Nexus Orchestrator] Flow Failed: ${error.message}`);
+            // Note: In a real system we might refund partial steps or have atomic transactions.
         }
     }
 
@@ -263,6 +355,131 @@ class NexusCoreService {
         };
     }
 
+    // --- SUBSCRIPTION MANAGER ---
+
+    /**
+     * Checks if a user has an active subscription for a tool.
+     * Attempts renewal if expired and auto-renew is on.
+     */
+    public async ensureSubscriptionActive(userId: string, toolId: string): Promise<boolean> {
+        const students = await getStudents();
+        const user = students.find(s => s.uid === userId);
+
+        if (!user) return false;
+
+        const sub = user.activeSubscriptions?.find(s => s.toolId === toolId);
+
+        if (!sub) return false; // Never subscribed
+
+        const now = new Date();
+        const expiresAt = new Date(sub.expiresAt);
+
+        // 1. Active & Valid
+        if (sub.status === 'active' && expiresAt > now) {
+            return true;
+        }
+
+        // 2. Expired but Grace Period/Auto-Renew
+        if (sub.status === 'active' && expiresAt <= now) {
+            if (sub.autoRenew) {
+                logger.info(`[Nexus Sub] Renovando assinatura ${toolId} para ${userId}...`);
+                const renewed = await this.processRenewal(user, sub);
+                if (renewed) return true;
+
+                // Failed renewal
+                sub.status = 'expired'; // Or grace period
+                await updateStudent(user.uid, { activeSubscriptions: user.activeSubscriptions });
+                return false;
+            } else {
+                sub.status = 'expired';
+                await updateStudent(user.uid, { activeSubscriptions: user.activeSubscriptions });
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Processes the financial renewal of a subscription.
+     */
+    private async processRenewal(user: Student, sub: UserSubscription): Promise<boolean> {
+        // Calculate Cost again (price might have changed)
+        const costConfig = await this.calculateServiceCost(sub.toolId);
+        const tools = await getToolCosts();
+        const toolDef = tools.find(t => t.toolId === sub.toolId);
+
+        // Use definition cost for monthly (USD -> Credits)
+        // Note: calculateServiceCost includes margin.
+
+        const billing = await consumeCredits(user.uid, sub.toolId, sub.cost, `Renovação Automática: ${sub.planName}`); // Use stored cost or current? Using stored for lock-in or update? Let's use stored for now to match UI agreement
+
+        if (billing.success) {
+            // Extend for 30 days
+            const newExpiry = new Date();
+            newExpiry.setDate(newExpiry.getDate() + 30);
+
+            sub.expiresAt = newExpiry.toISOString();
+            sub.lastPaymentDate = new Date().toISOString();
+            sub.status = 'active';
+
+            await updateStudent(user.uid, { activeSubscriptions: user.activeSubscriptions });
+            logger.info(`[Nexus Sub] Renovação SUCESSO para ${user.uid} - ${sub.toolId}`);
+            return true;
+        } else {
+            logger.warn(`[Nexus Sub] Renovação FALHOU para ${user.uid} - ${sub.toolId}: ${billing.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * Starts a new subscription for a user.
+     */
+    public async subscribe(userId: string, toolId: string): Promise<{ success: boolean; message: string }> {
+        const students = await getStudents();
+        const user = students.find(s => s.uid === userId);
+        if (!user) return { success: false, message: 'User not found' };
+
+        // 1. Check if already active
+        const existing = user.activeSubscriptions?.find(s => s.toolId === toolId && s.status === 'active');
+        if (existing) {
+            // If expired, we renew. If active, we return success.
+            const now = new Date();
+            if (new Date(existing.expiresAt) > now) return { success: true, message: 'Already active' };
+        }
+
+        // 2. Calculate Cost
+        const costConfig = await this.calculateServiceCost(toolId);
+
+        // 3. Billing
+        const billing = await consumeCredits(userId, toolId, costConfig.cost, `Nova Assinatura: ${toolId}`);
+        if (!billing.success) return { success: false, message: billing.message };
+
+        // 4. Add Subscription
+        const newSub: UserSubscription = {
+            id: `sub-${Date.now()}`,
+            toolId,
+            planName: 'Plano Mensal', // Idealmente viria do ToolConfig
+            status: 'active',
+            startedAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            autoRenew: true,
+            lastPaymentDate: new Date().toISOString(),
+            cost: costConfig.cost
+        };
+
+        if (!user.activeSubscriptions) user.activeSubscriptions = [];
+
+        // Remove old if exists
+        user.activeSubscriptions = user.activeSubscriptions.filter(s => s.toolId !== toolId);
+        user.activeSubscriptions.push(newSub);
+
+        await updateStudent(user.uid, { activeSubscriptions: user.activeSubscriptions });
+        logger.info(`[Nexus Sub] Nova Assinatura: ${toolId} para ${user.uid}`);
+
+        return { success: true, message: 'Assinatura ativada com sucesso!' };
+    }
+
     // --- MONITORAMENTO DE SAÚDE ---
 
     private startHealthMonitor() {
@@ -281,8 +498,44 @@ class NexusCoreService {
         }, 10000);
     }
 
+    // --- SAÚDE FINANCEIRA (INVISIBLE HOSTING MODEL) ---
 
+    public async monitorFinancialHealth(): Promise<{ status: 'healthy' | 'warning' | 'critical', margin: number, revenue: number, cost: number }> {
+        const students = await getStudents();
+        const activeStudents = students.length;
 
+        // 1. Custo Real (Internal Costs)
+        // Hosting ($1.50) + Maintenance ($0.005/day * 30 -> $0.15)
+        const avgHostingCost = 1.50 + 3.50; // Traditional + AI Hosting (worst case)
+        const totalInternalCost = activeStudents * avgHostingCost;
+
+        // 2. Receita Invisível (Fundo de Reserva)
+        // a) 2% do GMV (Vendas Totais na Plataforma)
+        const mockTotalSalesGMV = 50000; // $50k USD/mo mocked
+        const lucPayFee = mockTotalSalesGMV * 0.02;
+
+        // b) Margem na Venda de Créditos
+        // Custo Real API: $0.05 -> Venda: $0.20 (Margem $0.15)
+        // Mock Créditos Vendidos: 1000 credits/student/mo
+        const creditsSold = activeStudents * 50;
+        const creditMargin = creditsSold * 0.15; // $0.15 profit per credit sold
+
+        const totalInvisibleRevenue = lucPayFee + creditMargin;
+
+        const healthRatio = totalInvisibleRevenue / totalInternalCost;
+
+        logger.info(`[Nexus Financial] Health Check: Receita(${totalInvisibleRevenue.toFixed(2)}) vs Custo(${totalInternalCost.toFixed(2)}) - Ratio: ${healthRatio.toFixed(2)}`);
+
+        if (healthRatio < 1.0) {
+            logger.error(`[Nexus Financial] 🚨 ALERTA DE PREJUÍZO: Taxas não cobrem infraestrutura!`);
+            return { status: 'critical', margin: healthRatio, revenue: totalInvisibleRevenue, cost: totalInternalCost };
+        } else if (healthRatio < 1.2) {
+            logger.warn(`[Nexus Financial] ⚠️ ALERTA DE MARGEM BAIXA: Recomendado aumentar taxa LucPay.`);
+            return { status: 'warning', margin: healthRatio, revenue: totalInvisibleRevenue, cost: totalInternalCost };
+        }
+
+        return { status: 'healthy', margin: healthRatio, revenue: totalInvisibleRevenue, cost: totalInternalCost };
+    }
 
     public getStatus() {
         return {

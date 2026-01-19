@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Button from './Button';
-import { CheckCircle, DollarSign, Zap, Star, ShieldCheck, Info, AlertTriangle, Target, Calculator, Brain, Clock, Megaphone } from './Icons';
+import { CheckCircle, DollarSign, Zap, Star, ShieldCheck, Info, AlertTriangle, Target, Calculator, Brain, Clock, Megaphone, Copy as CopyIcon, FileText } from './Icons';
 import { PremiumTool, PremiumToolId, FinancialModel } from '../types/legacy';
 
 const AVAILABLE_TOOLS: PremiumTool[] = [
@@ -177,12 +177,64 @@ export const CreditControlCard: React.FC<{
                             </div>
                         </div>
                     )}
-                    {!isBelowRecommended && (
-                        <div className="mt-3 text-[10px] text-green-400 font-bold flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" /> Configuração Ideal. Conteúdo 100% Entregue.
-                        </div>
-                    )}
                 </div>
+
+                {/* COMMERCIAL TRANSPARENCY KIT - NEW FEATURE */}
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border border-gray-700 col-span-1 md:col-span-2 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <Megaphone className="w-32 h-32 text-white" />
+                    </div>
+
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-blue-500/20 rounded-lg">
+                            <ShieldCheck className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-black text-white uppercase tracking-wide">Kit de Transparência Comercial (Anti-Reembolso)</h4>
+                            <p className="text-[10px] text-gray-400">Copie e cole este aviso na sua Página de Vendas para evitar disputas.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* 1. SALES PAGE BADGE */}
+                        <div className="bg-black/40 p-4 rounded-xl border border-gray-700/50">
+                            <p className="text-[10px] text-gray-500 font-bold uppercase mb-2 flex items-center gap-2">
+                                <Star className="w-3 h-3 text-yellow-500" /> Selo de Garantia (Display)
+                            </p>
+                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-brand-primary/30 p-4 rounded-lg flex items-center justify-between shadow-lg">
+                                <div>
+                                    <p className="text-[10px] text-brand-primary font-black uppercase tracking-widest">Powered by Nexus AI</p>
+                                    <p className="text-white font-bold text-sm">Incluso: {limit} Interações/Dia Grátis</p>
+                                </div>
+                                <Zap className="w-6 h-6 text-brand-primary animate-pulse" />
+                            </div>
+                        </div>
+
+                        {/* 2. TERMS SNIPPET */}
+                        <div className="bg-black/40 p-4 rounded-xl border border-gray-700/50 flex flex-col justify-between">
+                            <div>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase mb-2 flex items-center gap-2">
+                                    <FileText className="w-3 h-3 text-gray-400" /> Texto Legal (Termos de Uso)
+                                </p>
+                                <div className="bg-gray-900 p-3 rounded border border-gray-800 text-[10px] text-gray-300 font-mono italic relative group">
+                                    "O aluno terá direito a uma franquia diária de {limit} interações gratuitas com o Mentor IA. O uso excedente poderá ser adquirido dentro da plataforma via recarga de créditos."
+
+                                    <button
+                                        className="absolute top-2 right-2 p-1.5 bg-gray-800 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(`O aluno terá direito a uma franquia diária de ${limit} interações gratuitas com o Mentor IA. O uso excedente poderá ser adquirido dentro da plataforma via recarga de créditos.`);
+                                            // Ideally toast here, but simplistic for now
+                                        }}
+                                        title="Copiar Texto"
+                                    >
+                                        <CopyIcon className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

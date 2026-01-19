@@ -1,10 +1,10 @@
-
 import React from 'react';
 import {
   Home, BookOpen, DollarSign, Sparkles, Bot, ShoppingBag,
   Megaphone, Link as LinkIcon, Filter,
   Mail, Users, User, MessageSquare, Brain, PlusCircle, Target,
-  Hammer, HeartPulse, ShieldCheck, TrendingUp, Monitor, Zap
+  Hammer, HeartPulse, ShieldCheck, TrendingUp, Monitor, Zap,
+  ChevronLeft, ChevronRight
 } from '../Icons';
 import { StudentPage, SchoolConfig, StudentMenuItem } from '../../types';
 import { NavItem } from '../common/NavItem';
@@ -57,6 +57,9 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   visiblePages // Destructure
 }) => {
   const { user } = useAuth();
+
+  // State for Sidebar Collapse
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   // Default Menu (Legacy Fallback)
   const defaultMenu: StudentMenuItem[] = [
@@ -141,16 +144,16 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
 
   return (
     <nav
-      className={`fixed bottom-0 left-0 w-full md:relative md:w-20 lg:w-64 bg-gray-900/95 backdrop-blur-md md:bg-gray-900/50 border-t md:border-t-0 md:border-r border-gray-700 flex md:flex-col justify-between md:justify-start py-2 md:py-8 px-2 lg:px-4 z-50 overflow-x-auto md:overflow-x-visible ${isImpersonating ? 'pt-14' : ''} no-scrollbar safe-area-bottom`}
+      className={`fixed bottom-0 left-0 w-full md:relative ${isCollapsed ? 'md:w-20' : 'md:w-64'} transition-all duration-300 bg-gray-900/95 backdrop-blur-md md:bg-gray-900/50 border-t md:border-t-0 md:border-r border-gray-700 flex md:flex-col justify-between md:justify-start py-2 md:py-8 px-2 lg:px-4 z-50 overflow-x-auto md:overflow-x-visible md:overflow-y-visible ${isImpersonating ? 'pt-14' : ''} safe-area-bottom h-auto md:h-screen`}
       role="navigation"
       aria-label="Menu Principal"
       style={{
         borderColor: schoolConfig ? `${primaryColor}20` : undefined
       }}
     >
-      <div className="hidden md:flex items-center gap-3 mb-12 px-2 lg:px-4 flex-shrink-0">
+      <div className={`hidden md:flex items-center gap-3 mb-8 px-2 ${isCollapsed ? 'justify-center' : 'lg:px-4'} flex-shrink-0 transition-all`}>
         <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg"
+          className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0"
           style={{
             background: schoolConfig
               ? `linear-gradient(135deg, ${primaryColor}, ${schoolConfig.theme?.secondaryColor || '#111827'})`
@@ -163,12 +166,14 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
             <Brain className="w-6 h-6 text-black" />
           )}
         </div>
-        <h1 className="text-sm font-black text-white hidden lg:block uppercase leading-tight">
-          {schoolConfig?.name || <>Mestre nos<br />Negócios</>}
-        </h1>
+        {!isCollapsed && (
+          <h1 className="text-sm font-black text-white hidden lg:block uppercase leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+            {schoolConfig?.name || <>Mestre nos<br />Negócios</>}
+          </h1>
+        )}
       </div>
 
-      <div className="flex md:flex-col w-full md:w-auto h-full items-center md:items-stretch px-2 md:px-0 gap-2 md:gap-1 min-w-max md:min-w-0">
+      <div className="flex md:flex-col w-full md:w-auto h-full md:h-auto md:flex-1 items-center md:items-stretch px-2 md:px-0 gap-2 md:gap-1 min-w-max md:min-w-0 md:overflow-y-auto no-scrollbar pb-20">
         {menuItems
           .filter(item => item.isEnabled)
           .filter(item => !visiblePages || visiblePages.includes(item.id)) // Apply White Label Filter
@@ -187,6 +192,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
                 isActive={activePage === item.path}
                 themeColor={primaryColor}
                 colorClass={customColorClass} // Pass for text styling in NavItem if supported
+                isCollapsed={isCollapsed}
                 onClick={() => {
                   if (item.path.startsWith('http')) {
                     window.open(item.path, '_blank');
@@ -203,6 +209,15 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
           })}
       </div>
 
+      {/* Collapse Button - Desktop Only */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="hidden md:flex absolute top-12 right-[-12px] bg-gray-800 border border-gray-600 rounded-full p-1 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors shadow-lg z-50 items-center justify-center transform hover:scale-110 active:scale-95"
+        title={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
+        style={{ width: '24px', height: '24px' }}
+      >
+        {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
+      </button>
 
     </nav >
   );

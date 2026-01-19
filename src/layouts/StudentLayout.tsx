@@ -54,20 +54,17 @@ export const StudentLayout: React.FC = () => {
     }, [user]);
 
     // Redirect if current page is not allowed
+    // Redirect if current page is not allowed
     React.useEffect(() => {
+        /*
+        // RESTORED FULL ACCESS: Disabled redirection for unauthorized pages
         if (visiblePages.length > 0 && !visiblePages.includes(activePage)) {
             console.warn(`Redirecting from unauthorized page: ${activePage}`);
-            // Allow 'dashboard' always just in case common list failed? 
-            // Common list already includes dashboard.
-
-            // BUT: wait for initial load? unique case?
-            // Only redirect if we are SURE config is loaded or default safe list exists.
-            // Our config has defaults, so safe.
-
             if (activePage !== 'dashboard') {
                 setHistory(prev => ['dashboard']);
             }
         }
+        */
     }, [activePage, visiblePages]);
 
     const [supportBadge, setSupportBadge] = useState(1);
@@ -79,11 +76,12 @@ export const StudentLayout: React.FC = () => {
         }
 
         // Guard: Prevent navigation to hidden pages
-        if (visiblePages.length > 0 && !visiblePages.includes(page)) {
+        // RESTORED FOR FULL ACCESS as requested
+        /*if (visiblePages.length > 0 && !visiblePages.includes(page)) {
             // Maybe show toast?
             console.log("Blocked navigation to", page);
             return;
-        }
+        }*/
 
         if (page === activePage) return;
         setHistory(prev => [...prev, page]);
@@ -147,7 +145,7 @@ export const StudentLayout: React.FC = () => {
                 supportBadge={supportBadge}
                 isImpersonating={isImpersonating}
                 schoolConfig={schoolConfig}
-                visiblePages={visiblePages} // Pass Filter
+            // visiblePages={visiblePages} // Pass Filter (DISABLED)
             />
 
             <main className={`flex-1 overflow-y-auto relative bg-gray-900 scroll-smooth ${isImpersonating ? 'pt-12' : ''}`}>

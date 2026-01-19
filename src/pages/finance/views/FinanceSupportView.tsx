@@ -2,15 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { SupportTicket, SupportAgent } from '../../../types';
 import { TicketsView } from '../../support/views/TicketsView';
-import { getSupportTickets, resolveTicket, sendTicketMessage, markTicketAsRead, createEscalationRequest } from '../../../services/mockFirebase';
+import { getSupportTickets, resolveTicket, sendTicketMessage, markTicketAsRead, createEscalationRequest, mockStudents } from '../../../services/mockFirebase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';
+import StudentProfileView from '../../../components/StudentProfileView';
+import { Student } from '../../../types';
+import { X as XIcon } from '../../../components/Icons';
 
 export const FinanceSupportView: React.FC = () => {
     const { user } = useAuth();
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
     const [newMessage, setNewMessage] = useState('');
+    const [studentProfileModal, setStudentProfileModal] = useState<Student | null>(null);
 
     // Cast user to SupportAgent as they share similar structure for this view
     const agent = user as unknown as SupportAgent;
@@ -69,11 +73,12 @@ export const FinanceSupportView: React.FC = () => {
     };
 
     const handleViewStudent = (studentId: string) => {
-        // Implementation for viewing student profile if needed, 
-        // or just log for now if we don't have the modal here.
-        // The TicketsView expects this prop.
-        console.log("View student:", studentId);
-        toast("Perfil do aluno em desenvolvimento para esta view.");
+        const student = mockStudents.find(s => s.uid === studentId);
+        if (student) {
+            setStudentProfileModal(student);
+        } else {
+            toast.error("Perfil do aluno não encontrado.");
+        }
     };
 
     const handleMarkAsRead = async (id: string) => {
@@ -97,6 +102,22 @@ export const FinanceSupportView: React.FC = () => {
                 agent={agent}
                 markAsRead={handleMarkAsRead}
             />
+
+            {studentProfileModal && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4">
+                    <div className="w-full max-w-4xl relative max-h-[90vh] overflow-y-auto rounded-xl bg-gray-900 border border-gray-700">
+                        <StudentProfileView
+                            student={studentProfileModal}
+                            viewer="support" // Finance agents act as support level 2
+                            permissions={{ viewSensitiveData: true }} // Finance needs to see sensitive data
+                            onClose={() => setStudentProfileModal(null)}
+                        />
+                        <button onClick={() => setStudentProfileModal(null)} className="absolute top-4 right-4 p-2 text-white/50 hover:text-white">
+                            <XIcon className="w-6 h-6" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -7,12 +7,15 @@ import toast from 'react-hot-toast';
 import { WhatsmeowManager } from './WhatsmeowManager';
 import { CreateInstanceModal } from '../modals/CreateInstanceModal';
 import { ConfirmActionModal } from '../modals/ConfirmActionModal';
+import { useAuth } from '../../../hooks/useAuth';
+import { nexusCore } from '../../../services/NexusCore';
 
 export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
+    const { user } = useAuth();
     // PADRÃO: Whatsmeow inicia ativo. Evolution desligado por padrão.
     const [whatsAppEngine, setWhatsAppEngine] = useState<'evolution' | 'whatsmeow'>('whatsmeow');
     const [enableEvolutionBackup, setEnableEvolutionBackup] = useState(false);
-    
+
     // Evolution Config
     const [evolutionConfig, setEvolutionConfig] = useState({ serverUrl: 'https://api.evolution.com', globalKey: 'global-secret-key-123456' });
     const [waInstances, setWaInstances] = useState<any[]>([]);
@@ -24,7 +27,7 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
 
     useEffect(() => {
         if (isAdmin) {
-             getAdminIntegrations('whatsapp').then(setWaInstances);
+            getAdminIntegrations('whatsapp').then(setWaInstances);
         } else {
             // For students, fetch instances they own if applicable, but for this mockup
             // we assume personal instance management via Whatsmeow is default
@@ -40,6 +43,19 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
     }, [isAdmin, enableEvolutionBackup, whatsAppEngine]);
 
     const handleCreateInstance = async (name: string) => {
+        // SECURITY CHECK: Subscription for Evolution API
+        if (!isAdmin && whatsAppEngine === 'evolution' && user) {
+            const confirm = window.confirm("Atenção: A Evolution API é um recurso Premium (Backup Profissional).\n\nAo criar esta instância, você ativará uma assinatura MENSAL de ≈40 Créditos ($2.75).\n\nDeseja confirmar a assinatura e criar?");
+            if (!confirm) return;
+
+            const subResult = await nexusCore.subscribe(user.uid, 'wa_evolution_api');
+            if (!subResult.success) {
+                toast.error(subResult.message); // e.g. "Saldo Insuficiente"
+                return;
+            }
+            toast.success("Assinatura Ativada/Renovada! Criando instância...");
+        }
+
         const newInst = { id: `wa-${Date.now()}`, instanceName: name, status: 'disconnected', battery: 0, phone: '', profilePic: '', lastActivity: 'Agora' };
         await saveAdminIntegration('whatsapp', newInst);
         setWaInstances(prev => [...prev, newInst]);
@@ -51,13 +67,13 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
         // Simulate QR Scan Process
         setTimeout(() => {
             setWaInstances(prev => {
-                const updated = prev.map(inst => 
-                    inst.id === id ? { 
-                        ...inst, 
-                        status: 'connected', 
-                        battery: 98, 
-                        phone: '5511988887777', 
-                        profilePic: `https://i.pravatar.cc/150?u=${id}` 
+                const updated = prev.map(inst =>
+                    inst.id === id ? {
+                        ...inst,
+                        status: 'connected',
+                        battery: 98,
+                        phone: '5511988887777',
+                        profilePic: `https://i.pravatar.cc/150?u=${id}`
                     } : inst
                 );
                 const connectedItem = updated.find(i => i.id === id);
@@ -84,11 +100,11 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
 
         if (type === 'logout') {
             setWaInstances(prev => {
-                const updated = prev.map(inst => 
+                const updated = prev.map(inst =>
                     inst.id === instanceId ? { ...inst, status: 'disconnected', battery: 0, phone: '', profilePic: '' } : inst
                 );
                 const item = updated.find(i => i.id === instanceId);
-                if(item) saveAdminIntegration('whatsapp', item);
+                if (item) saveAdminIntegration('whatsapp', item);
                 return updated;
             });
             toast.success("Instância desconectada.");
@@ -110,23 +126,23 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
             {/* Admin Controls - Ativação do Backup */}
             {isAdmin && (
                 <div className="flex justify-end mb-4">
-                     <div className="bg-yellow-900/20 border border-yellow-500/30 px-3 py-2 rounded-lg flex items-center gap-2">
-                         <label className="text-xs font-bold text-yellow-500 uppercase mr-2">Admin Control:</label>
-                         <label className="relative inline-flex items-center cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
-                                checked={enableEvolutionBackup} 
+                    <div className="bg-yellow-900/20 border border-yellow-500/30 px-3 py-2 rounded-lg flex items-center gap-2">
+                        <label className="text-xs font-bold text-yellow-500 uppercase mr-2">Admin Control:</label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={enableEvolutionBackup}
                                 onChange={(e) => {
                                     setEnableEvolutionBackup(e.target.checked);
-                                    if(e.target.checked) toast.success("Evolution API liberada como opção de backup.");
+                                    if (e.target.checked) toast.success("Evolution API liberada como opção de backup.");
                                     else toast("Evolution API ocultada dos alunos.");
                                 }}
                             />
                             <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-yellow-500"></div>
                             <span className="ml-2 text-xs text-gray-300">Liberar Evolution (Backup)</span>
                         </label>
-                     </div>
+                    </div>
                 </div>
             )}
 
@@ -134,14 +150,14 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
             {(isAdmin || enableEvolutionBackup) && (
                 <div className="flex justify-center mb-6">
                     <div className="bg-gray-900 p-1 rounded-xl flex gap-1 border border-gray-700">
-                        <button 
+                        <button
                             onClick={() => setWhatsAppEngine('whatsmeow')}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${whatsAppEngine === 'whatsmeow' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
                         >
-                            <Zap className="w-3 h-3"/> API Padrão (Whatsmeow)
+                            <Zap className="w-3 h-3" /> API Padrão (Whatsmeow)
                         </button>
-                        
-                        <button 
+
+                        <button
                             onClick={() => setWhatsAppEngine('evolution')}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${whatsAppEngine === 'evolution' ? 'bg-green-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
                         >
@@ -163,29 +179,29 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
                                 <div className="flex-1">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                            <Server className="w-5 h-5 text-green-500"/> Credenciais Globais Evolution API
+                                            <Server className="w-5 h-5 text-green-500" /> Credenciais Globais Evolution API
                                         </h3>
                                         <Button onClick={() => setShowSecrets(!showSecrets)} className="!py-1.5 !px-3 !text-xs !bg-gray-700 hover:!bg-gray-600 text-white flex items-center gap-2">
-                                             {showSecrets ? <EyeOff className="w-3 h-3"/> : <Eye className="w-3 h-3"/>}
-                                             {showSecrets ? 'Ocultar Chaves' : 'Ver Chaves'}
+                                            {showSecrets ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                            {showSecrets ? 'Ocultar Chaves' : 'Ver Chaves'}
                                         </Button>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">Server URL</label>
-                                            <input 
+                                            <input
                                                 className="w-full bg-gray-800 border border-gray-600 rounded-lg p-2.5 text-white text-sm font-mono focus:border-green-500 outline-none"
                                                 value={evolutionConfig.serverUrl}
-                                                onChange={e => setEvolutionConfig({...evolutionConfig, serverUrl: e.target.value})}
+                                                onChange={e => setEvolutionConfig({ ...evolutionConfig, serverUrl: e.target.value })}
                                             />
                                         </div>
                                         <div>
                                             <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">Global API Key</label>
-                                            <input 
+                                            <input
                                                 type={showSecrets ? "text" : "password"}
                                                 className="w-full bg-gray-800 border border-gray-600 rounded-lg p-2.5 text-white text-sm font-mono focus:border-green-500 outline-none"
                                                 value={evolutionConfig.globalKey}
-                                                onChange={e => setEvolutionConfig({...evolutionConfig, globalKey: e.target.value})}
+                                                onChange={e => setEvolutionConfig({ ...evolutionConfig, globalKey: e.target.value })}
                                             />
                                         </div>
                                     </div>
@@ -203,10 +219,10 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
                     <div>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Smartphone className="w-5 h-5 text-brand-primary"/> Gerenciador de Instâncias (Evolution)
+                                <Smartphone className="w-5 h-5 text-brand-primary" /> Gerenciador de Instâncias (Evolution)
                             </h3>
                             <Button onClick={() => setIsCreateInstanceOpen(true)} className="!py-2 !px-4 !text-xs !bg-blue-600 hover:!bg-blue-500">
-                                <PlusCircle className="w-3 h-3 mr-1"/> Criar Instância
+                                <PlusCircle className="w-3 h-3 mr-1" /> Criar Instância
                             </Button>
                         </div>
 
@@ -245,10 +261,10 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
                                                     {connectingInstance === inst.id ? (
                                                         <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center mb-4 relative overflow-hidden">
                                                             <div className="absolute inset-0 bg-white opacity-50 z-10"></div>
-                                                            <RefreshCw className="w-8 h-8 text-black animate-spin z-20"/>
+                                                            <RefreshCw className="w-8 h-8 text-black animate-spin z-20" />
                                                         </div>
                                                     ) : (
-                                                        <div 
+                                                        <div
                                                             className="w-32 h-32 bg-white rounded-lg flex items-center justify-center mb-4 cursor-pointer hover:opacity-90 transition-opacity border-4 border-white shadow-lg group relative"
                                                             onClick={() => handleScanQR(inst.id)}
                                                         >
@@ -274,28 +290,28 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
 
                                         {/* Instance Footer Actions */}
                                         <div className="p-3 bg-gray-900 border-t border-gray-800 grid grid-cols-3 gap-2">
-                                            <button 
-                                                onClick={() => handleRestartInstance(inst.id)} 
+                                            <button
+                                                onClick={() => handleRestartInstance(inst.id)}
                                                 className="flex flex-col items-center justify-center p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
                                                 title="Reiniciar"
                                             >
-                                                <RefreshCw className="w-4 h-4 mb-1"/>
+                                                <RefreshCw className="w-4 h-4 mb-1" />
                                                 <span className="text-[9px] font-bold">RESTART</span>
                                             </button>
-                                            <button 
-                                                onClick={() => inst.status === 'connected' ? confirmLogout(inst.id) : handleScanQR(inst.id)} 
+                                            <button
+                                                onClick={() => inst.status === 'connected' ? confirmLogout(inst.id) : handleScanQR(inst.id)}
                                                 className={`flex flex-col items-center justify-center p-2 rounded hover:bg-gray-800 transition-colors ${inst.status === 'connected' ? 'text-yellow-500 hover:text-yellow-400' : 'text-blue-500 hover:text-blue-400'}`}
                                                 title={inst.status === 'connected' ? 'Desconectar' : 'Conectar'}
                                             >
-                                                {inst.status === 'connected' ? <LogOut className="w-4 h-4 mb-1"/> : <Zap className="w-4 h-4 mb-1"/>}
+                                                {inst.status === 'connected' ? <LogOut className="w-4 h-4 mb-1" /> : <Zap className="w-4 h-4 mb-1" />}
                                                 <span className="text-[9px] font-bold">{inst.status === 'connected' ? 'LOGOUT' : 'CONNECT'}</span>
                                             </button>
-                                            <button 
-                                                onClick={() => confirmDelete(inst.id)} 
+                                            <button
+                                                onClick={() => confirmDelete(inst.id)}
                                                 className="flex flex-col items-center justify-center p-2 rounded hover:bg-red-900/20 text-red-500 hover:text-red-400 transition-colors"
                                                 title="Excluir Instância"
                                             >
-                                                <Trash className="w-4 h-4 mb-1"/>
+                                                <Trash className="w-4 h-4 mb-1" />
                                                 <span className="text-[9px] font-bold">DELETE</span>
                                             </button>
                                         </div>
@@ -308,10 +324,10 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
             )}
 
             <CreateInstanceModal isOpen={isCreateInstanceOpen} onClose={() => setIsCreateInstanceOpen(false)} onConfirm={handleCreateInstance} />
-            
-            <ConfirmActionModal 
-                isOpen={confirmAction.isOpen} 
-                onClose={() => setConfirmAction({...confirmAction, isOpen: false})} 
+
+            <ConfirmActionModal
+                isOpen={confirmAction.isOpen}
+                onClose={() => setConfirmAction({ ...confirmAction, isOpen: false })}
                 onConfirm={executeConfirmAction}
                 title={confirmAction.type === 'logout' ? 'Desconectar WhatsApp?' : 'Excluir Instância?'}
                 description={confirmAction.type === 'logout' ? 'O bot parará de responder imediatamente.' : 'Esta ação não pode ser desfeita. Todos os dados da instância serão perdidos.'}

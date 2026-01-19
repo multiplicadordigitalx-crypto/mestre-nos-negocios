@@ -96,6 +96,38 @@ const SystemSettingsView: React.FC = () => {
                             </div>
                         </div>
 
+
+
+                        {/* 1.1 Perfil do Negócio (Stripe & Emails) */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-brand-primary uppercase tracking-wider border-b border-gray-700 pb-2">
+                                1.1 Perfil do Negócio (Stripe & Emails)
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Input
+                                    label="Domínio Principal"
+                                    value={settings.businessDomain || ''}
+                                    onChange={e => setSettings({ ...settings, businessDomain: e.target.value })}
+                                    placeholder="Ex: mestrenosnegocios.com"
+                                />
+                                <Input
+                                    label="E-mail de Suporte (Público)"
+                                    value={settings.businessEmail || ''}
+                                    onChange={e => setSettings({ ...settings, businessEmail: e.target.value })}
+                                    placeholder="Ex: contato@mestrenosnegocios.com"
+                                />
+                                <div className="md:col-span-2">
+                                    <Input
+                                        label="Descriptor da Fatura (Cartão)"
+                                        value={settings.businessDescriptor || ''}
+                                        onChange={e => setSettings({ ...settings, businessDescriptor: e.target.value })}
+                                        placeholder="Ex: MESTRENEGOCIOS (Max 22 chars)"
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-1">Este nome aparecerá na fatura do cartão dos alunos.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* 2. Contato e Suporte */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold text-brand-primary uppercase tracking-wider border-b border-gray-700 pb-2">
@@ -174,13 +206,13 @@ const SystemSettingsView: React.FC = () => {
                             <Button onClick={handleSave} isLoading={loading}>Salvar Alterações</Button>
                         </div>
                     </div>
-                </Card>
+                </Card >
             ) : (
                 <div className="animate-fade-in">
                     <AdminProfileView />
                 </div>
             )}
-        </div>
+        </div >
     );
 };
 

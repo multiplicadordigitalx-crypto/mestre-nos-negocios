@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../../../../../components/Card';
 import Button from '../../../../../components/Button';
 import Input from '../../../../../components/Input';
-import { 
-    Link as LinkIcon, PlusCircle, Trash, CreditCard, Zap, 
+import {
+    Link as LinkIcon, PlusCircle, Trash, CreditCard, Zap,
     FileText, ShoppingBag, CheckCircle, LockClosed, Settings,
     ShieldCheck, Activity, DollarSign, Users, PieChart
 } from '../../../../../components/Icons';
@@ -26,8 +26,8 @@ const GATEWAY_FEES: Record<string, { percent: number, fixed: number }> = {
 export const CheckoutLinksTab: React.FC = () => {
     const [combos, setCombos] = useState<CreditCombo[]>([]);
     const [selectedComboId, setSelectedComboId] = useState<string | null>(null);
-    const [editingCombo, setEditingCombo] = useState<CreditCombo | null>(null);
-    
+    const [editingCombo, setEditingCombo] = useState<CreditCombo & { stripePaymentLink?: string } | null>(null); // Extended Type
+
     // Routing state for Native Checkout
     const [nativeRouting, setNativeRouting] = useState({
         active: true,
@@ -51,11 +51,14 @@ export const CheckoutLinksTab: React.FC = () => {
 
     const handleSelectCombo = (combo: CreditCombo) => {
         setSelectedComboId(combo.id);
-        setEditingCombo({ ...combo, paymentMethods: combo.paymentMethods || [] });
+        // Simulate fetching extra metadata like payment link
+        const existingLink = localStorage.getItem(`stripe_link_${combo.id}`) || '';
+        // Initialize DRAFT with EXISTING (Published) link so they match initially
+        setEditingCombo({ ...combo, paymentMethods: combo.paymentMethods || [], stripePaymentLink: existingLink });
     };
 
     const handleToggleNative = () => {
-        setNativeRouting(prev => ({...prev, active: !prev.active}));
+        setNativeRouting(prev => ({ ...prev, active: !prev.active }));
         toast.success(nativeRouting.active ? "Checkout Nativo Desativado" : "Checkout Nativo Ativado Globalmente");
     };
 
@@ -67,7 +70,7 @@ export const CheckoutLinksTab: React.FC = () => {
 
         // Custo do Gateway (Custo)
         const gatewayCost = (simulationAmount * (baseFees.percent / 100)) + baseFees.fixed;
-        
+
         // Taxa da Plataforma (Revenue)
         const platformRevenue = (simulationAmount * (platformFees.percent / 100)) + platformFees.fixed;
 
@@ -95,7 +98,7 @@ export const CheckoutLinksTab: React.FC = () => {
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                         <div>
                             <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                                <Settings className="w-6 h-6 text-green-400"/> Roteamento Inteligente (Checkout Nativo)
+                                <Settings className="w-6 h-6 text-green-400" /> Roteamento Inteligente (Checkout Nativo)
                             </h3>
                             <p className="text-gray-400 text-sm mt-1 max-w-2xl">
                                 Configure qual gateway processa cada método. As taxas base são importadas automaticamente da API do Gateway.
@@ -104,11 +107,11 @@ export const CheckoutLinksTab: React.FC = () => {
                         <label className="flex items-center gap-3 cursor-pointer bg-gray-900 p-3 rounded-xl border border-gray-600 hover:border-green-500 transition-colors shadow-lg">
                             <span className="text-sm font-bold text-white uppercase">Checkout Nativo</span>
                             <div className="relative">
-                                <input 
-                                    type="checkbox" 
-                                    className="sr-only peer" 
-                                    checked={nativeRouting.active} 
-                                    onChange={handleToggleNative} 
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={nativeRouting.active}
+                                    onChange={handleToggleNative}
                                 />
                                 <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
                             </div>
@@ -119,13 +122,13 @@ export const CheckoutLinksTab: React.FC = () => {
                         {/* ROTA PIX */}
                         <div className="bg-gray-900/80 p-5 rounded-2xl border border-gray-600 shadow-inner flex flex-col gap-2">
                             <div className="flex items-center gap-2 mb-2 text-yellow-400 font-bold uppercase text-xs tracking-wider">
-                                <Zap className="w-4 h-4"/> Rota PIX
+                                <Zap className="w-4 h-4" /> Rota PIX
                             </div>
-                            <select 
+                            <select
                                 className="w-full bg-gray-800 text-white text-sm border border-gray-600 rounded-lg p-3 outline-none focus:border-yellow-500 transition-colors cursor-pointer"
                                 value={nativeRouting.pixGateway}
                                 onChange={(e) => {
-                                    setNativeRouting({...nativeRouting, pixGateway: e.target.value});
+                                    setNativeRouting({ ...nativeRouting, pixGateway: e.target.value });
                                     toast.success(`PIX roteado para ${e.target.value}`);
                                 }}
                             >
@@ -137,13 +140,13 @@ export const CheckoutLinksTab: React.FC = () => {
                         {/* ROTA CARTÃO */}
                         <div className="bg-gray-900/80 p-5 rounded-2xl border border-gray-600 shadow-inner flex flex-col gap-2">
                             <div className="flex items-center gap-2 mb-2 text-blue-400 font-bold uppercase text-xs tracking-wider">
-                                <CreditCard className="w-4 h-4"/> Rota Cartão
+                                <CreditCard className="w-4 h-4" /> Rota Cartão
                             </div>
-                            <select 
+                            <select
                                 className="w-full bg-gray-800 text-white text-sm border border-gray-600 rounded-lg p-3 outline-none focus:border-blue-500 transition-colors cursor-pointer"
                                 value={nativeRouting.cardGateway}
                                 onChange={(e) => {
-                                    setNativeRouting({...nativeRouting, cardGateway: e.target.value});
+                                    setNativeRouting({ ...nativeRouting, cardGateway: e.target.value });
                                     toast.success(`Cartões roteados para ${e.target.value}`);
                                 }}
                             >
@@ -155,13 +158,13 @@ export const CheckoutLinksTab: React.FC = () => {
                         {/* ROTA BOLETO */}
                         <div className="bg-gray-900/80 p-5 rounded-2xl border border-gray-600 shadow-inner flex flex-col gap-2">
                             <div className="flex items-center gap-2 mb-2 text-purple-400 font-bold uppercase text-xs tracking-wider">
-                                <FileText className="w-4 h-4"/> Rota Boleto
+                                <FileText className="w-4 h-4" /> Rota Boleto
                             </div>
-                            <select 
+                            <select
                                 className="w-full bg-gray-800 text-white text-sm border border-gray-600 rounded-lg p-3 outline-none focus:border-purple-500 transition-colors cursor-pointer"
                                 value={nativeRouting.boletoGateway}
                                 onChange={(e) => {
-                                    setNativeRouting({...nativeRouting, boletoGateway: e.target.value});
+                                    setNativeRouting({ ...nativeRouting, boletoGateway: e.target.value });
                                     toast.success(`Boletos roteados para ${e.target.value}`);
                                 }}
                             >
@@ -177,26 +180,26 @@ export const CheckoutLinksTab: React.FC = () => {
                             {/* Inputs */}
                             <div className="w-full md:w-1/3 space-y-4">
                                 <h4 className="text-white font-bold flex items-center gap-2">
-                                    <Activity className="w-5 h-5 text-brand-primary"/> Configurar Taxas da Plataforma
+                                    <Activity className="w-5 h-5 text-brand-primary" /> Configurar Taxas da Plataforma
                                 </h4>
                                 <p className="text-xs text-gray-400">
                                     Defina sua margem sobre as transações (Application Fee). Isso é adicionado ao custo base do gateway.
                                 </p>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Input 
-                                        label="Sua Taxa (%)" 
-                                        type="number" 
-                                        step="0.1" 
-                                        value={platformFees.percent} 
-                                        onChange={e => setPlatformFees({...platformFees, percent: parseFloat(e.target.value) || 0})}
+                                    <Input
+                                        label="Sua Taxa (%)"
+                                        type="number"
+                                        step="0.1"
+                                        value={platformFees.percent}
+                                        onChange={e => setPlatformFees({ ...platformFees, percent: parseFloat(e.target.value) || 0 })}
                                         className="!bg-gray-900"
                                     />
-                                    <Input 
-                                        label="Taxa Fixa (R$)" 
-                                        type="number" 
-                                        step="0.10" 
-                                        value={platformFees.fixed} 
-                                        onChange={e => setPlatformFees({...platformFees, fixed: parseFloat(e.target.value) || 0})}
+                                    <Input
+                                        label="Taxa Fixa (R$)"
+                                        type="number"
+                                        step="0.10"
+                                        value={platformFees.fixed}
+                                        onChange={e => setPlatformFees({ ...platformFees, fixed: parseFloat(e.target.value) || 0 })}
                                         className="!bg-gray-900"
                                     />
                                 </div>
@@ -209,7 +212,7 @@ export const CheckoutLinksTab: React.FC = () => {
                             {/* Visual Simulator */}
                             <div className="w-full md:w-2/3 bg-gray-900 rounded-2xl border border-gray-700 p-6 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                                    <PieChart className="w-32 h-32 text-white"/>
+                                    <PieChart className="w-32 h-32 text-white" />
                                 </div>
                                 <div className="flex justify-between items-center mb-4">
                                     <h4 className="text-white font-bold text-sm uppercase tracking-wider">Simulador de Split Automático</h4>
@@ -218,15 +221,15 @@ export const CheckoutLinksTab: React.FC = () => {
 
                                 {/* Progress Bar Visualization */}
                                 <div className="w-full h-8 bg-gray-800 rounded-full flex overflow-hidden mb-4 border border-gray-600">
-                                    <div className="h-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white relative group" style={{width: `${(splitSimulation.gatewayCost / simulationAmount) * 100}%`}}>
+                                    <div className="h-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white relative group" style={{ width: `${(splitSimulation.gatewayCost / simulationAmount) * 100}%` }}>
                                         <span className="truncate px-1">Gateway</span>
                                         <div className="absolute bottom-full mb-1 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Custo: R$ {splitSimulation.gatewayCost.toFixed(2)}</div>
                                     </div>
-                                    <div className="h-full bg-brand-primary flex items-center justify-center text-[10px] font-bold text-black relative group" style={{width: `${(splitSimulation.platformRevenue / simulationAmount) * 100}%`}}>
+                                    <div className="h-full bg-brand-primary flex items-center justify-center text-[10px] font-bold text-black relative group" style={{ width: `${(splitSimulation.platformRevenue / simulationAmount) * 100}%` }}>
                                         <span className="truncate px-1">Plat.</span>
                                         <div className="absolute bottom-full mb-1 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Sua Receita: R$ {splitSimulation.platformRevenue.toFixed(2)}</div>
                                     </div>
-                                    <div className="h-full bg-purple-500 flex items-center justify-center text-[10px] font-bold text-white relative group" style={{width: `${(splitSimulation.affiliateCommission / simulationAmount) * 100}%`}}>
+                                    <div className="h-full bg-purple-500 flex items-center justify-center text-[10px] font-bold text-white relative group" style={{ width: `${(splitSimulation.affiliateCommission / simulationAmount) * 100}%` }}>
                                         <span className="truncate px-1">Afil.</span>
                                         <div className="absolute bottom-full mb-1 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Afiliado (20%): R$ {splitSimulation.affiliateCommission.toFixed(2)}</div>
                                     </div>
@@ -266,19 +269,18 @@ export const CheckoutLinksTab: React.FC = () => {
                 <Card className="lg:col-span-1 p-0 overflow-hidden bg-gray-800 border-gray-700 flex flex-col h-full shadow-lg">
                     <div className="p-5 border-b border-gray-700 bg-gray-900/80">
                         <h3 className="text-sm font-bold text-white uppercase flex items-center gap-2 tracking-wider">
-                            <ShoppingBag className="w-4 h-4 text-brand-primary"/> Produtos (Combos)
+                            <ShoppingBag className="w-4 h-4 text-brand-primary" /> Produtos (Combos)
                         </h3>
                     </div>
                     <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar max-h-[500px]">
                         {combos.map(combo => (
-                            <div 
+                            <div
                                 key={combo.id}
                                 onClick={() => handleSelectCombo(combo)}
-                                className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${
-                                    selectedComboId === combo.id 
-                                    ? 'bg-brand-primary/10 border-brand-primary shadow-[0_0_15px_rgba(250,204,21,0.1)]' 
+                                className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${selectedComboId === combo.id
+                                    ? 'bg-brand-primary/10 border-brand-primary shadow-[0_0_15px_rgba(250,204,21,0.1)]'
                                     : 'bg-gray-900/50 border-gray-700 hover:border-gray-500 hover:bg-gray-800'
-                                }`}
+                                    }`}
                             >
                                 <span className={`text-sm font-bold ${selectedComboId === combo.id ? 'text-white' : 'text-gray-300'}`}>{combo.name}</span>
                                 <span className="text-xs font-mono text-green-400 bg-green-500/10 px-2 py-1 rounded border border-green-500/20">
@@ -297,7 +299,7 @@ export const CheckoutLinksTab: React.FC = () => {
                                 <div>
                                     <div className="flex items-center gap-3 mb-1">
                                         <div className="p-2 bg-brand-primary/10 rounded-lg">
-                                            <ShoppingBag className="w-5 h-5 text-brand-primary"/>
+                                            <ShoppingBag className="w-5 h-5 text-brand-primary" />
                                         </div>
                                         <h3 className="text-2xl font-black text-white">{editingCombo.name}</h3>
                                     </div>
@@ -312,7 +314,7 @@ export const CheckoutLinksTab: React.FC = () => {
                             <div className="bg-gray-900/80 p-6 rounded-2xl border border-gray-600 mb-6 shadow-inner">
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="p-2 bg-green-500/10 rounded-lg text-green-500 border border-green-500/20">
-                                        <LinkIcon className="w-5 h-5"/>
+                                        <LinkIcon className="w-5 h-5" />
                                     </div>
                                     <div>
                                         <span className="text-white font-bold text-sm block">Link Único (Checkout Nativo)</span>
@@ -320,34 +322,76 @@ export const CheckoutLinksTab: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex gap-3">
-                                    <div className="flex-1 bg-black/40 border border-gray-600 rounded-xl p-3 flex items-center justify-between group hover:border-brand-primary/50 transition-colors">
-                                        <code className="text-xs text-blue-300 font-mono truncate mr-2">
-                                            https://pay.mestre15x.com/{editingCombo.id}
-                                        </code>
+                                    <div className="bg-black/40 border border-gray-600 rounded-xl p-3 flex items-center justify-between group hover:border-brand-primary/50 transition-colors w-full flex-1 relative">
+                                        <div className="relative w-full">
+                                            <Input
+                                                label="Link de Pagamento Stripe (Rascunho)"
+                                                placeholder="https://buy.stripe.com/..."
+                                                value={editingCombo.stripePaymentLink || ''} // Uses DRAFT value from state
+                                                onChange={(e) => {
+                                                    const newLink = e.target.value;
+                                                    setEditingCombo({ ...editingCombo, stripePaymentLink: newLink });
+                                                    // Only update DRAFT state, do NOT save to localStorage yet
+                                                }}
+                                                className="!bg-transparent !border-none !p-0 !text-blue-300 md:!text-sm !text-xs w-full focus:ring-0"
+                                            />
+                                            {/* Visual HINT if Draft differs from Published (Simulated check) */}
+                                            {editingCombo.stripePaymentLink !== (localStorage.getItem(`stripe_link_${editingCombo.id}`) || '') && (
+                                                <span className="absolute right-0 top-0 text-[10px] text-yellow-500 font-bold bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">
+                                                    Não Publicado
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <button 
-                                        className="bg-brand-primary hover:bg-yellow-400 text-black px-6 py-3 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-2"
-                                        onClick={() => {navigator.clipboard.writeText(`https://pay.mestre15x.com/${editingCombo.id}`); toast.success("Copiado!");}}
-                                    >
-                                        COPIAR
-                                    </button>
+
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-2 justify-center"
+                                            onClick={() => {
+                                                if (editingCombo.stripePaymentLink) {
+                                                    window.open(editingCombo.stripePaymentLink, '_blank');
+                                                } else {
+                                                    toast.error("Nenhum link configurado.");
+                                                }
+                                            }}
+                                        >
+                                            TESTAR
+                                        </button>
+
+                                        <button
+                                            className="bg-brand-primary hover:bg-yellow-400 text-black px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg flex items-center gap-2 justify-center"
+                                            onClick={() => {
+                                                if (editingCombo.stripePaymentLink) {
+                                                    // PUBLISH ACTION
+                                                    localStorage.setItem(`stripe_link_${editingCombo.id}`, editingCombo.stripePaymentLink);
+                                                    toast.success("Link PUBLICADO na Loja!");
+                                                    // Force re-render to clear "Unpublished" indicator
+                                                    setEditingCombo({ ...editingCombo });
+                                                } else {
+                                                    toast.error("Insira um link para publicar.");
+                                                }
+                                            }}
+                                        >
+                                            PUBLICAR
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="mt-4 flex items-center gap-2 text-[10px] text-gray-400 bg-gray-800/50 p-2 rounded-lg w-fit">
-                                    <ShieldCheck className="w-3 h-3 text-green-500"/>
-                                    <span>Protegido por SSL e Antifraude ClearSale</span>
+                                    <ShieldCheck className="w-3 h-3 text-green-500" />
+                                    <span>Define o redirecionamento do botão de compra se o Stripe estiver ativo.</span>
                                 </div>
                             </div>
-                            
+
                             <div className="mt-auto bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl flex gap-3 items-start">
                                 <div className="p-1 bg-blue-500/20 rounded-full mt-0.5">
-                                    <Activity className="w-4 h-4 text-blue-400"/>
+                                    <Activity className="w-4 h-4 text-blue-400" />
                                 </div>
                                 <div>
                                     <p className="text-blue-300 font-bold text-sm mb-1">Como funciona o Roteamento?</p>
                                     <p className="text-blue-100/70 text-xs leading-relaxed">
-                                        Quando o cliente acessa este link, o sistema verifica automaticamente a disponibilidade dos gateways. 
-                                        Se o cliente escolher PIX, a transação é direcionada para <strong>{nativeRouting.pixGateway}</strong>. 
-                                        Se escolher Cartão, vai para <strong>{nativeRouting.cardGateway}</strong>. 
+                                        Quando o cliente acessa este link, o sistema verifica automaticamente a disponibilidade dos gateways.
+                                        Se o cliente escolher PIX, a transação é direcionada para <strong>{nativeRouting.pixGateway}</strong>.
+                                        Se escolher Cartão, vai para <strong>{nativeRouting.cardGateway}</strong>.
                                         Isso maximiza a aprovação e reduz taxas.
                                     </p>
                                 </div>
@@ -356,7 +400,7 @@ export const CheckoutLinksTab: React.FC = () => {
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-gray-500">
                             <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center mb-4 border-2 border-gray-700 border-dashed">
-                                <ShoppingBag className="w-8 h-8 opacity-30"/>
+                                <ShoppingBag className="w-8 h-8 opacity-30" />
                             </div>
                             <p className="text-sm font-medium">Selecione um produto ao lado para gerenciar os links.</p>
                         </div>

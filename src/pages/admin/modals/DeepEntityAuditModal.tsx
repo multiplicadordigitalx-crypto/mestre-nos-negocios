@@ -54,7 +54,12 @@ export const DeepEntityAuditModal: React.FC<DeepEntityAuditModalProps> = ({ type
                             <div key={i} className="flex justify-between items-center p-3 bg-gray-900 border border-gray-700 rounded-lg text-sm">
                                 <div>
                                     <p className="text-white font-bold">{h.amount} Créditos</p>
-                                    <p className="text-[10px] text-gray-500">{new Date(h.date).toLocaleDateString()}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-[10px] text-gray-500">{new Date(h.date).toLocaleDateString()}</p>
+                                        {h.gatewayId && (
+                                            <span className="text-[9px] font-mono text-gray-600 bg-black/30 px-1.5 rounded">{h.gatewayId}</span>
+                                        )}
+                                    </div>
                                 </div>
                                 <span className="text-brand-primary font-bold">R$ {h.value.toLocaleString()}</span>
                             </div>

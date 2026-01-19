@@ -33,6 +33,8 @@ const MestreIAPage = () => {
   // Verificação de Admin robusta
   const isAdmin = user?.role === 'super_admin' ||
     user?.role === 'admin' ||
+    user?.role === 'influencer' || // Unblock for Partners
+    user?.role === 'coproducer' || // Unblock for Partners
     user?.email?.endsWith('@mestredosnegocios.com');
 
   const hasAccess = user?.hasMestreIA || isAdmin;

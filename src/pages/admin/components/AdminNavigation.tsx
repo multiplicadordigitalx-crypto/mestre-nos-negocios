@@ -4,13 +4,13 @@ import {
     ShieldCheck, FileText, Link as LinkIcon,
     ShoppingBag, Briefcase,
     TrendingUp, MessageSquare, DollarSign, BarChart3, Wallet, Activity,
-    Unlock, Smartphone, Settings
+    Unlock, Smartphone, Settings, CreditCard
 } from '../../../components/Icons';
 
 // Helper components needed for icons
 import { CheckCircle, Trophy } from '../../../components/Icons';
 
-export type AdminView = 'dashboard' | 'app_products' | 'requests' | 'influencers' | 'sales_team' | 'verification' | 'levels' | 'chat' | 'refunds' | 'access_recovery' | 'financial' | 'team' | 'productivity' | 'audit' | 'evolution' | 'settings' | 'commissions' | 'withdrawals';
+export type AdminView = 'dashboard' | 'app_products' | 'requests' | 'influencers' | 'sales_team' | 'verification' | 'levels' | 'chat' | 'refunds' | 'access_recovery' | 'financial' | 'team' | 'productivity' | 'audit' | 'evolution' | 'settings' | 'commissions' | 'withdrawals' | 'lucpay_center';
 
 interface AdminNavigationProps {
     currentView: AdminView;
@@ -22,7 +22,7 @@ interface AdminNavigationProps {
 
 const AdminNavigation: React.FC<AdminNavigationProps> = ({ currentView, setCurrentView, pendingCount, isSuperAdmin, canViewAudit }) => {
 
-    const NavButton = ({ view, label, icon, badge }: { view: AdminView, label: string, icon: React.ReactNode, badge?: number }) => (
+    const NavButton = ({ view, label, icon, badge }: { view: AdminView, label: string, icon: React.ReactNode, badge?: number | string }) => (
         <button
             onClick={() => setCurrentView(view)}
             className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${currentView === view ? 'bg-gray-700 text-white shadow' : 'text-gray-400 hover:text-white hover:bg-gray-800'
@@ -30,8 +30,10 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({ currentView, setCurre
         >
             {icon}
             {label}
-            {typeof badge === 'number' && badge > 0 ? (
-                <span className="ml-1 bg-brand-primary text-black text-xs px-1.5 rounded-full">{badge}</span>
+            {badge ? (
+                <span className={`ml-1 text-[10px] px-1.5 rounded-full font-bold ${typeof badge === 'number' ? 'bg-brand-primary text-black' : 'bg-indigo-500 text-white'}`}>
+                    {badge}
+                </span>
             ) : null}
         </button>
     );
@@ -50,6 +52,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({ currentView, setCurre
             <NavButton view="financial" label="Financeiro" icon={<BarChart3 className="w-4 h-4" />} />
             <NavButton view="withdrawals" label="Saques" icon={<DollarSign className="w-4 h-4 text-green-400" />} />
             <NavButton view="commissions" label="Comissões" icon={<Wallet className="w-4 h-4 text-green-400" />} />
+            <NavButton view="lucpay_center" label="LucPay (Stripe)" icon={<CreditCard className="w-4 h-4 text-indigo-400" />} badge="NOVO" />
             <NavButton view="productivity" label="Produtividade" icon={<Activity className="w-4 h-4" />} />
             <NavButton view="access_recovery" label="Acesso" icon={<Unlock className="w-4 h-4" />} />
 

@@ -1,5 +1,5 @@
 
-export type StudentPage = 'dashboard' | 'training' | 'financial' | 'products' | 'marketing' | 'integrations' | 'funnels' | 'email_marketing' | 'nexus_ads' | 'support' | 'profile' | 'coach' | 'community' | 'mestre_ia' | 'my_results' | 'create_course' | 'wallet' | 'recharge' | 'producer_dashboard' | 'health_diary' | 'diario_alimentar' | 'jurista_ia';
+export type StudentPage = 'dashboard' | 'training' | 'financial' | 'products' | 'marketing' | 'integrations' | 'funnels' | 'email_marketing' | 'nexus_ads' | 'support' | 'profile' | 'coach' | 'community' | 'mestre_ia' | 'my_results' | 'create_course' | 'wallet' | 'recharge' | 'producer_dashboard' | 'health_diary' | 'diario_alimentar' | 'jurista_ia' | 'knowledge_practice';
 
 export type UserRole = 'student' | 'admin' | 'super_admin' | 'support' | 'support_agent' | 'sales_agent' | 'sales_manager' | 'influencer' | 'finance' | 'viewer' | 'coproducer';
 
@@ -104,6 +104,19 @@ export interface OnboardingData {
 
 export interface AnamneseData extends OnboardingData { }
 
+
+export interface UserSubscription {
+    id: string;
+    toolId: string;           // ex: 'wa_evolution_api'
+    planName: string;         // ex: 'Mensal'
+    status: 'active' | 'expired' | 'cancelled' | 'grace_period';
+    startedAt: string;        // ISO Date
+    expiresAt: string;        // ISO Date
+    autoRenew: boolean;
+    lastPaymentDate: string;
+    cost: number;
+}
+
 export interface User {
     uid: string;
     email: string | null;
@@ -124,6 +137,7 @@ export interface User {
     onboarding?: OnboardingData;
     anamnese?: AnamneseData;
     cpf?: string;
+    activeSubscriptions?: UserSubscription[];
 }
 
 export type CourseCategory = 'standard' | 'personal_master' | 'therapy_master' | 'slimming_master';
@@ -436,6 +450,11 @@ export interface SystemSettings {
     systemEmail?: string;
     whatsapp?: string;
 
+    // Business Profile (Stripe & Emails)
+    businessDomain?: string;
+    businessEmail?: string;
+    businessDescriptor?: string;
+
     // Control
     maintenanceMode?: boolean;
     allowSignup?: boolean;
@@ -457,6 +476,7 @@ export interface ToolCost {
     monthlyProvision?: number;
     dilutedCommissionPercent?: number;
     platformSharePercent?: number; // Net Profit Share for Platform
+    billingType?: 'usage' | 'monthly';
 }
 
 export interface WhiteLabelConfig {
@@ -506,7 +526,7 @@ export interface InstanceSlot {
 export interface PaymentMethod {
     id: string;
     label: string;
-    url: string;
+    url?: string;
     type: 'pix' | 'credit_card' | 'boleto' | 'generic';
     active: boolean;
 }
@@ -1338,6 +1358,7 @@ export interface WalletTransaction {
     toolId?: string;
     pocketUsed?: 'specialized' | 'global';
     balanceSnapshot?: number;
+    gatewayId?: string;
 }
 
 export interface ProducerWallet {
@@ -1387,7 +1408,7 @@ export interface FinancialAuditTicket {
 
 // --- NEXUS CORE TYPES ---
 export type TaskPriority = 'low' | 'normal' | 'high' | 'critical';
-export type TaskType = 'campaign_gen' | 'content_creation' | 'sales_recovery' | 'data_sync' | 'analysis' | 'repair';
+export type TaskType = 'campaign_gen' | 'content_creation' | 'sales_recovery' | 'data_sync' | 'analysis' | 'repair' | 'dark_post_gen';
 
 export interface NexusTask {
     id: string;
