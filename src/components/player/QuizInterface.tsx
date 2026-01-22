@@ -12,9 +12,9 @@ interface QuizInterfaceProps {
     };
     onComplete: (score: number) => void;
     onScoreUpdate?: (currentScore: number) => void;
-    questions?: Question[];
     courseId?: string;
     moduleId?: string;
+    isLightMode?: boolean;
 }
 
 export interface Question {
@@ -65,7 +65,7 @@ const DEFAULT_QUESTIONS: Question[] = [
     }
 ];
 
-export const QuizInterface: React.FC<QuizInterfaceProps> = ({ theme, onComplete, onScoreUpdate, questions }) => {
+export const QuizInterface: React.FC<QuizInterfaceProps> = ({ theme, onComplete, onScoreUpdate, questions, isLightMode = false }) => {
     const activeQuestions = questions && questions.length > 0 ? questions : DEFAULT_QUESTIONS;
 
     const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -107,28 +107,34 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({ theme, onComplete,
         }
     };
 
+    // Theme Constants
+    const themeTextMain = isLightMode ? 'text-gray-900' : 'text-white';
+    const themeTextSub = isLightMode ? 'text-gray-600' : 'text-gray-400';
+    const themeBgCard = isLightMode ? 'bg-white border-gray-200' : 'bg-gray-800/30 border-gray-700';
+    const themeBgResult = isLightMode ? 'bg-white border-gray-200' : 'bg-gray-800/50 border-gray-700';
+
     if (showResult) {
         return (
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-fade-in relative z-10">
+            <div className={`flex flex-col items-center justify-center h-full p-8 text-center animate-fade-in relative z-10 ${themeTextMain}`}>
                 <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="w-32 h-32 rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(0,0,0,0.5)] bg-gradient-to-br from-gray-800 to-black border-4"
+                    className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(0,0,0,0.5)] border-4 ${isLightMode ? 'bg-gray-100' : 'bg-gradient-to-br from-gray-800 to-black'}`}
                     style={{ borderColor: theme.primary }}
                 >
                     <Trophy className="w-16 h-16" style={{ color: theme.primary }} />
                 </motion.div>
-                <h3 className="text-3xl font-black text-white uppercase mb-2">Quiz Finalizado!</h3>
-                <p className="text-gray-400 mb-8">Você dominou este módulo.</p>
+                <h3 className={`text-3xl font-black uppercase mb-2 ${themeTextMain}`}>Quiz Finalizado!</h3>
+                <p className={`${themeTextSub} mb-8`}>Você dominou este módulo.</p>
 
                 <div className="grid grid-cols-2 gap-4 w-full max-w-md mb-8">
-                    <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
-                        <p className="text-xs text-gray-500 uppercase font-bold">XP Total</p>
-                        <p className="text-2xl font-black text-white">+{score} XP</p>
+                    <div className={`p-4 rounded-xl border ${themeBgResult}`}>
+                        <p className={`text-xs uppercase font-bold ${themeTextSub}`}>XP Total</p>
+                        <p className={`text-2xl font-black ${themeTextMain}`}>+{score} XP</p>
                     </div>
-                    <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
-                        <p className="text-xs text-gray-500 uppercase font-bold">Acertos</p>
-                        <p className="text-2xl font-black text-white">{Math.round((score / (activeQuestions.length * 100)) * 100)}%</p>
+                    <div className={`p-4 rounded-xl border ${themeBgResult}`}>
+                        <p className={`text-xs uppercase font-bold ${themeTextSub}`}>Acertos</p>
+                        <p className={`text-2xl font-black ${themeTextMain}`}>{Math.round((score / (activeQuestions.length * 100)) * 100)}%</p>
                     </div>
                 </div>
 
@@ -144,7 +150,7 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({ theme, onComplete,
             {/* Top Bar Removed as per user request to maximize screen space */}
 
             {/* Progress Bar */}
-            <div className="h-1 w-full bg-gray-800">
+            <div className={`h-1 w-full ${isLightMode ? 'bg-gray-200' : 'bg-gray-800'}`}>
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
@@ -166,10 +172,10 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({ theme, onComplete,
                         >
                             {/* Question Card */}
                             <div className="mb-8">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4 block">
+                                <span className={`text-[10px] font-bold uppercase tracking-widest mb-4 block ${themeTextSub}`}>
                                     Questão {currentQuestionIdx + 1} de {activeQuestions.length}
                                 </span>
-                                <h2 className="text-xl md:text-3xl font-bold text-white leading-tight">
+                                <h2 className={`text-xl md:text-3xl font-bold leading-tight ${themeTextMain}`}>
                                     {question.text}
                                 </h2>
                             </div>
@@ -200,7 +206,9 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({ theme, onComplete,
                                             key={idx}
                                             onClick={() => handleSelectOption(idx)}
                                             disabled={isAnswered}
-                                            className={`group relative p-5 rounded-2xl text-left border-2 transition-all duration-300 ${borderColor} ${bgColor} ${!isAnswered && 'hover:bg-gray-800 hover:border-gray-600'}`}
+                                            className={`group relative p-5 rounded-2xl text-left border-2 transition-all duration-300 
+                                                ${borderColor} ${bgColor} 
+                                                ${!isAnswered && (isLightMode ? 'hover:bg-gray-50 hover:border-gray-300' : 'hover:bg-gray-800 hover:border-gray-600')}`}
                                             style={!isAnswered && isSelected ? { borderColor: theme.primary } : {}}
                                         >
                                             <div className="flex items-start gap-4">
@@ -211,7 +219,7 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({ theme, onComplete,
                                                     {showStatus && isCorrect && <CheckCircle className="w-4 h-4" />}
                                                     {showStatus && isSelected && !isCorrect && <AlertCircle className="w-4 h-4" />}
                                                 </div>
-                                                <p className={`text-base font-medium ${isSelected || isCorrect ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                                                <p className={`text-base font-medium ${isSelected || (isAnswered && isCorrect) ? (isLightMode ? 'text-gray-900' : 'text-white') : (isLightMode ? 'text-gray-600 group-hover:text-gray-900' : 'text-gray-300 group-hover:text-white')}`}>
                                                     {opt}
                                                 </p>
                                             </div>
@@ -225,7 +233,7 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({ theme, onComplete,
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="mt-8 p-6 rounded-2xl border bg-gray-900"
+                                    className={`mt-8 p-6 rounded-2xl border ${isLightMode ? 'bg-gray-50' : 'bg-gray-900'}`}
                                     style={{ borderColor: selectedOption === question.correctIndex ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' }}
                                 >
                                     <div className="flex items-start gap-4">
@@ -236,7 +244,7 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({ theme, onComplete,
                                             <h4 className={`text-lg font-bold mb-1 ${selectedOption === question.correctIndex ? 'text-green-500' : 'text-red-500'}`}>
                                                 {selectedOption === question.correctIndex ? 'Correto!' : 'Incorreto'}
                                             </h4>
-                                            <p className="text-gray-300 leading-relaxed mb-6">
+                                            <p className={`${isLightMode ? 'text-gray-600' : 'text-gray-300'} leading-relaxed mb-6`}>
                                                 {question.explanation}
                                             </p>
                                             <Button

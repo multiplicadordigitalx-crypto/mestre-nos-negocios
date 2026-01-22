@@ -8,12 +8,19 @@ import {
 } from '../../Icons';
 import Button from '../../Button';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../../hooks/useAuth';
+import { consumeCredits } from '../../../services/mockFirebase';
+import { InsufficientFundsAlert } from '../language/InsufficientFundsAlert';
+
+import { StudentPage } from '../../../types';
 
 interface LegalSageAgentProps {
     onBack: () => void;
+    navigateTo?: (page: StudentPage) => void;
 }
 
-export const LegalSageAgent: React.FC<LegalSageAgentProps> = ({ onBack }) => {
+export const LegalSageAgent: React.FC<LegalSageAgentProps> = ({ onBack, navigateTo }) => {
+    const { user, refreshUser } = useAuth();
     // Steps: 0=Config, 1=Processing, 2=Summary (Wait for Exec), 3=Executing, 4=Result
     const [step, setStep] = useState(0);
     const [specialty, setSpecialty] = useState<string>('');
@@ -29,8 +36,8 @@ export const LegalSageAgent: React.FC<LegalSageAgentProps> = ({ onBack }) => {
     const EXECUTION_COST = 45;
 
     // Modals
-    const [showProcessConfirm, setShowProcessConfirm] = useState(false);
-    const [showExecutionConfirm, setShowExecutionConfirm] = useState(false);
+    const [showInsufficientModal, setShowInsufficientModal] = useState(false);
+    const [requiredCredits, setRequiredCredits] = useState(0);
 
     const [generatedProcess, setGeneratedProcess] = useState<string | null>(null);
 
@@ -168,30 +175,53 @@ export const LegalSageAgent: React.FC<LegalSageAgentProps> = ({ onBack }) => {
             toast.error("Selecione uma especialidade e forneça o caso (texto, arquivo ou link).");
             return;
         }
-        setShowProcessConfirm(true);
+
+        if (user && (user.creditBalance || 0) < processingCost) {
+            setRequiredCredits(processingCost);
+            setShowInsufficientModal(true);
+            return;
+        }
+
+        confirmProcessing();
     };
 
-    const confirmProcessing = () => {
-        setShowProcessConfirm(false);
+    const confirmProcessing = async () => {
+        if (!user) return;
+
         setStep(1); // Processing State
 
-        setTimeout(() => {
-            setStep(2); // Ready/Summary State
-            toast.success("Análise inicial concluída!");
-        }, 3000);
+        const result = await consumeCredits(user.uid, 'legalsage_proc', processingCost, 'LegalSage: Processamento de Documentos');
+        if (result.success) {
+            refreshUser?.();
+            setTimeout(() => {
+                setStep(2); // Ready/Summary State
+                toast.success("Análise inicial concluída!");
+            }, 3000);
+        } else {
+            setStep(0);
+            toast.error(result.message || "Erro ao processar.");
+        }
     };
 
     // 2. Request Execution (Generation)
     const handleRequestExecution = () => {
-        setShowExecutionConfirm(true);
+        if (user && (user.creditBalance || 0) < EXECUTION_COST) {
+            setRequiredCredits(EXECUTION_COST);
+            setShowInsufficientModal(true);
+            return;
+        }
+        confirmExecution();
     };
 
-    const confirmExecution = () => {
-        setShowExecutionConfirm(false);
+    const confirmExecution = async () => {
+        if (!user) return;
         setStep(3); // Generating State
 
-        setTimeout(() => {
-            setGeneratedProcess(`
+        const result = await consumeCredits(user.uid, 'legalsage_exec', EXECUTION_COST, 'LegalSage: Geração de Documento');
+        if (result.success) {
+            refreshUser?.();
+            setTimeout(() => {
+                setGeneratedProcess(`
 EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA ___ VARA DO TRABALHO DE SÃO PAULO - SP
 
 [NOME DO RECLAMANTE], qualificado nos autos... vem respeitosamente à presença de Vossa Excelência...
@@ -208,27 +238,31 @@ b) O pagamento das verbas rescisórias...
 
 [IA NOTE: Analisei 43 casos similares no TRT-2. A tese de 'Perdão Tácito' tem 78% de chance de êxito neste contexto.]
             `);
-            setStep(4); // Finished State
-            toast.success("Processo gerado com sucesso!");
-        }, 4000);
+                setStep(4); // Finished State
+                toast.success("Processo gerado com sucesso!");
+            }, 4000);
+        }
     };
 
     return (
         <div className="bg-gray-900 border border-gray-800 rounded-[2.5rem] overflow-hidden flex flex-col relative h-auto">
 
             {/* Header */}
-            <div className="bg-gray-950/80 p-6 border-b border-gray-800 flex items-center justify-center relative backdrop-blur-md sticky top-0 z-20">
-                <div className="absolute left-6">
+            <div className="bg-gray-950/80 p-6 border-b border-gray-800 flex items-center justify-between relative backdrop-blur-md sticky top-0 z-20">
+                <div className="flex items-center gap-4">
                     <Button onClick={onBack} className="!p-2 bg-gray-800 hover:bg-gray-700 text-white border border-gray-700 rounded-full transition-colors">
                         <ChevronLeft className="w-5 h-5" />
                     </Button>
                 </div>
-                <div className="text-center">
+
+                <div className="text-center absolute left-1/2 -translate-x-1/2">
                     <h2 className="text-3xl font-black text-white flex items-center justify-center gap-2 tracking-tight">
                         🦉 O Sábio
                     </h2>
                     <p className="text-sm text-gray-400 font-medium tracking-wide bg-gradient-to-r from-gray-400 to-gray-600 bg-clip-text text-transparent">Agente Jurídico</p>
                 </div>
+
+                <div className="w-24"></div> {/* Spacer for centering */}
             </div>
 
             {/* Body */}
@@ -352,58 +386,7 @@ b) O pagamento das verbas rescisórias...
                         </motion.div>
                     )}
 
-                    {/* CONFIRMATION MODALS */}
-                    {showProcessConfirm && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                            <div className="bg-gray-900 border border-gray-700 p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-2xl">
-                                <div className="flex items-center gap-3 text-yellow-500 mb-2">
-                                    <AlertCircle className="w-6 h-6" />
-                                    <h3 className="text-lg font-bold text-white">Confirmação de Custo</h3>
-                                </div>
-                                <p className="text-sm text-gray-300">
-                                    Esta ação iniciará a leitura e estruturação dos dados. O custo será debitado da sua carteira.
-                                </p>
-                                <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="text-gray-400">Processamento (IA):</span>
-                                        <span className="text-white font-mono">{processingCost > 0 ? processingCost : '0'} Créditos</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs text-gray-500 mt-2 border-t border-gray-700 pt-2">
-                                        <span>Saldo Atual:</span>
-                                        <span className="text-green-400">1.250 Créditos</span>
-                                    </div>
-                                </div>
-                                <div className="flex gap-3">
-                                    <Button onClick={() => setShowProcessConfirm(false)} className="flex-1 !bg-gray-800 hover:!bg-gray-700">Cancelar</Button>
-                                    <Button onClick={confirmProcessing} className="flex-1 !bg-green-600 hover:!bg-green-500">Confirmar</Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {showExecutionConfirm && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                            <div className="bg-gray-900 border border-gray-700 p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-2xl">
-                                <div className="flex items-center gap-3 text-blue-500 mb-2">
-                                    <Zap className="w-6 h-6" />
-                                    <h3 className="text-lg font-bold text-white">Gerar Documento Final</h3>
-                                </div>
-                                <p className="text-sm text-gray-300">
-                                    A análise foi concluída. Confirmar a geração completa da peça jurídica baseada na tese estruturada?
-                                </p>
-                                <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="text-gray-400">Execução (IA):</span>
-                                        <span className="text-white font-mono">{EXECUTION_COST} Créditos</span>
-                                    </div>
-                                </div>
-                                <div className="flex gap-3">
-                                    <Button onClick={() => setShowExecutionConfirm(false)} className="flex-1 !bg-gray-800 hover:!bg-gray-700">Cancelar</Button>
-                                    <Button onClick={confirmExecution} className="flex-1 !bg-blue-600 hover:!bg-blue-500">Gerar Agora</Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    {/* MODALS REMOVED IN FAVOR OF InsufficientFundsAlert */}
 
 
                     {/* STEP 1: PROCESSING LOADING */}
@@ -516,6 +499,17 @@ b) O pagamento das verbas rescisórias...
                     )}
                 </AnimatePresence>
             </div>
+            {/* Global Modals */}
+            <InsufficientFundsAlert
+                isOpen={showInsufficientModal}
+                onClose={() => setShowInsufficientModal(false)}
+                onRecharge={() => {
+                    setShowInsufficientModal(false);
+                    if (navigateTo) navigateTo('recharge');
+                    else toast.error("Navegação indisponível");
+                }}
+                title="Saldo Insuficiente" // Default props but kept for clarity if needed
+            />
         </div>
     );
 };

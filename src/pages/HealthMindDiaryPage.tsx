@@ -7,6 +7,7 @@ import {
     Camera, TrendingUp, Calendar, ArrowRight,
     Sparkles, Activity
 } from '../components/Icons';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
 import Button from '../components/Button';
 import { MoodTrackerCard } from '../components/diary/MoodTrackerCard';
 import { FoodLogCard } from '../components/diary/FoodLogCard';
@@ -18,24 +19,37 @@ import { IntellectLogCard } from '../components/diary/IntellectLogCard';
 import { SpiritualityLogCard } from '../components/diary/SpiritualityLogCard';
 import { AstrologyCard } from '../components/diary/AstrologyCard';
 import { SleepTrackerCard } from '../components/diary/SleepTrackerCard';
+import { DynamicHealthFlashcards } from '../components/diary/DynamicHealthFlashcards';
+import { DynamicHealthQuiz } from '../components/diary/DynamicHealthQuiz';
 import { useCreditGuard } from '../hooks/useCreditGuard';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
+import { InsufficientFundsAlert } from '../components/knowledge/language/InsufficientFundsAlert';
 
-const HealthMindDiaryPage: React.FC = () => {
+
+import { StudentPage } from '../types';
+
+interface HealthMindDiaryPageProps {
+    navigateTo?: (page: StudentPage) => void;
+}
+
+const HealthMindDiaryPage: React.FC<HealthMindDiaryPageProps> = ({ navigateTo }) => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'mind' | 'body' | 'insights'>('body');
-    const [bodySubTab, setBodySubTab] = useState<'food' | 'metrics' | 'biolab' | 'exercise'>('food');
-    const [mindSubTab, setMindSubTab] = useState<'feelings' | 'therapy' | 'intellect' | 'spirit' | 'astro' | 'sleep'>('feelings');
+    const [bodySubTab, setBodySubTab] = useState<'food' | 'metrics' | 'biolab' | 'exercise' | 'study' | 'quiz'>('food');
+    const [mindSubTab, setMindSubTab] = useState<'feelings' | 'therapy' | 'intellect' | 'spirit' | 'astro' | 'sleep' | 'study' | 'quiz'>('feelings');
 
-    // Niche Detection Logic (Mocked or derived)
-    // In production, this would come from schoolConfig passed via props or context
-    const isTherapyNiche = false; // Toggle for testing/logic demo
-    const hasPhysicalKit = true; // Simulating producer config
+    // Niche Detection Logic (Dynamic)
+    // In production, this would come from schoolConfig.
+    // We'll use 'diet', 'therapy', or 'fitness' based on mock course data.
+    const courseNiche: 'diet' | 'therapy' | 'fitness' = 'diet';
+    const isTherapyNiche = courseNiche === 'therapy';
+    const hasPhysicalKit = courseNiche === 'fitness';
 
     // Credit Guard Integration
     const { checkAndConsume, isProcessing } = useCreditGuard();
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+    const [showInsufficientModal, setShowInsufficientModal] = useState(false);
 
     const handleGenerateReport = async () => {
         // HYBRID CREDIT LOGIC: 5 Reports/Day (Cost 10 each, Limit 50)
@@ -47,7 +61,8 @@ const HealthMindDiaryPage: React.FC = () => {
         const proceed = await checkAndConsume('health_evolution_report', 'Relatório de Evolução IA', {
             cost: 10,
             dailyLimit: 50, // Global Health Suite Limit
-            contextId: 'health_suite' // Shared Bucket!
+            contextId: 'health_suite', // Shared Bucket!
+            onInsufficientFunds: () => setShowInsufficientModal(true)
         });
 
         if (proceed) {
@@ -85,11 +100,7 @@ const HealthMindDiaryPage: React.FC = () => {
                                 </span>
                             </div>
                         )}
-                        <div className="bg-gray-800/80 px-4 py-1.5 rounded-full border border-gray-700 flex items-center gap-2 text-xs font-bold text-gray-300">
-                            <span>💳 {user?.creditBalance || 0}</span>
-                            <span className="text-gray-600">|</span>
-                            <button onClick={() => window.location.href = '/painel/credits'} className="text-brand-primary hover:underline uppercase text-[10px]">Recarregar</button>
-                        </div>
+                        <CreditBalanceWidget onRecharge={() => navigateTo ? navigateTo('recharge') : null} />
                     </div>
 
                     <div className="flex bg-gray-800/50 p-1.5 rounded-2xl border border-gray-700/50 shadow-inner">
@@ -217,7 +228,15 @@ const HealthMindDiaryPage: React.FC = () => {
                                     <button
                                         onClick={() => setBodySubTab('exercise')}
                                         className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${bodySubTab === 'exercise' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'bg-gray-800 text-gray-500 border border-gray-700 hover:text-white'}`}
-                                    >Exercícios Físicos</button>
+                                    >{courseNiche === 'diet' ? 'Atividade' : 'Exercícios'}</button>
+                                    <button
+                                        onClick={() => setBodySubTab('study')}
+                                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${bodySubTab === 'study' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-800 text-gray-500 border border-gray-700 hover:text-white'}`}
+                                    >Estudo Prático</button>
+                                    <button
+                                        onClick={() => setBodySubTab('quiz')}
+                                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${bodySubTab === 'quiz' ? 'bg-brand-primary text-black shadow-lg shadow-brand-primary/20' : 'bg-gray-800 text-gray-500 border border-gray-700 hover:text-white'}`}
+                                    >Desafio IA</button>
                                 </div>
                             )}
 
@@ -232,6 +251,8 @@ const HealthMindDiaryPage: React.FC = () => {
                                     {bodySubTab === 'metrics' && <BodyMetricsCard hasPhysicalKit={hasPhysicalKit} />}
                                     {bodySubTab === 'biolab' && <BioLabCard hasPhysicalKit={hasPhysicalKit} />}
                                     {bodySubTab === 'exercise' && <ExerciseLogCard />}
+                                    {bodySubTab === 'study' && <DynamicHealthFlashcards niche={courseNiche} context="body" onBack={() => setBodySubTab('food')} navigateTo={navigateTo} />}
+                                    {bodySubTab === 'quiz' && <DynamicHealthQuiz niche={courseNiche} onBack={() => setBodySubTab('food')} navigateTo={navigateTo} />}
                                 </>
                             )}
                         </div>
@@ -263,6 +284,14 @@ const HealthMindDiaryPage: React.FC = () => {
                                     onClick={() => setMindSubTab('sleep')}
                                     className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mindSubTab === 'sleep' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-gray-800 text-gray-500 border border-gray-700 hover:text-white'}`}
                                 >Sono</button>
+                                <button
+                                    onClick={() => setMindSubTab('study')}
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mindSubTab === 'study' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-800 text-gray-500 border border-gray-700 hover:text-white'}`}
+                                >Memorização</button>
+                                <button
+                                    onClick={() => setMindSubTab('quiz')}
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mindSubTab === 'quiz' ? 'bg-brand-primary text-black shadow-lg shadow-brand-primary/20' : 'bg-gray-800 text-gray-500 border border-gray-700 hover:text-white'}`}
+                                >Desafio IA</button>
                             </div>
 
                             <AnimatePresence mode="wait">
@@ -273,6 +302,8 @@ const HealthMindDiaryPage: React.FC = () => {
                                     {mindSubTab === 'spirit' && <SpiritualityLogCard />}
                                     {mindSubTab === 'astro' && <AstrologyCard />}
                                     {mindSubTab === 'sleep' && <SleepTrackerCard />}
+                                    {mindSubTab === 'study' && <DynamicHealthFlashcards niche={courseNiche} context="mind" onBack={() => setMindSubTab('feelings')} navigateTo={navigateTo} />}
+                                    {mindSubTab === 'quiz' && <DynamicHealthQuiz niche={courseNiche} onBack={() => setMindSubTab('feelings')} navigateTo={navigateTo} />}
                                 </div>
                             </AnimatePresence>
                         </div>
@@ -295,6 +326,17 @@ const HealthMindDiaryPage: React.FC = () => {
                     )}
                 </motion.div>
             </AnimatePresence>
+            {/* Premium Credit Modals */}
+            <InsufficientFundsAlert
+                isOpen={showInsufficientModal}
+                onClose={() => setShowInsufficientModal(false)}
+                onRecharge={() => {
+                    setShowInsufficientModal(false);
+                    if (navigateTo) navigateTo('recharge');
+                    else toast.error("Navegação indisponível");
+                }}
+                requiredCredits={10}
+            />
         </div>
     );
 };

@@ -94,7 +94,33 @@ export const PainelDoAluno: React.FC<PainelDoAlunoProps> = ({ activePage, naviga
     }
 
     if (isTestPlayerOpen) {
-        return <StudentPlayerView onBack={() => setIsTestPlayerOpen(false)} />;
+        return <StudentPlayerView
+            onBack={() => setIsTestPlayerOpen(false)}
+            lesson={{
+                id: 'demo-lesson',
+                title: 'Aula Exemplo: Negócios Exponenciais',
+                moduleId: 'demo-module',
+                duration: 600,
+                videoUrl: 'https://actions.google.com/sounds/v1/science_fiction/hum_in_a_spaceship.ogg',
+                completed: false,
+                locked: false
+            } as any}
+            course={{
+                id: 'demo-course',
+                title: 'Mestre dos Negócios 2.0',
+                category: 'business_master', // or 'tech', 'marketing'
+                description: 'Curso de demonstração',
+                totalLessons: 10,
+                completedLessons: 0,
+                modules: [],
+                aiConfig: { monthlyCreditAllowance: 50 },
+                progress: 0
+            } as any}
+            onNavigate={(page) => {
+                setIsTestPlayerOpen(false);
+                navigateTo(page as StudentPage);
+            }}
+        />;
     }
 
     // Render Logic - Mapping Pages to Components
@@ -132,10 +158,11 @@ export const PainelDoAluno: React.FC<PainelDoAlunoProps> = ({ activePage, naviga
             case 'profile': return <ProfilePage onOpenRefund={() => setShowRefundModal(true)} onOpenRenewal={handleOpenRenewal} />;
             case 'create_course': return <StudentCourseCreatorView navigateTo={navigateTo} />;
             case 'wallet': return <WalletSection navigateTo={navigateTo} />;
-            case 'recharge': return <RechargeSection />;
-            case 'health_diary': return <HealthMindDiaryPage />;
-            case 'diario_alimentar': return <HealthMindDiaryPage />;
-            case 'knowledge_practice': return <KnowledgePracticePage />;
+            case 'recharge': return <RechargeSection navigateTo={navigateTo} />;
+            case 'health_diary': return <HealthMindDiaryPage navigateTo={navigateTo} />;
+            case 'diario_alimentar': return <HealthMindDiaryPage navigateTo={navigateTo} />;
+            case 'knowledge_practice': return <KnowledgePracticePage navigateTo={navigateTo} />;
+            case 'nexus_poliglota': return <KnowledgePracticePage initialLanguageMode={true} navigateTo={navigateTo} />;
             default: return <InicioSection navigateTo={navigateTo} />;
         }
     };
@@ -212,7 +239,16 @@ export const PainelDoAluno: React.FC<PainelDoAlunoProps> = ({ activePage, naviga
                         title="Teste: Sabedoria & Prática"
                     >
                         <span className="text-xl">🦉</span>
-                        <span className="hidden lg:block">Nova Area: Jurídico/Humanas</span>
+                        <span className="hidden lg:block">Nova Area: Mentor Jurídico</span>
+                    </button>
+
+                    <button
+                        onClick={() => navigateTo('nexus_poliglota')}
+                        className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-black uppercase text-[10px] px-4 py-3 rounded-full shadow-2xl shadow-cyan-500/40 hover:scale-110 active:scale-95 transition-all border-2 border-white/20"
+                        title="Teste: Nexus Poliglota"
+                    >
+                        <span className="text-xl">🌍</span>
+                        <span className="hidden lg:block">Nexus Poliglota</span>
                     </button>
 
                     <button

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
 import Card from '../../../components/Card';
@@ -28,20 +29,21 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
     const [customObjectiveInput, setCustomObjectiveInput] = useState('');
     const [generatedPageData, setGeneratedPageData] = useState<any>(null);
     const [showLeadMode, setShowLeadMode] = useState(false);
-    
+
     // Search State
-    const [productSearch, setProductSearch] = useState('');
-    
+    const [searchParams] = useSearchParams();
+    const [productSearch, setProductSearch] = useState(searchParams.get('product') || '');
+
     // Hosting State
     const [subdomainName, setSubdomainName] = useState('');
     const [autoConfigSEO, setAutoConfigSEO] = useState(true);
     const [selectedHostingProvider, setSelectedHostingProvider] = useState<'free' | 'cloudflare' | 'cpanel'>('free');
-    
+
     // Configs
     const [selectedFramework, setSelectedFramework] = useState<string>('AIDA');
     const [selectedPalette, setSelectedPalette] = useState<string>('Energia (Vermelho/Laranja)');
     const [loadingLog, setLoadingLog] = useState<string[]>([]);
-    
+
     // Products
     const [products, setProducts] = useState<AppProduct[]>([]);
     const [builderProduct, setBuilderProduct] = useState<AppProduct | null>(null);
@@ -54,14 +56,14 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
         getAppProducts().then(setProducts);
     }, []);
 
-    const filteredProductsForBuilder = products.filter(p => 
+    const filteredProductsForBuilder = products.filter(p =>
         p.name.toLowerCase().includes(productSearch.toLowerCase())
     );
 
     const triggerGenerate = () => {
         const objective = selectedObjective === 'Outros Objetivos' ? customObjectiveInput : selectedObjective;
         if (!objective) return toast.error("Defina um objetivo!");
-        
+
         setPendingAction(() => executeGenerate);
         setIsCreditGateOpen(true);
     };
@@ -82,7 +84,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
     const executeGenerate = () => {
         const objective = selectedObjective === 'Outros Objetivos' ? customObjectiveInput : selectedObjective;
         setBuilderStep('generating');
-        setLoadingLog([]); 
+        setLoadingLog([]);
         const logs = [
             `> Acessando Otimizador IA...`,
             `> Analisando 142 páginas anteriores (Taxa média: 14%)...`,
@@ -106,7 +108,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
 
     const finishGeneration = (objective: string) => {
         const paletteName = selectedPalette ? selectedPalette.split(' ')[0] : 'Padrão';
-        
+
         setGeneratedPageData({
             title: "Página Gerada por IA: " + objective,
             structure: `Framework: ${selectedFramework} | Design: ${paletteName}`,
@@ -120,7 +122,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
     };
 
     const handlePublishPage = () => {
-        if(!subdomainName) return toast.error("Defina um subdomínio.");
+        if (!subdomainName) return toast.error("Defina um subdomínio.");
         const fullUrl = selectedHostingProvider === 'free' ? `${subdomainName}.mestre.com` : `${subdomainName}.seudominio.com`;
         const newPage: PageItem = {
             name: generatedPageData.title.replace('Página Gerada por IA: ', ''),
@@ -157,7 +159,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
     };
 
     const handleDeletePage = () => {
-        if(confirm("Tem certeza? O trabalho da IA será perdido.")) {
+        if (confirm("Tem certeza? O trabalho da IA será perdido.")) {
             setBuilderStep('input');
             setSelectedObjective('');
             setGeneratedPageData(null);
@@ -169,7 +171,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
             <Card className="p-8 bg-gray-800 border border-purple-500/30 text-center relative overflow-hidden min-h-[500px] flex flex-col justify-center">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
-                
+
                 {builderStep === 'input' && (
                     <div className="animate-fade-in w-full max-w-2xl mx-auto text-left">
                         <div className="w-20 h-20 bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6 border border-purple-500/50">
@@ -179,7 +181,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                         <p className="text-gray-400 mb-8 text-center">
                             Selecione o objetivo, estrutura e estilo. A IA criará uma página otimizada.
                         </p>
-                        
+
                         <div className="space-y-6">
                             {/* Product Selection - Searchable Interface */}
                             <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
@@ -187,7 +189,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                                     <span className="bg-purple-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
                                     Selecione o Produto
                                 </h4>
-                                
+
                                 {!builderProduct ? (
                                     <div className="space-y-3">
                                         <div className="relative">
@@ -207,20 +209,20 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                                                 <p className="text-gray-500 text-xs italic text-center py-4">Nenhum produto encontrado para sua busca.</p>
                                             ) : (
                                                 filteredProductsForBuilder.map(p => (
-                                                    <div 
+                                                    <div
                                                         key={p.id}
                                                         onClick={() => setBuilderProduct(p)}
                                                         className="bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-lg p-3 cursor-pointer flex items-center gap-3 transition-colors group"
                                                     >
                                                         <div className="w-8 h-8 rounded bg-gray-900 flex items-center justify-center text-gray-500 group-hover:text-brand-primary transition-colors">
-                                                            <Box className="w-4 h-4"/>
+                                                            <Box className="w-4 h-4" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <p className="text-white text-sm font-bold truncate">{p.name}</p>
                                                             <p className="text-gray-500 text-[10px] uppercase font-bold tracking-tighter">{p.platform}</p>
                                                         </div>
                                                         <div className="text-brand-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <CheckCircle className="w-4 h-4"/>
+                                                            <CheckCircle className="w-4 h-4" />
                                                         </div>
                                                     </div>
                                                 ))
@@ -231,7 +233,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                                     <div className="flex items-center justify-between bg-purple-900/20 border border-purple-500/50 rounded-lg p-3">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 bg-purple-500/20 rounded text-purple-400">
-                                                <Box className="w-5 h-5"/>
+                                                <Box className="w-5 h-5" />
                                             </div>
                                             <div>
                                                 <p className="text-white font-bold text-sm">{builderProduct.name}</p>
@@ -252,21 +254,21 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                                     </label>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {['Página de Vendas (Perpétuo)', 'Página de Captura (Lançamento)', 'Webinar / Aula Gratuita', 'Aplicação / Mentoria', 'Outros Objetivos'].map(type => (
-                                            <button 
-                                                key={type} 
+                                            <button
+                                                key={type}
                                                 onClick={() => setSelectedObjective(type)}
                                                 className={`p-3 rounded-lg border transition-all flex items-center justify-between text-left ${selectedObjective === type ? 'bg-purple-900/40 border-purple-500 ring-1 ring-purple-500' : 'bg-gray-900 border-gray-700 hover:border-gray-500'}`}
                                             >
                                                 <span className="text-white text-xs font-bold">{type}</span>
-                                                {selectedObjective === type && <CheckCircle className="w-4 h-4 text-purple-400"/>}
+                                                {selectedObjective === type && <CheckCircle className="w-4 h-4 text-purple-400" />}
                                             </button>
                                         ))}
                                     </div>
                                     <AnimatePresence>
                                         {selectedObjective === 'Outros Objetivos' && (
                                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-3">
-                                                <Input 
-                                                    placeholder="Ex: Página de Obrigado para Ebook..." 
+                                                <Input
+                                                    placeholder="Ex: Página de Obrigado para Ebook..."
                                                     value={customObjectiveInput}
                                                     onChange={e => setCustomObjectiveInput(e.target.value)}
                                                     className="!bg-gray-900"
@@ -283,7 +285,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                                             <span className="bg-gray-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">3</span>
                                             Framework Estrutural (Copy)
                                         </label>
-                                        <select 
+                                        <select
                                             className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none"
                                             value={selectedFramework}
                                             onChange={e => setSelectedFramework(e.target.value)}
@@ -292,13 +294,13 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                                         </select>
                                         <p className="text-[10px] text-gray-500 mt-1">A IA seguirá rigorosamente a estrutura escolhida.</p>
                                     </div>
-                                    
+
                                     <div>
                                         <label className="text-sm font-bold text-gray-300 mb-3 block flex items-center gap-2">
                                             <span className="bg-gray-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">4</span>
                                             Paleta & Estilo Visual
                                         </label>
-                                        <select 
+                                        <select
                                             className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none"
                                             value={selectedPalette}
                                             onChange={e => setSelectedPalette(e.target.value)}
@@ -312,7 +314,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                         </div>
 
                         <div className="mt-8">
-                            <Button 
+                            <Button
                                 onClick={triggerGenerate}
                                 className="w-full !py-4 !px-10 text-lg font-black uppercase !bg-purple-600 hover:!bg-purple-500 shadow-lg shadow-purple-900/40"
                                 disabled={!selectedObjective || (selectedObjective === 'Outros Objetivos' && !customObjectiveInput) || !builderProduct}
@@ -327,7 +329,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                     <div className="text-left font-mono text-xs bg-black p-6 rounded-xl border border-gray-700 h-96 w-full flex flex-col">
                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
                             {loadingLog.map((log, idx) => (
-                                <motion.div 
+                                <motion.div
                                     key={idx}
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
@@ -346,13 +348,13 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <CheckCircle className="w-6 h-6 text-green-500"/> Página Gerada com Sucesso
+                                    <CheckCircle className="w-6 h-6 text-green-500" /> Página Gerada com Sucesso
                                 </h3>
                                 <p className="text-gray-400 text-sm mt-1">{generatedPageData.title}</p>
                             </div>
                             <div className="flex gap-2">
                                 <Button variant="secondary" onClick={() => setShowLeadMode(true)} className="!py-2 !text-xs border-gray-600">
-                                    <Eye className="w-4 h-4 mr-2"/> Modo Lead
+                                    <Eye className="w-4 h-4 mr-2" /> Modo Lead
                                 </Button>
                             </div>
                         </div>
@@ -360,7 +362,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <div className="bg-gray-900 p-5 rounded-xl border border-gray-700">
                                 <h4 className="text-purple-400 font-bold text-xs uppercase mb-3 flex items-center gap-2">
-                                    <Layers className="w-4 h-4"/> Estrutura & Funil
+                                    <Layers className="w-4 h-4" /> Estrutura & Funil
                                 </h4>
                                 <p className="text-white font-medium text-sm mb-2">{generatedPageData.structure}</p>
                                 <p className="text-gray-500 text-xs bg-black/30 p-2 rounded border border-gray-800">
@@ -373,7 +375,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                             </div>
                             <div className="bg-gray-900 p-5 rounded-xl border border-gray-700">
                                 <h4 className="text-blue-400 font-bold text-xs uppercase mb-3 flex items-center gap-2">
-                                    <FileText className="w-4 h-4"/> Preview da Copy
+                                    <FileText className="w-4 h-4" /> Preview da Copy
                                 </h4>
                                 <p className="text-gray-300 text-sm italic">"{generatedPageData.copySnippet}"</p>
                             </div>
@@ -381,13 +383,13 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
 
                         <div className="flex gap-3 pt-4 border-t border-gray-700">
                             <Button variant="secondary" onClick={handleDeletePage} className="!bg-red-900/20 text-red-400 border-red-900/50 hover:border-red-500 flex-1">
-                                <Trash className="w-4 h-4 mr-2"/> Descartar
+                                <Trash className="w-4 h-4 mr-2" /> Descartar
                             </Button>
                             <Button variant="secondary" onClick={handleArchivePage} className="!bg-yellow-900/20 text-yellow-400 border-yellow-900/50 hover:border-yellow-500 flex-1">
-                                <Archive className="w-4 h-4 mr-2"/> Arquivar
+                                <Archive className="w-4 h-4 mr-2" /> Arquivar
                             </Button>
                             <Button onClick={() => setBuilderStep('hosting')} className="flex-[2] !bg-green-600 hover:!bg-green-500 text-white font-bold">
-                                <Globe className="w-4 h-4 mr-2"/> CONFIGURAR DOMÍNIO
+                                <Globe className="w-4 h-4 mr-2" /> CONFIGURAR DOMÍNIO
                             </Button>
                         </div>
                     </div>
@@ -406,13 +408,13 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                         <div className="space-y-6">
                             <div className="bg-gray-900 p-4 rounded-xl border border-gray-700">
                                 <label className="block text-sm font-bold text-gray-300 mb-3">Escolha o Tipo de Domínio</label>
-                                
+
                                 <div className="flex flex-col gap-3">
                                     <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${selectedHostingProvider === 'free' ? 'bg-blue-600/20 border-blue-500' : 'bg-gray-800 border-gray-600 hover:border-gray-500'}`}>
-                                        <input 
-                                            type="radio" 
-                                            name="provider" 
-                                            value="free" 
+                                        <input
+                                            type="radio"
+                                            name="provider"
+                                            value="free"
                                             checked={selectedHostingProvider === 'free'}
                                             onChange={() => setSelectedHostingProvider('free')}
                                             className="hidden"
@@ -427,9 +429,9 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                                     </label>
 
                                     <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${selectedHostingProvider !== 'free' ? 'bg-green-600/20 border-green-500' : 'bg-gray-800 border-gray-600 hover:border-gray-500'}`}>
-                                        <input 
-                                            type="radio" 
-                                            name="provider" 
+                                        <input
+                                            type="radio"
+                                            name="provider"
                                             value="cloudflare"
                                             checked={selectedHostingProvider !== 'free'}
                                             onChange={() => setSelectedHostingProvider('cloudflare')}
@@ -439,12 +441,12 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                                             {selectedHostingProvider !== 'free' && <div className="w-2 h-2 rounded-full bg-green-500"></div>}
                                         </div>
                                         <div>
-                                            <span className="text-white text-sm font-bold block flex items-center gap-2">Domínio Próprio (100% Autônomo) <ShieldCheck className="w-3 h-3 text-green-400"/></span>
+                                            <span className="text-white text-sm font-bold block flex items-center gap-2">Domínio Próprio (100% Autônomo) <ShieldCheck className="w-3 h-3 text-green-400" /></span>
                                             <span className="text-xs text-gray-400">Usa sua API (Cloudflare/cPanel) para criar subdomínios limpos.</span>
                                         </div>
                                     </label>
                                 </div>
-                                
+
                                 {selectedHostingProvider !== 'free' && (
                                     <div className="mt-3 p-3 bg-green-900/20 border border-green-500/30 rounded text-xs text-green-300">
                                         <p>A ferramenta usará a API Key configurada no <strong>Hub de Integrações</strong> para criar registros DNS automaticamente.</p>
@@ -457,7 +459,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                                     Nome do Subdomínio {selectedHostingProvider !== 'free' ? '(Será criado via API)' : ''}
                                 </label>
                                 <div className="flex">
-                                    <input 
+                                    <input
                                         className="flex-1 bg-gray-900 border border-gray-600 rounded-l-lg p-3 text-white focus:border-brand-primary outline-none text-right"
                                         placeholder="sua-oferta"
                                         value={subdomainName}
@@ -472,9 +474,9 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                             <div className="bg-gray-900 p-4 rounded-xl border border-gray-700">
                                 <label className="flex items-center justify-between cursor-pointer">
                                     <span className="text-sm text-white font-medium flex items-center gap-2">
-                                        <Zap className="w-4 h-4 text-yellow-400"/> Auto Configuração (Recomendado)
+                                        <Zap className="w-4 h-4 text-yellow-400" /> Auto Configuração (Recomendado)
                                     </span>
-                                    <input type="checkbox" className="w-5 h-5 rounded border-gray-600 bg-gray-800 text-brand-primary" checked={autoConfigSEO} onChange={e => setAutoConfigSEO(e.target.checked)}/>
+                                    <input type="checkbox" className="w-5 h-5 rounded border-gray-600 bg-gray-800 text-brand-primary" checked={autoConfigSEO} onChange={e => setAutoConfigSEO(e.target.checked)} />
                                 </label>
                                 {autoConfigSEO && (
                                     <div className="mt-3 text-xs text-gray-400 space-y-1 pl-6 border-l-2 border-gray-700">
@@ -488,7 +490,7 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                             <div className="flex gap-3 pt-4">
                                 <Button variant="secondary" onClick={() => setBuilderStep('preview')} className="flex-1">Voltar</Button>
                                 <Button onClick={handlePublishPage} className="flex-[2] !bg-green-600 hover:!bg-green-500 text-white font-bold">
-                                    <Rocket className="w-4 h-4 mr-2"/> 
+                                    <Rocket className="w-4 h-4 mr-2" />
                                     {selectedHostingProvider === 'free' ? 'PUBLICAR AGORA' : 'CRIAR DNS & PUBLICAR'}
                                 </Button>
                             </div>
@@ -496,10 +498,10 @@ export const BuilderTab: React.FC<Props> = ({ onPageCreated, setActiveTab }) => 
                     </div>
                 )}
             </Card>
-            
+
             <LeadModeModal isOpen={showLeadMode} onClose={() => setShowLeadMode(false)} title="Página Vendas Exemplo" />
-            
-            <AICreditGate 
+
+            <AICreditGate
                 isOpen={isCreditGateOpen}
                 onClose={() => setIsCreditGateOpen(false)}
                 onConfirm={confirmGate}

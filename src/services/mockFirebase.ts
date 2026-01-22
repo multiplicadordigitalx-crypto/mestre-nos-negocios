@@ -161,7 +161,8 @@ const initialSystemStatus: SystemStatus = {
     maintenance: false,
     activeNodes: 4,
     queueCount: 0,
-    healthScore: 100
+    healthScore: 100,
+    creditValueBRL: 0.15
 };
 
 const initialSupportAgents: SupportAgent[] = [
@@ -1108,6 +1109,8 @@ const DEFAULT_TOOL_COSTS: ToolCost[] = [
     { toolId: 'nexus_consultancy', toolName: 'Consultoria Nexus IA', costPerTask: 50.00, realCostEstimate: 5.00, complexity: 'high' },
     { toolId: 'producer_action_auto', toolName: 'Execução Autônoma (Action)', costPerTask: 25.00, realCostEstimate: 2.00, complexity: 'medium' },
     { toolId: 'team_member_seat', toolName: 'Vaga de Equipe (Mensal)', costPerTask: 100.00, realCostEstimate: 0.00, complexity: 'low' },
+    // VIP Lounge
+    { toolId: 'nexus_culture', toolName: 'VIP Lounge (Guia Cultural)', costPerTask: 25.00, realCostEstimate: 0.10, complexity: 'medium' },
     // Health & Mind
     { toolId: 'health_sleep_analysis', toolName: 'Análise de Sono IA', costPerTask: 0.05, realCostEstimate: 0.01, complexity: 'low' },
     { toolId: 'health_gratitude_insight', toolName: 'Insight Gratidão IA', costPerTask: 0.03, realCostEstimate: 0.005, complexity: 'low' },
@@ -1124,7 +1127,9 @@ const DEFAULT_TOOL_COSTS: ToolCost[] = [
     { toolId: 'ads_opp_intelligence', toolName: 'Intel. Oportunidades', costPerTask: 0.08, realCostEstimate: 0.01, complexity: 'medium' },
     // Mestre IA New Tools
     { toolId: 'blindagem_legal', toolName: 'Blindagem Legal (Anti-Bloqueio)', costPerTask: 0.15, realCostEstimate: 0.02, complexity: 'medium' },
-    { toolId: 'raio_x_metricas', toolName: 'Raio-X de Métricas (ROI)', costPerTask: 0.25, realCostEstimate: 0.05, complexity: 'high' }
+    { toolId: 'raio_x_metricas', toolName: 'Raio-X de Métricas (ROI)', costPerTask: 0.25, realCostEstimate: 0.05, complexity: 'high' },
+    // Executive Passport
+    { toolId: 'executive_mission', toolName: 'Missão Executiva (Base)', costPerTask: 20.00, realCostEstimate: 2.00, complexity: 'high' }
 ];
 
 export const getToolCosts = async (): Promise<ToolCost[]> => {
@@ -1527,7 +1532,8 @@ export const consumeCredits = async (
     }
 
     // --- TIER 2: PERSONAL FREE DAILY LIMIT (HEALTH & MIND / MESTRE IA) ---
-    if (userType === 'student' && !forceWallet) {
+    // Paid tools (OAB, JurisMemoria, VIP Lounge, Quiz) bypass this and go straight to wallet
+    if (userType === 'student' && !forceWallet && toolId !== 'simulado_oab' && toolId !== 'util_jurismemoria' && toolId !== 'nexus_culture' && toolId !== 'nexus_quiz' && toolId !== 'executive_mission') {
         const student = user as Student;
         const dailyLimit = student.dailyMestreIALimit || 0;
 
@@ -3019,7 +3025,8 @@ export const getSystemSettings = async (): Promise<SystemSettings> => {
         purchaseLink: '#',
         forgotPasswordLink: '#',
         supportLink: '#',
-        mestreIAMaintenance: false
+        mestreIAMaintenance: false,
+        globalProtectionThreshold: 10
     });
 };
 
@@ -3272,3 +3279,6 @@ export const getProducerSlots = async (producerId: string): Promise<InstanceSlot
         }
     ];
 };
+
+
+

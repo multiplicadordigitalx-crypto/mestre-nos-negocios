@@ -7,16 +7,18 @@ import { ViralCreativesTab } from './marketing/tabs/ViralCreativesTab';
 import { UGCAutomationTab } from './marketing/tabs/UGCAutomationTab';
 import { BotAutomationTab } from './marketing/tabs/BotAutomationTab';
 import { WhatsAppEvolutionTab } from './marketing/tabs/WhatsAppEvolutionTab';
+import { NexusStudioTab } from './marketing/tabs/NexusStudioTab';
 import { SharedAccount } from '../types';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 import { MestreFullModal } from './funnels/modals/FunnelsModals';
 
-type MarketingTab = 'dashboard' | 'ugc_automation' | 'bot_automation' | 'viral_creatives' | 'whatsapp';
+type MarketingTab = 'dashboard' | 'ugc_automation' | 'bot_automation' | 'viral_creatives' | 'whatsapp' | 'nexus_studio';
 
 const ALL_TABS: { id: MarketingTab; label: string; description: string; icon: any; color: string; bgColor: string }[] = [
     { id: 'dashboard', label: 'Dashboard', description: 'Visão em tempo real', icon: BarChart3, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
     { id: 'viral_creatives', label: 'Criativos Virais', description: 'Detectar & Clonar', icon: Film, color: 'text-red-500', bgColor: 'bg-red-500/10' },
+    { id: 'nexus_studio', label: 'Nexus Studio', description: 'Vídeos Longos & Reais', icon: Camera, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
     { id: 'ugc_automation', label: 'Máquina UGC', description: 'Fábrica de Vídeos', icon: Camera, color: 'text-yellow-400', bgColor: 'bg-yellow-500/10' },
     { id: 'bot_automation', label: 'Bot de Vendas', description: 'Monitoramento & Resposta', icon: Robot, color: 'text-green-400', bgColor: 'bg-green-500/10' },
     { id: 'whatsapp', label: 'WhatsApp Evo', description: 'Vendedor Implacável', icon: Phone, color: 'text-green-500', bgColor: 'bg-green-500/10' },
@@ -85,6 +87,7 @@ const MarketingPage: React.FC = () => {
                     {activeTab === 'viral_creatives' && <ViralCreativesTab onTransferToUGC={handleTransferToUGC} accounts={sharedAccounts} />}
                     {activeTab === 'ugc_automation' && <UGCAutomationTab initialScript={ugcTransferData} accounts={sharedAccounts} onAddAccount={handleAddAccount} onUpdateAccounts={handleUpdateAccounts} />}
                     {activeTab === 'bot_automation' && <BotAutomationTab accounts={sharedAccounts} onAddAccount={handleAddAccount} onRemoveAccount={handleRemoveAccount} />}
+                    {activeTab === 'nexus_studio' && <NexusStudioTab />}
                     {activeTab === 'whatsapp' && <WhatsAppEvolutionTab />}
                 </motion.div>
             </AnimatePresence>

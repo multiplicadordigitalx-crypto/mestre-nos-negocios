@@ -7,7 +7,7 @@ export const useCreditGuard = () => {
     const { user, refreshUser } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const checkAndConsume = async (toolId: string, narrative: string = 'Uso de Ferramenta', overrideCost?: number | { cost?: number, dailyLimit?: number, contextId?: string }): Promise<boolean> => {
+    const checkAndConsume = async (toolId: string, narrative: string = 'Uso de Ferramenta', overrideCost?: number | { cost?: number, dailyLimit?: number, contextId?: string, onInsufficientFunds?: () => void }): Promise<boolean> => {
         setIsProcessing(true);
         try {
             // 1. Get Cost
@@ -126,7 +126,9 @@ export const useCreditGuard = () => {
                     } else {
                         // Wallet also failed
                         if (walletResult.code === 'INSUFFICIENT_FUNDS_WALLET') {
-                            if (window.confirm("Saldo insuficiente na carteira. Deseja Recarregar?")) {
+                            if (typeof overrideCost === 'object' && overrideCost.onInsufficientFunds) {
+                                overrideCost.onInsufficientFunds();
+                            } else if (window.confirm("Saldo insuficiente na carteira. Deseja Recarregar?")) {
                                 window.location.href = '/painel/credits'; // Or use navigate if available in context
                             }
                         } else {
@@ -141,7 +143,10 @@ export const useCreditGuard = () => {
                 }
             } else if (result.code === 'INSUFFICIENT_FUNDS_WALLET') {
                 // Should likely not happen on first try if daily limit works, but just in case
-                if (window.confirm("Saldo e Limite Insuficientes. Ir para Recarga?")) {
+                // Should likely not happen on first try if daily limit works, but just in case
+                if (typeof overrideCost === 'object' && overrideCost.onInsufficientFunds) {
+                    overrideCost.onInsufficientFunds();
+                } else if (window.confirm("Saldo e Limite Insuficientes. Ir para Recarga?")) {
                     window.location.href = '/painel/credits';
                 }
                 setIsProcessing(false);

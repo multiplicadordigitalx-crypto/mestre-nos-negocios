@@ -1,5 +1,5 @@
 
-export type StudentPage = 'dashboard' | 'training' | 'financial' | 'products' | 'marketing' | 'integrations' | 'funnels' | 'email_marketing' | 'nexus_ads' | 'support' | 'profile' | 'coach' | 'community' | 'mestre_ia' | 'my_results' | 'create_course' | 'wallet' | 'recharge' | 'producer_dashboard' | 'health_diary' | 'diario_alimentar' | 'jurista_ia' | 'knowledge_practice';
+export type StudentPage = 'dashboard' | 'training' | 'financial' | 'products' | 'marketing' | 'integrations' | 'funnels' | 'email_marketing' | 'nexus_ads' | 'support' | 'profile' | 'coach' | 'community' | 'mestre_ia' | 'my_results' | 'create_course' | 'wallet' | 'recharge' | 'producer_dashboard' | 'health_diary' | 'diario_alimentar' | 'jurista_ia' | 'knowledge_practice' | 'nexus_poliglota';
 
 export type UserRole = 'student' | 'admin' | 'super_admin' | 'support' | 'support_agent' | 'sales_agent' | 'sales_manager' | 'influencer' | 'finance' | 'viewer' | 'coproducer';
 
@@ -64,6 +64,7 @@ export interface SystemStatus {
     activeNodes: number;
     queueCount: number;
     healthScore?: number;
+    creditValueBRL?: number;
 }
 
 export interface WalletBucket {
@@ -377,6 +378,15 @@ export interface Quiz {
     failMessage: string;
 }
 
+export interface LessonCheckpoint {
+    time: number; // Seconds
+    type: 'quiz' | 'tool_redirect' | 'reflection';
+    question?: string; // For Quizzes/Reflection
+    toolId?: NexusToolId; // For Tool Redirect
+    toolTaskLabel?: string; // "Draft Contract"
+    completed?: boolean;
+}
+
 export interface Lesson {
     id: string;
     moduleId: string;
@@ -388,6 +398,9 @@ export interface Lesson {
     videoSource?: 'youtube' | 'vimeo' | 'upload' | 'url';
     order: number;
     materials?: LessonMaterial[];
+    // New AI Fields
+    transcript?: string;
+    checkpoints?: LessonCheckpoint[];
     quiz?: Quiz;
 }
 
@@ -462,6 +475,7 @@ export interface SystemSettings {
     // Legacy / Other
     mestreIAMaintenance?: boolean;
     producerCommissionPercentage?: number;
+    globalProtectionThreshold?: number;
 }
 
 export interface ToolCost {
@@ -477,6 +491,17 @@ export interface ToolCost {
     dilutedCommissionPercent?: number;
     platformSharePercent?: number; // Net Profit Share for Platform
     billingType?: 'usage' | 'monthly';
+
+    // Financial Safety
+    targetMargin?: number; // Desired margin to maintain (e.g. 50%)
+    triggerThreshold?: number; // % deviation to trigger auto-adjust (default 10%)
+    autoAdjust?: boolean; // Enable auto-balancing
+    lastAutoAdjustment?: {
+        date: number;
+        oldPrice: number;
+        newPrice: number;
+        reason: 'margin_drop' | 'margin_recovery';
+    };
 }
 
 export interface WhiteLabelConfig {
@@ -1408,6 +1433,8 @@ export interface FinancialAuditTicket {
 
 // --- NEXUS CORE TYPES ---
 export type TaskPriority = 'low' | 'normal' | 'high' | 'critical';
+import { NexusToolId } from '../services/ToolRegistry';
+
 export type TaskType = 'campaign_gen' | 'content_creation' | 'sales_recovery' | 'data_sync' | 'analysis' | 'repair' | 'dark_post_gen';
 
 export interface NexusTask {

@@ -2,17 +2,27 @@ import React, { useState, useRef } from 'react';
 import { FileText, CheckCircle, AlertCircle, ChevronLeft, Zap, Award, Mic, Upload, XCircle } from '../../Icons';
 import Button from '../../Button';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../../hooks/useAuth';
+import { consumeCredits } from '../../../services/mockFirebase';
+import { InsufficientFundsAlert } from '../language/InsufficientFundsAlert';
+import { StudentPage } from '../../../types';
 
 interface EssayCorrectorProps {
     onBack: () => void;
+    navigateTo?: (page: StudentPage) => void;
 }
 
-export const EssayCorrector: React.FC<EssayCorrectorProps> = ({ onBack }) => {
+export const EssayCorrector: React.FC<EssayCorrectorProps> = ({ onBack, navigateTo }) => {
+    const { user, refreshUser } = useAuth();
     const [text, setText] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [linkUrl, setLinkUrl] = useState('');
     const [showLinkInput, setShowLinkInput] = useState(false);
+
+    // Modal & Credit States
+    const [showInsufficientModal, setShowInsufficientModal] = useState(false);
+    const COST_PER_ESSAY = 5;
 
     const [result, setResult] = useState<null | {
         score: number;
@@ -36,24 +46,43 @@ export const EssayCorrector: React.FC<EssayCorrectorProps> = ({ onBack }) => {
             return;
         }
 
+        if (user && (user.creditBalance || 0) < COST_PER_ESSAY) {
+            setShowInsufficientModal(true);
+            return;
+        }
+
         setIsAnalyzing(true);
-        // Simulate AI Analysis
-        setTimeout(() => {
-            setIsAnalyzing(false);
-            setResult({
-                score: 8.5,
-                feedback: "Boa estrutura argumentativa. A fundamentação no Art. 300 do CPC está correta, mas faltou explorar mais a jurisprudência recente do STJ sobre o tema. O fechamento foi conciso e objetivo.",
-                checklist: [
-                    { item: "Endereçamento Correto", pass: true },
-                    { item: "Qualificação das Partes", pass: true },
-                    { item: "Fundamentação Legal (Artigos)", pass: true },
-                    { item: "Citação de Jurisprudência", pass: false },
-                    { item: "Pedidos Claros", pass: true },
-                    { item: "Valor da Causa", pass: true },
-                ]
-            });
-            toast.success("Correção finalizada!");
-        }, 3000);
+        // Execute Debit
+        const startDebit = async () => {
+            if (!user) return;
+            const result = await consumeCredits(user.uid, 'essay_correction', COST_PER_ESSAY, 'Corretor de Peças: Análise Jurídica');
+            if (!result.success) {
+                toast.error(result.message || "Erro ao debitar créditos.");
+                setIsAnalyzing(false);
+                return;
+            }
+            refreshUser?.();
+
+            // Simulate AI Analysis
+            setTimeout(() => {
+                setIsAnalyzing(false);
+                setResult({
+                    score: 8.5,
+                    feedback: "Boa estrutura argumentativa. A fundamentação no Art. 300 do CPC está correta, mas faltou explorar mais a jurisprudência recente do STJ sobre o tema. O fechamento foi conciso e objetivo.",
+                    checklist: [
+                        { item: "Endereçamento Correto", pass: true },
+                        { item: "Qualificação das Partes", pass: true },
+                        { item: "Fundamentação Legal (Artigos)", pass: true },
+                        { item: "Citação de Jurisprudência", pass: false },
+                        { item: "Pedidos Claros", pass: true },
+                        { item: "Valor da Causa", pass: true },
+                    ]
+                });
+                toast.success("Correção finalizada!");
+            }, 3000);
+        };
+
+        startDebit();
     };
 
     return (
@@ -94,7 +123,7 @@ export const EssayCorrector: React.FC<EssayCorrectorProps> = ({ onBack }) => {
                         </div>
 
                         {/* File/Link Actions */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 justify-center">
                             {/* Upload Button */}
                             <div className="relative">
                                 <input
@@ -179,6 +208,26 @@ export const EssayCorrector: React.FC<EssayCorrectorProps> = ({ onBack }) => {
                     )}
                 </div>
             </div>
+            {/* Footer Note */}
+            <div className="p-4 border-t border-gray-800 bg-gray-950/50 flex items-center justify-center gap-2 text-center">
+                <AlertCircle className="w-4 h-4 text-gray-600" />
+                <p className="text-[10px] text-gray-500 max-w-lg">
+                    <strong>Nota:</strong> Ferramenta baseada em IA. As respostas servem de auxílio e aprendizado, não substituem consultoria legal oficial.
+                </p>
+            </div>
+
+            {/* Global Modals */}
+            <InsufficientFundsAlert
+                isOpen={showInsufficientModal}
+                onClose={() => setShowInsufficientModal(false)}
+                onRecharge={() => {
+                    setShowInsufficientModal(false);
+                    if (navigateTo) navigateTo('recharge');
+                    else toast.error("Navegação indisponível");
+                }}
+                requiredCredits={COST_PER_ESSAY}
+                currentCredits={user?.creditBalance || 0}
+            />
         </div>
     );
 };

@@ -1,9 +1,7 @@
+
 import React from 'react';
 import { PlansState } from './types';
-import {
-    Brain, Megaphone, Filter, ShieldCheck,
-    Zap, Image, Film, Target, MessageCircle, Server, Phone, Mail, Activity, Camera, BookOpen, Globe, Award, HeartPulse, Mic, Box, PenTool, Rocket, Search, Cpu, List, PlusCircle
-} from '../../../../components/Icons';
+import { Brain, MessageSquare, Mic, Share2, Users, Video, Zap, FileText, Globe, GraduationCap, PenTool, Bot, Folder, Search, Scale, Megaphone, Filter, Mail, BookOpen, Target, Activity, HeartPulse, Rocket } from 'lucide-react';
 
 export interface SystemToolExtended {
     id: string;
@@ -189,6 +187,33 @@ export const SYSTEM_MODULES: SystemModuleExtended[] = [
             { id: 'ads_bid_optimization', label: 'Otimização de Bids (Mestre Full)', costUSD: 0.200, baseUnit: "1 Otimização", billingType: 'execution' },
             { id: 'ads_dark_post_gen', label: 'Criar Dark Post Viral (IA)', costUSD: 0.120, baseUnit: "1 Dark Post", billingType: 'execution' },
             { id: 'ads_opp_intelligence', label: 'Inteligência de Oportunidades', costUSD: 0.080, baseUnit: "1 Insight", billingType: 'execution' }
+        ]
+    },
+    {
+        id: 'legal_module',
+        label: 'Módulo Mentor Jurídico',
+        icon: <Scale className="w-5 h-5 text-gray-200" />,
+        description: 'Ferramentas de IA para advogados e estudantes de direito.',
+        tools: [
+            { id: 'legal_sage_agent', label: 'O Sábio (Agente IA)', costUSD: 0.150, baseUnit: "1 Execução", billingType: 'execution' },
+            { id: 'legal_essay_corrector', label: 'Corretor de Peças', costUSD: 0.080, baseUnit: "1 Correção", billingType: 'execution' },
+            { id: 'legal_vade_mecum', label: 'Vade Mecum (Busca IA)', costUSD: 0.010, baseUnit: "1 Busca", billingType: 'execution' },
+            { id: 'legal_audience_sim', label: 'Simulador de Audiência', costUSD: 0.120, baseUnit: "1 Simulação", billingType: 'execution' },
+            { id: 'legal_oab_quiz', label: 'Simulado OAB', costUSD: 0.005, baseUnit: "1 Simulado", billingType: 'execution' },
+            { id: 'legal_jurismemoria', label: 'JurisMemória', costUSD: 0.005, baseUnit: "1 Sessão", billingType: 'execution' },
+            { id: 'legal_repository', label: 'Banco de Modelos', costUSD: 0.020, baseUnit: "1 Download/Acesso", billingType: 'execution' }
+        ]
+    },
+    {
+        id: 'languages',
+        label: 'Módulo Idiomas & Humanas',
+        icon: <Globe className="w-5 h-5 text-blue-400" />,
+        description: 'Imersão cultural, prática de conversação e flashcards gamificados.',
+        tools: [
+            { id: 'lang_flashcard_gen', label: 'Flashcards Gamified (Geração)', costUSD: 0.05, baseUnit: "1 Deck", billingType: 'execution' },
+            { id: 'lang_voice_chat', label: 'Nexus Voice Lab (Conversação)', costUSD: 0.10, baseUnit: "1 Minuto", billingType: 'execution' },
+            { id: 'lang_culture_scan', label: 'Culture Explorer (Curiosidades)', costUSD: 0.02, baseUnit: "1 Consulta", billingType: 'execution' },
+            { id: 'executive_mission', label: 'Passaporte Executivo (Missões Base)', costUSD: 0.15, baseUnit: "1 Missão", billingType: 'execution' }
         ]
     }
 ];

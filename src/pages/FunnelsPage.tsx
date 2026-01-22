@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Layers, Settings, DollarSign, MousePointer, Activity,
@@ -29,7 +30,17 @@ const FunnelsPage: React.FC = () => {
     const [showConfigModal, setShowConfigModal] = useState(false);
 
     // TABS CONFIG
-    const [activeTab, setActiveTab] = useState<'overview' | 'builder' | 'optimizer' | 'strategies' | 'analytics' | 'persona'>('overview');
+    const [searchParams] = useSearchParams();
+    const tabParam = searchParams.get('tab');
+    const [activeTab, setActiveTab] = useState<'overview' | 'builder' | 'optimizer' | 'strategies' | 'analytics' | 'persona'>(
+        (tabParam as any) || 'overview'
+    );
+
+    useEffect(() => {
+        if (tabParam) {
+            setActiveTab(tabParam as any);
+        }
+    }, [tabParam]);
 
     // Data Hook
     const {

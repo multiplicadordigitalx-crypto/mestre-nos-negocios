@@ -7,9 +7,10 @@ import {
     PlusCircle, BookOpen, Brain, Settings, X as XIcon, Sparkles,
     Zap, DollarSign, TrendingUp, Target, Pencil,
     Activity, ShieldCheck, HeartPulse, Camera, RefreshCw, LockClosed,
-    CheckCircle, Info, ChevronRight, ArrowLeft, CloudUpload, Trash, Layers,
+    CheckCircle, Info, ChevronRight, ArrowLeft, CloudUpload, Trash, Layers, ArrowRight,
     Smartphone, FileText, BarChart3, AlertTriangle, Coins, ShoppingBag, Phone, Mic, ShieldAlert,
-    Layout, List, Gauge, Film, Clock, Rocket, Link as LinkIcon, Image, Youtube, Palette, Monitor, Megaphone, Eye, Star
+    Layout, List, Gauge, Film, Clock, Rocket, Link as LinkIcon, Image, Youtube, Palette, Monitor, Megaphone, Eye, Star,
+    ChevronUp, ChevronDown, Video, Upload, HardDrive, Download, FileBox, ExternalLink
 } from '../../../components/Icons';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { Course, CourseCategory, FinancialViability, SchoolSettings, StudentPage } from '../../../types';
@@ -34,9 +35,9 @@ const CATEGORY_CONTEXT: Record<string, {
 }> = {
     standard: {
         titlePlaceholder: "Ex: Método Mestre 50X",
-        promisePlaceholder: "Ex: Vou tirar você do zero e te transformar em um empresário que fatura R$ 10k/mês através de tráfego pago...",
-        aiNamingContext: "marketing digital e negócios",
-        contentHint: "Suba vídeos, PDFs ou links de aulas sobre negócios e vendas para que a IA estruture seu treinamento.",
+        promisePlaceholder: "Ex: Vou tirar você do zero e te transformar em um mestre na sua área através de um método estruturado...",
+        aiNamingContext: "ensino tradicional, videoaulas e transferência de conhecimento especializado",
+        contentHint: "Suba videoaulas, PDFs, ebooks ou links de materiais sobre seu tema para que a IA estruture seu treinamento pedagógico.",
         icon: BookOpen
     },
     personal_master: {
@@ -104,13 +105,26 @@ const CATEGORIES_LIST = [
 
 const NICHOS_BY_CATEGORY: Record<string, string[]> = {
     all: [
-        "Marketing Digital & Vendas", "Finanças & Investimentos", "Saúde & Emagrecimento",
-        "Relacionamentos", "Desenvolvimento Pessoal", "Tecnologia & Programação",
-        "Negócios & Carreira", "Outros"
+        "Marketing Digital & Vendas", "Finanças & Investimentos", "Saúde & Bem-estar",
+        "Desenvolvimento Pessoal", "Tecnologia & Programação", "Idiomas & Línguas Estrangeiras",
+        "Negócios & Empreendedorismo", "Carreira & Profissões", "Artes & Design",
+        "Educação & Concursos", "Gastronomia & Culinária", "Esportes & Fitness",
+        "Moda & Beleza", "Maternidade & Família", "Relacionamentos",
+        "Espiritualidade & Esoterismo", "Fotografia & Vídeo", "Música & Instrumentos",
+        "Imobiliário & Corretagem", "Direito & Consultoria", "Agronegócio",
+        "Arquitetura & Design de Interiores", "Artesanato & Hobbies",
+        "E-commerce & Dropshipping", "Sustentabilidade & Ecologia", "Outros"
     ],
     standard: [
-        "Marketing Digital & Vendas", "Finanças & Investimentos", "Infoprodutos",
-        "Artesanato & Hobbies", "Educação Infantil", "Concursos & Provas"
+        "Marketing Digital & Vendas", "Finanças & Investimentos", "Desenvolvimento Pessoal",
+        "Educação & Concursos", "Idiomas & Línguas Estrangeiras", "Tecnologia & Programação",
+        "Negócios & Gestão", "Infoprodutos & Lançamentos", "Artesanato & Hobbies",
+        "Saúde & Bem-estar", "Gastronomia & Culinária", "Moda & Beleza",
+        "Fotografia & Vídeo", "Música & Instrumentos", "Artes & Design",
+        "Imobiliário & Corretagem", "Direito & Consultoria", "Maternidade & Educação Infantil",
+        "Espiritualidade & Desenvolvimento Espiritual", "Esportes & Alta Performance",
+        "Produtividade & Soft Skills", "Recursos Humanos & Liderança", "Engenharia & Arquitetura",
+        "E-commerce & Logística", "Agronegócio & Veterinária", "Outros"
     ],
     personal_master: [
         "Negócios & Gestão de Equipes", "Empreendedorismo Digital", "Liderança & Soft Skills",
@@ -119,17 +133,20 @@ const NICHOS_BY_CATEGORY: Record<string, string[]> = {
         "Engenharia & Arquitetura", "Tecnologia & Dev Mentor", "Ciência de Dados & BI",
         "Idiomas (Fluência Acelerada)", "Oratória & Comunicação", "Carreira & Recolocação",
         "Produtividade & Gestão de Tempo", "Maternidade & Educação de Filhos", "Esportes & Alta Performance",
-        "Moda & Imagem Pessoal", "Estratégia Imobiliária", "Marketing de Influência"
+        "Moda & Imagem Pessoal", "Estratégia Imobiliária", "Marketing de Influência",
+        "Mentoria de Vida & Performance", "Espiritualidade & Propósito", "Gestão de Tráfego Avançada"
     ],
     therapy_master: [
         "Saúde Mental (Geral)", "Psicologia TCC", "Terapia Holística", "Acolhimento Luto/Crises",
         "Ansiedade & Stress", "Autoconhecimento Profundo", "Meditação & Mindfulness",
-        "Constelação Familiar", "Terapia de Casal"
+        "Constelação Familiar", "Terapia de Casal", "Psicanálise & Inconsciente",
+        "Desenvolvimento Emocional", "Superação de Traumas"
     ],
     slimming_master: [
         "Emagrecimento Feminino", "Hipertrofia & Ganho de Massa", "Bio-hacking & Longevidade",
         "Nutrição Esportiva", "Yoga & Flexibilidade", "Crossfit & Performance",
-        "Reeducação Alimentar", "Jejum Intermitente Profissional"
+        "Reeducação Alimentar", "Jejum Intermitente Profissional", "Saúde Intestinal & Detox",
+        "Suplementação Estratégica", "Mente Magra & Comportamento"
     ]
 };
 
@@ -182,14 +199,11 @@ const Step1Category: React.FC<{
                     className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex flex-col gap-4 items-start bg-gray-900 border-gray-700 hover:border-brand-primary`}
                 >
                     <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-2xl bg-gray-800 border border-gray-700 text-${cat.color}-400 shadow-inner relative`}>
+                        <div className={`p-3 rounded-2xl bg-gray-800 border border-gray-700 text-${cat.color}-400 shadow-inner`}>
                             <cat.icon className="w-7 h-7" />
-                            {/* @ts-ignore */}
-                            {cat.isAi && <div className="absolute -top-1 -right-1 w-3 h-3 bg-brand-primary rounded-full animate-pulse border border-black"></div>}
                         </div>
                         <div>
                             <p className="text-base font-black text-white uppercase tracking-tighter">{cat.label}</p>
-                            {cat.isAi && <span className="text-[9px] text-brand-primary font-bold uppercase tracking-widest bg-yellow-400/10 px-1.5 py-0.5 rounded border border-yellow-500/20">Nexus Player (Cobrança na Venda)</span>}
                         </div>
                     </div>
                     <p className="text-sm text-gray-400 font-medium leading-relaxed">{cat.desc}</p>
@@ -261,7 +275,7 @@ const Step2BasicDetails: React.FC<{
                                 {nameSuggestions.map((n, i) => (
                                     <button key={i} onClick={() => selectName(n.name)} className="text-left p-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs border border-gray-700 transition-colors group">
                                         <div className="flex justify-between items-center"><span className="font-bold text-white group-hover:text-brand-primary">{n.name}</span><ChevronRight className="w-3 h-3 text-gray-600" /></div>
-                                        <p className="text-[9px] text-gray-500 mt-1">{n.reason}</p>
+                                        <p className="text-[11px] text-gray-500 mt-1">{n.reason}</p>
                                     </button>
                                 ))}
                             </div>
@@ -281,7 +295,7 @@ const Step2BasicDetails: React.FC<{
                     ) : (
                         <>
                             <Camera className="w-10 h-10 text-gray-600 mb-2 group-hover:text-brand-primary transition-colors" />
-                            <p className="text-[10px] text-gray-500 uppercase font-black">Upload ou Gerar c/ IA</p>
+                            <p className="text-xs text-gray-500 uppercase font-black tracking-wider">Upload ou Gerar c/ IA</p>
                         </>
                     )}
                     <input type="file" className="hidden" id="admin-cover-up" onChange={e => { const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onloadend = () => setData({ ...data, coverUrl: r.result as string }); r.readAsDataURL(f); } }} />
@@ -290,7 +304,7 @@ const Step2BasicDetails: React.FC<{
                 <Button onClick={() => triggerAITask('cover_generator', handleGenerateCover)} className="w-full !py-4 !text-xs font-black uppercase !bg-purple-600 shadow-xl hover:scale-[1.02] transition-transform">
                     <Camera className="w-4 h-4 mr-2" /> Gerar Capa de Alta Conversão (IA)
                 </Button>
-                <p className="text-center text-[10px] text-gray-500">A IA analisará seu nicho para criar uma imagem que conecta.</p>
+                <p className="text-center text-[11px] text-gray-500 font-medium tracking-wide">A IA analisará seu nicho para criar uma imagem que conecta.</p>
             </div>
         </div>
 
@@ -321,7 +335,7 @@ const Step2BasicDetails: React.FC<{
                                     key={elem}
                                     type="button"
                                     onClick={() => toggleTherapyComponent(elem)}
-                                    className={`text-[10px] px-3 py-1.5 rounded-lg border transition-all ${data.therapyConfig?.elementos?.includes(elem) ? 'bg-pink-600 text-white border-pink-500' : 'bg-gray-800 text-gray-400 border-gray-700'}`}
+                                    className={`text-[11px] px-3 py-1.5 rounded-lg border transition-all ${data.therapyConfig?.elementos?.includes(elem) ? 'bg-pink-600 text-white border-pink-500' : 'bg-gray-800 text-gray-400 border-gray-700'}`}
                                 >
                                     {elem}
                                 </button>
@@ -360,7 +374,7 @@ const Step3Promise: React.FC<{
                 onChange={e => setData({ ...data, description: e.target.value })}
                 placeholder={context.promisePlaceholder}
             />
-            <Button onClick={() => triggerAITask('promise_architect', handleGeneratePromise)} className="!bg-purple-600 hover:!bg-purple-500 font-black uppercase text-[10px] tracking-widest !py-3 px-6 shadow-xl">
+            <Button onClick={() => triggerAITask('promise_architect', handleGeneratePromise)} className="!bg-purple-600 hover:!bg-purple-500 font-black uppercase text-[11px] tracking-widest !py-3 px-6 shadow-xl">
                 <Zap className="w-4 h-4 mr-2" /> Otimizar Promessa com Nexus IA
             </Button>
         </div>
@@ -370,6 +384,594 @@ const Step3Promise: React.FC<{
         </div>
     </div>
 );
+
+// --- STEP 4: TRADITIONAL (MANUAL) ---
+const Step4TraditionalContent: React.FC<{
+    data: any;
+    setData: (d: any) => void;
+    onBack: () => void;
+    onNext: () => void;
+    triggerAITask: (id: string, action: () => void, cost?: number) => void;
+    isProcessing: boolean;
+}> = ({ data, setData, onBack, onNext, triggerAITask, isProcessing }) => {
+    const [expandedModule, setExpandedModule] = useState<string | null>(null);
+    const [uploadingItems, setUploadingItems] = useState<Record<string, number>>({});
+    const [aiSettings, setAiSettings] = useState<Record<string, { qty: number, opts: number }>>({}); // modId -> settings
+    const [editingQuiz, setEditingQuiz] = useState<{ modId: string, quizId: string } | null>(null);
+
+    const handleFileUpload = async (modId: string, itemId: string, file: File, type: 'lesson' | 'material') => {
+        try {
+            setUploadingItems(prev => ({ ...prev, [itemId]: 1 }));
+            const url = await uploadFileToStorage(file, (progress) => {
+                setUploadingItems(prev => ({ ...prev, [itemId]: progress }));
+            });
+
+            if (type === 'lesson') {
+                updateLesson(modId, itemId, { videoUrl: url, videoFile: file.name });
+            } else {
+                updateMaterial(modId, itemId, { url, fileName: file.name });
+            }
+            toast.success("Upload concluído!");
+        } catch (e) {
+            toast.error("Erro no upload.");
+        } finally {
+            setUploadingItems(prev => {
+                const newState = { ...prev };
+                delete newState[itemId];
+                return newState;
+            });
+        }
+    };
+
+    const addModule = () => {
+        const newModule = {
+            id: `mod-${Date.now()}`,
+            title: 'Novo Módulo',
+            lessons: [],
+            materials: [],
+            quizzes: []
+        };
+        const newModules = [...(data.modules || []), newModule];
+        setData({ ...data, modules: newModules, totalModules: newModules.length });
+        setExpandedModule(newModule.id);
+        toast.success("Módulo adicionado.");
+    };
+
+    const updateModule = (modId: string, updates: any) => {
+        setData({
+            ...data,
+            modules: (data.modules || []).map((m: any) => {
+                if (m.id === modId) {
+                    // For legacy support check if 'quiz' exists and migrate to 'quizzes' if needed
+                    const updated = { ...m, ...updates };
+                    if (updates.quiz === null) delete updated.quiz;
+                    if (updated.quiz && !updated.quizzes) {
+                        updated.quizzes = [updated.quiz];
+                        delete updated.quiz;
+                    }
+                    return updated;
+                }
+                return m;
+            })
+        });
+    };
+
+    const removeModule = (modId: string) => {
+        const newModules = data.modules.filter((m: any) => m.id !== modId);
+        setData({ ...data, modules: newModules, totalModules: newModules.length });
+        toast.success("Módulo removido.");
+    };
+
+    const addLesson = (modId: string) => {
+        const newLesson = {
+            id: `less-${Date.now()}`,
+            title: 'Nova Aula',
+            type: 'video',
+            videoUrl: '',
+            description: ''
+        };
+        updateModule(modId, {
+            lessons: [...(data.modules?.find((m: any) => m.id === modId)?.lessons || []), newLesson]
+        });
+    };
+
+    const updateLesson = (modId: string, lessId: string, updates: any) => {
+        const mod = data.modules?.find((m: any) => m.id === modId);
+        const newLessons = (mod?.lessons || []).map((l: any) => l.id === lessId ? { ...l, ...updates } : l);
+        updateModule(modId, { lessons: newLessons });
+    };
+
+    const removeLesson = (modId: string, lessId: string) => {
+        const mod = data.modules?.find((m: any) => m.id === modId);
+        updateModule(modId, { lessons: (mod?.lessons || []).filter((l: any) => l.id !== lessId) });
+    };
+
+    const addMaterial = (modId: string) => {
+        const newMat = { id: `mat-${Date.now()}`, name: 'Novo Material', type: 'link', url: '' };
+        const mod = data.modules?.find((m: any) => m.id === modId);
+        updateModule(modId, { materials: [...(mod?.materials || []), newMat] });
+    };
+
+    const updateMaterial = (modId: string, matId: string, updates: any) => {
+        const mod = data.modules?.find((m: any) => m.id === modId);
+        const newMats = (mod?.materials || []).map((m: any) => m.id === matId ? { ...m, ...updates } : m);
+        updateModule(modId, { materials: newMats });
+    };
+
+    const removeMaterial = (modId: string, matId: string) => {
+        const mod = data.modules?.find((m: any) => m.id === modId);
+        updateModule(modId, { materials: (mod?.materials || []).filter((m: any) => m.id !== matId) });
+    };
+
+    const generateQuizIA = async (modId: string, qtyQuestions: number = 3, qtyOptions: number = 4) => {
+        const mod = data.modules?.find((m: any) => m.id === modId);
+
+        await triggerAITask('quiz_generator', async () => {
+            try {
+                const ideas = `Gere um quiz de ${qtyQuestions} perguntas para o módulo "${mod?.title}" com base nos temas: ${(mod?.lessons || []).map((l: any) => l.title).join(', ')}. Cada questão deve ter ${qtyOptions} alternativas.`;
+                const response = await callMestreIA('method_architect', { ideas });
+
+                // Simulate AI generation with requested parameters
+                const mockQuestions = Array.from({ length: qtyQuestions }).map((_, i) => ({
+                    id: `q${Date.now()}-${i}`,
+                    text: `Questão ${i + 1} gerada por IA sobre ${mod?.title}?`,
+                    options: Array.from({ length: qtyOptions }).map((_, j) => `Opção ${String.fromCharCode(65 + j)}`),
+                    correctOptionIndex: 0
+                }));
+
+                const newQuiz = { id: `quiz-${Date.now()}`, title: `Quiz IA: ${mod?.title}`, questions: mockQuestions };
+                const currentQuizzes = mod?.quizzes || (mod?.quiz ? [mod.quiz] : []);
+                updateModule(modId, { quizzes: [...currentQuizzes, newQuiz], quiz: null });
+                toast.success("Quiz gerado com sucesso!");
+            } catch (e) {
+                toast.error("Erro ao gerar quiz.");
+            }
+        }, 15 + (qtyQuestions * 2));
+    };
+
+    const addManualQuiz = (modId: string) => {
+        const mod = data.modules?.find((m: any) => m.id === modId);
+        const newQuiz = {
+            id: `quiz-${Date.now()}`,
+            title: 'Novo Quiz Manual',
+            questions: [{ id: `q${Date.now()}`, text: 'Digite sua pergunta...', options: ['', '', '', ''], correctOptionIndex: 0 }]
+        };
+        const currentQuizzes = mod?.quizzes || (mod?.quiz ? [mod.quiz] : []);
+        updateModule(modId, { quizzes: [...currentQuizzes, newQuiz], quiz: null });
+    };
+
+    const removeQuiz = (modId: string, quizId: string) => {
+        const mod = data.modules?.find((m: any) => m.id === modId);
+        if (!mod) return;
+
+        let currentQuizzes = [...(mod.quizzes || [])];
+        // Merge legacy quiz if it exists and isn't already in the list (though updateModule handles this, being explicit helps)
+        if (mod.quiz && !currentQuizzes.find((q: any) => q.id === mod.quiz.id)) {
+            currentQuizzes.push(mod.quiz);
+        }
+
+        const newQuizzes = currentQuizzes.filter((q: any) => q.id !== quizId);
+
+        // Update module: Set new quizzes list and force 'quiz' to null to clear legacy
+        updateModule(modId, { quizzes: newQuizzes, quiz: null });
+        toast.success("Quiz excluído com sucesso.");
+    };
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+            <div className="flex justify-between items-center bg-gray-900 p-6 rounded-[2rem] border border-gray-700">
+                <div>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Estrutura do Treinamento</h3>
+                    <p className="text-gray-500 text-xs text-balance max-w-sm">Crie módulos, adicione aulas e configure materiais complementares. Você também pode gerar quizes com IA baseados no conteúdo.</p>
+                </div>
+                <Button onClick={addModule} className="!bg-brand-primary text-black font-black uppercase text-xs">
+                    <PlusCircle className="w-4 h-4 mr-2" /> Novo Módulo
+                </Button>
+            </div>
+
+            <div className="space-y-4">
+                {!data.modules || data.modules.length === 0 ? (
+                    <div className="py-24 text-center border-2 border-dashed border-gray-800 rounded-[3rem] bg-gray-900/30">
+                        <Layers className="w-16 h-16 text-gray-800 mx-auto mb-4 opacity-30" />
+                        <p className="text-gray-500 font-black uppercase tracking-widest text-xs">Nenhum módulo criado ainda.</p>
+                        <Button onClick={addModule} className="mt-6 !bg-gray-800 border-gray-700 text-gray-400">Começar Estrutura</Button>
+                    </div>
+                ) : data.modules?.map((mod: any, mIdx: number) => (
+                    <div key={mod.id} className="bg-gray-900 rounded-[2.5rem] border border-gray-700 overflow-hidden shadow-2xl transition-all">
+                        <div
+                            className={`p-6 flex items-center justify-between cursor-pointer hover:bg-gray-800/50 ${expandedModule === mod.id ? 'bg-gray-800/30 border-b border-gray-800' : ''}`}
+                            onClick={() => setExpandedModule(expandedModule === mod.id ? null : mod.id)}
+                        >
+                            <div className="flex items-center gap-4">
+                                <span className="w-10 h-10 flex items-center justify-center bg-brand-primary text-black font-black rounded-2xl text-sm shadow-[0_0_15px_rgba(250,204,21,0.2)]">{mIdx + 1}</span>
+                                <input
+                                    className="bg-transparent text-white font-black uppercase tracking-tight outline-none focus:text-brand-primary text-lg w-full max-w-md"
+                                    value={mod.title}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => updateModule(mod.id, { title: e.target.value })}
+                                />
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="hidden md:flex flex-col items-end mr-4">
+                                    <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{mod.lessons?.length || 0} Aulas</span>
+                                    <span className="text-[11px] text-brand-primary font-black uppercase">{mod.materials?.length || 0} Materiais</span>
+                                </div>
+                                <button onClick={(e) => { e.stopPropagation(); removeModule(mod.id); }} className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all"><Trash className="w-4 h-4" /></button>
+                                {expandedModule === mod.id ? <ChevronUp className="w-6 h-6 text-gray-500" /> : <ChevronDown className="w-6 h-6 text-gray-500" />}
+                            </div>
+                        </div>
+
+                        <AnimatePresence>
+                            {expandedModule === mod.id && (
+                                <MotionDiv initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-8 space-y-10 bg-black/20 border-t border-gray-800/50">
+                                    {/* Lessons Section */}
+                                    <div className="space-y-6">
+                                        <div className="flex justify-between items-center bg-gray-800/40 p-3 rounded-2xl border border-gray-700/50">
+                                            <h4 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2"><Film className="w-5 h-5 text-brand-primary" /> Grade de Aulas</h4>
+                                            <Button onClick={() => addLesson(mod.id)} variant="secondary" className="!py-2 !px-4 !text-[10px] bg-gray-900 border-gray-700 hover:border-brand-primary text-white font-black uppercase"> + Nova Aula</Button>
+                                        </div>
+                                        <div className="grid gap-6">
+                                            {mod.lessons?.map((less: any, lIdx: number) => (
+                                                <div key={less.id} className="bg-gray-800/40 border border-gray-700/50 p-6 rounded-[2rem] flex flex-col gap-6 group hover:border-brand-primary/30 transition-all relative overflow-hidden">
+                                                    {uploadingItems[less.id] && (
+                                                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+                                                            <LoadingSpinner className="w-8 h-8 text-brand-primary mb-3" />
+                                                            <span className="text-[11px] font-black uppercase text-white tracking-widest">Enviando Vídeo: {uploadingItems[less.id]}%</span>
+                                                            <div className="w-48 h-1 bg-gray-800 rounded-full mt-3 overflow-hidden">
+                                                                <div className="h-full bg-brand-primary transition-all duration-300" style={{ width: `${uploadingItems[less.id]}%` }}></div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-12 h-12 bg-gray-950 rounded-2xl flex items-center justify-center text-gray-600 group-hover:text-brand-primary transition-colors border border-gray-700 shadow-inner"><Video className="w-6 h-6" /></div>
+                                                            <div>
+                                                                <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest block ml-1">Configuração da Aula</label>
+                                                                <input
+                                                                    placeholder="Ex: Introdução ao Método"
+                                                                    className="bg-transparent text-white text-lg font-black outline-none focus:text-brand-primary transition-colors w-full"
+                                                                    value={less.title}
+                                                                    onChange={(e) => updateLesson(mod.id, less.id, { title: e.target.value })}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => removeLesson(mod.id, less.id)} className="p-2 text-gray-700 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all"><Trash className="w-5 h-5" /></button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                                        <div className="space-y-3 p-5 bg-black/20 rounded-2xl border border-gray-800/50 relative group/info">
+                                                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                                <Upload className="w-3.5 h-3.5 text-brand-primary" /> Arquivo de Vídeo (Hospedagem Nexus)
+                                                            </label>
+                                                            <div className="flex gap-3">
+                                                                <input
+                                                                    type="file"
+                                                                    id={`lesson-upload-${less.id}`}
+                                                                    className="hidden"
+                                                                    accept="video/*"
+                                                                    onChange={(e) => e.target.files?.[0] && handleFileUpload(mod.id, less.id, e.target.files[0], 'lesson')}
+                                                                />
+                                                                <Button
+                                                                    onClick={() => document.getElementById(`lesson-upload-${less.id}`)?.click()}
+                                                                    className="flex-1 !bg-brand-primary !text-black border-brand-primary hover:!bg-brand-primary/80 !py-3 !text-[10px] uppercase font-black shadow-[0_4px_15px_rgba(250,204,21,0.2)]"
+                                                                >
+                                                                    <Upload className="w-3.5 h-3.5 mr-2" /> {less.videoFile ? `Alterar Vídeo (${less.videoFile})` : 'Fazer Upload do Vídeo'}
+                                                                </Button>
+                                                            </div>
+                                                            <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Recomendado para máxima segurança. O vídeo será processado e protegido contra pirataria em nossa infraestrutura.</p>
+                                                        </div>
+
+                                                        <div className="space-y-3 p-5 bg-black/20 rounded-2xl border border-gray-800/50">
+                                                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                                <ExternalLink className="w-3.5 h-3.5 text-blue-400" /> Link de Streaming Externo
+                                                            </label>
+                                                            <input
+                                                                placeholder="Cole a URL do YouTube, Vimeo ou Link Direto (MP4)..."
+                                                                className="w-full bg-gray-900 border border-gray-700/50 rounded-xl px-4 py-3 text-white text-xs font-bold outline-none focus:border-brand-primary"
+                                                                value={less.videoUrl}
+                                                                onChange={(e) => updateLesson(mod.id, less.id, { videoUrl: e.target.value, videoFile: '' })}
+                                                            />
+                                                            <p className="text-[11px] text-gray-600 font-medium">Use esta opção se o seu vídeo já estiver hospedado em plataformas externas ou em sua própria CDN.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Materials Section */}
+                                    <div className="space-y-6">
+                                        <div className="flex justify-between items-center bg-gray-800/40 p-4 rounded-3xl border border-gray-700/50">
+                                            <div>
+                                                <h4 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2"><FileText className="w-5 h-5 text-purple-400" /> Materiais de Apoio</h4>
+                                                <p className="text-[11px] text-gray-500 uppercase font-black mt-1">Ebooks, PDFs e Planilhas Complementares</p>
+                                            </div>
+                                            <Button onClick={() => addMaterial(mod.id)} variant="secondary" className="!py-2.5 !px-6 !text-[10px] bg-gray-950 border-gray-700 hover:border-purple-500 text-white font-black uppercase"> + Adicionar Material</Button>
+                                        </div>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            {mod.materials?.map((mat: any) => (
+                                                <div key={mat.id} className="bg-gray-800/40 border border-gray-700/50 p-6 rounded-[2rem] flex flex-col gap-4 group hover:border-purple-500/30 transition-all relative overflow-hidden">
+                                                    {uploadingItems[mat.id] && (
+                                                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+                                                            <LoadingSpinner className="w-6 h-6 text-purple-400 mb-2" />
+                                                            <span className="text-[9px] font-black uppercase text-white tracking-widest">Enviando: {uploadingItems[mat.id]}%</span>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2.5 bg-gray-950 rounded-xl text-purple-400 border border-gray-800 shadow-inner"><FileText className="w-5 h-5" /></div>
+                                                            <input
+                                                                className="bg-transparent text-white font-black uppercase tracking-tight outline-none focus:text-purple-400 text-xs"
+                                                                placeholder="Nome do Material"
+                                                                value={mat.name}
+                                                                onChange={(e) => updateMaterial(mod.id, mat.id, { name: e.target.value })}
+                                                            />
+                                                        </div>
+                                                        <button onClick={() => removeMaterial(mod.id, mat.id)} className="text-gray-700 hover:text-red-500 transition-colors"><Trash className="w-4 h-4" /></button>
+                                                    </div>
+
+                                                    <div className="grid gap-4">
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center justify-between px-1">
+                                                                <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest">Hospedagem de Arquivo:</label>
+                                                                {mat.fileName && <span className="text-[8px] bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full font-black uppercase">Enviado</span>}
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <input
+                                                                    type="file"
+                                                                    id={`mat-upload-${mat.id}`}
+                                                                    className="hidden"
+                                                                    accept=".pdf,.epub,.doc,.docx"
+                                                                    onChange={(e) => e.target.files?.[0] && handleFileUpload(mod.id, mat.id, e.target.files[0], 'material')}
+                                                                />
+                                                                <Button
+                                                                    onClick={() => document.getElementById(`mat-upload-${mat.id}`)?.click()}
+                                                                    className="flex-1 !bg-brand-primary !text-black border-brand-primary hover:!bg-brand-primary/80 !py-3 !text-[10px] uppercase font-black shadow-[0_4px_15px_rgba(250,204,21,0.2)]"
+                                                                >
+                                                                    <Upload className="w-4 h-4 mr-2" /> {mat.fileName ? `Alterar Arquivo (${mat.fileName})` : 'Fazer Upload do PDF/Ebook'}
+                                                                </Button>
+                                                            </div>
+                                                            <p className="text-[11px] text-gray-600 leading-tight">Envie arquivos de até 50MB. Serão entregues diretamente na biblioteca do aluno.</p>
+                                                        </div>
+
+                                                        <div className="space-y-2 pt-3 border-t border-gray-800/50">
+                                                            <div className="flex items-center justify-between px-1">
+                                                                <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest">Ou link Externo (Nuvem):</label>
+                                                                {mat.url && !mat.fileName && <span className="text-[8px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full font-black uppercase">Link Ativo</span>}
+                                                            </div>
+                                                            <div className="relative">
+                                                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
+                                                                <input
+                                                                    className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-xs font-bold outline-none focus:border-brand-primary transition-all"
+                                                                    placeholder="Google Drive, Dropbox, Notion..."
+                                                                    value={mat.url}
+                                                                    onChange={(e) => updateMaterial(mod.id, mat.id, { url: e.target.value, fileName: '' })}
+                                                                />
+                                                            </div>
+                                                            <p className="text-[11px] text-gray-600 font-medium">Certifique-se de que o link externo está com a permissão de "Leitura" pública habilitada.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Quiz Tool Integration */}
+                                    <div className="pt-10 border-t border-gray-800/50">
+                                        <div className="flex items-center gap-3 mb-8">
+                                            <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent to-gray-800"></div>
+                                            <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest">Avaliação e Reciclagem</span>
+                                            <div className="h-0.5 flex-1 bg-gradient-to-l from-transparent to-gray-800"></div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                                            <div className="p-8 bg-purple-900/10 border border-purple-500/20 rounded-[2.5rem] relative overflow-hidden text-left flex flex-col gap-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 bg-purple-500/20 rounded-2xl border border-purple-500/20"><Sparkles className="w-6 h-6 text-purple-400" /></div>
+                                                    <div>
+                                                        <span className="text-[14px] font-black text-white uppercase tracking-tight block">Gerador Nexus IA</span>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Configuração do Motor</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Nº Perguntas</label>
+                                                        <select
+                                                            className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-white text-xs font-bold outline-none focus:border-purple-500"
+                                                            value={aiSettings[mod.id]?.qty || 3}
+                                                            onChange={(e) => setAiSettings(prev => ({ ...prev, [mod.id]: { ...(prev[mod.id] || { qty: 3, opts: 4 }), qty: parseInt(e.target.value) } }))}
+                                                        >
+                                                            {[1, 2, 3, 5, 7, 10].map(n => <option key={n} value={n}>{n} {n === 1 ? 'Questão' : 'Questões'}</option>)}
+                                                        </select>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Alternativas</label>
+                                                        <select
+                                                            className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-white text-xs font-bold outline-none focus:border-purple-500"
+                                                            value={aiSettings[mod.id]?.opts || 4}
+                                                            onChange={(e) => setAiSettings(prev => ({ ...prev, [mod.id]: { ...(prev[mod.id] || { qty: 3, opts: 4 }), opts: parseInt(e.target.value) } }))}
+                                                        >
+                                                            {[2, 3, 4, 5].map(n => <option key={n} value={n}>{n} Opções</option>)}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => generateQuizIA(mod.id, aiSettings[mod.id]?.qty || 3, aiSettings[mod.id]?.opts || 4)}
+                                                    disabled={isProcessing}
+                                                    className="w-full !py-4 !bg-purple-600 hover:!bg-purple-500 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl transition-all disabled:opacity-50"
+                                                >
+                                                    <Sparkles className="w-4 h-4 inline mr-2" /> Gerar Quiz c/ IA
+                                                </button>
+                                            </div>
+
+                                            <button
+                                                onClick={() => {
+                                                    const quizId = `quiz-${Date.now()}`;
+                                                    addManualQuiz(mod.id);
+                                                    setTimeout(() => {
+                                                        const el = document.getElementById(quizId);
+                                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                    }, 100);
+                                                }}
+                                                className="group relative flex flex-col items-start p-8 rounded-[2.5rem] transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
+                                            >
+                                                {/* Premium Background Layer */}
+                                                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black border border-gray-800 group-hover:border-brand-primary/30 transition-colors duration-500"></div>
+                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(250,204,21,0.05),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+                                                {/* Content Layer */}
+                                                <div className="relative z-10 w-full">
+                                                    <div className="flex items-center justify-between mb-8">
+                                                        <div className="p-4 bg-gray-950 rounded-2xl border border-gray-800 shadow-inner group-hover:scale-110 group-hover:border-brand-primary/50 transition-all duration-500">
+                                                            <Pencil className="w-8 h-8 text-gray-600 group-hover:text-brand-primary" />
+                                                        </div>
+                                                        <div className="bg-gray-950/50 backdrop-blur-sm border border-gray-800 px-3 py-1.5 rounded-full">
+                                                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-primary transition-colors">Sem Custo</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <span className="text-xl font-black text-white uppercase tracking-tight block mb-2 group-hover:text-brand-primary transition-colors duration-300">Editor Manual</span>
+                                                    <p className="text-[11px] text-gray-500 leading-relaxed font-medium group-hover:text-gray-400 transition-colors">
+                                                        Construa sua avaliação do zero com controle total sobre questões, alternativas e pesos. Perfeito para certificações personalizadas.
+                                                    </p>
+
+                                                    <div className="mt-8 flex items-center gap-3 text-xs font-black text-brand-primary uppercase tracking-widest opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                                                        Começar a criar <ArrowRight className="w-4 h-4" />
+                                                    </div>
+                                                </div>
+
+                                                {/* Decorative Corner Element */}
+                                                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-brand-primary/5 rounded-full blur-2xl group-hover:bg-brand-primary/10 transition-colors"></div>
+                                            </button>
+                                        </div>
+
+                                        {(mod.quizzes || (mod.quiz ? [mod.quiz] : [])).map((q: any, qIdx: number) => (
+                                            <div id={q.id} key={q.id} className="bg-gradient-to-br from-brand-primary/10 to-transparent border border-brand-primary/30 p-8 rounded-[3rem] relative overflow-hidden transition-all duration-500 hover:border-brand-primary/50 scroll-mt-20">
+                                                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none"><Target className="w-24 h-24 text-brand-primary" /></div>
+                                                <div className="flex justify-between items-center mb-8">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 flex items-center justify-center bg-brand-primary text-black font-black rounded-xl text-xs">{qIdx + 1}</div>
+                                                        <div>
+                                                            <input
+                                                                className="text-sm font-black text-white uppercase tracking-tight bg-transparent outline-none focus:text-brand-primary transition-colors border-b border-gray-800"
+                                                                value={q.title}
+                                                                onChange={(e) => {
+                                                                    const newQuizzes = [...(mod.quizzes || [])];
+                                                                    newQuizzes[qIdx] = { ...q, title: e.target.value };
+                                                                    updateModule(mod.id, { quizzes: newQuizzes });
+                                                                }}
+                                                            />
+                                                            <p className="text-[11px] text-gray-500 uppercase font-black tracking-widest mt-1">Status: Ativo no Player • {q.questions?.length} Questões</p>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" onClick={(e) => { e.stopPropagation(); removeQuiz(mod.id, q.id); }} className="relative z-20 bg-red-900/20 text-red-400 text-[10px] font-black uppercase px-4 py-2 rounded-xl border border-red-500/20 hover:bg-red-900/40 transition-all">Remover Quiz</button>
+                                                </div>
+                                                <div className="grid gap-6">
+                                                    {q.questions.map((question: any, questIdx: number) => (
+                                                        <div key={question.id} className="bg-gray-950/50 p-6 rounded-2xl border border-gray-800 group hover:border-brand-primary/30 transition-all">
+                                                            <div className="flex gap-4 items-start mb-4">
+                                                                <span className="text-brand-primary font-black text-xs mt-1">{questIdx + 1}.</span>
+                                                                <input
+                                                                    className="bg-transparent w-full text-sm text-white font-bold outline-none border-b border-transparent focus:border-brand-primary pb-1"
+                                                                    value={question.text}
+                                                                    placeholder="Pergunta aqui..."
+                                                                    onChange={(e) => {
+                                                                        const newQuizzes = [...(mod.quizzes || [])];
+                                                                        const newQuestions = [...q.questions];
+                                                                        newQuestions[questIdx] = { ...question, text: e.target.value };
+                                                                        newQuizzes[qIdx] = { ...q, questions: newQuestions };
+                                                                        updateModule(mod.id, { quizzes: newQuizzes });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-8">
+                                                                {question.options.map((opt: string, oIdx: number) => (
+                                                                    <div key={oIdx} className="flex items-center gap-3 bg-black/40 p-3 rounded-xl border border-gray-800 cursor-pointer hover:border-gray-600 transition-all" onClick={() => {
+                                                                        const newQuizzes = [...(mod.quizzes || [])];
+                                                                        const newQuestions = [...q.questions];
+                                                                        newQuestions[questIdx] = { ...question, correctOptionIndex: oIdx };
+                                                                        newQuizzes[qIdx] = { ...q, questions: newQuestions };
+                                                                        updateModule(mod.id, { quizzes: newQuizzes });
+                                                                    }}>
+                                                                        <div className={`w-4 h-4 rounded-full border-2 border-gray-700 flex items-center justify-center transition-all ${question.correctOptionIndex === oIdx ? 'bg-brand-primary border-brand-primary' : ''}`}>
+                                                                            {question.correctOptionIndex === oIdx && <div className="w-1.5 h-1.5 bg-black rounded-full" />}
+                                                                        </div>
+                                                                        <input
+                                                                            className="bg-transparent flex-1 text-xs text-gray-400 outline-none"
+                                                                            value={opt}
+                                                                            placeholder={`Opção ${oIdx + 1}`}
+                                                                            onChange={(e) => {
+                                                                                const newQuizzes = [...(mod.quizzes || [])];
+                                                                                const newQuestions = [...q.questions];
+                                                                                const newOptions = [...question.options];
+                                                                                newOptions[oIdx] = e.target.value;
+                                                                                newQuestions[questIdx] = { ...question, options: newOptions };
+                                                                                newQuizzes[qIdx] = { ...q, questions: newQuestions };
+                                                                                updateModule(mod.id, { quizzes: newQuizzes });
+                                                                            }}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <div className="mt-4 flex justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const newQuizzes = [...(mod.quizzes || [])];
+                                                                        const newQuestions = q.questions.filter((_: any, i: number) => i !== questIdx);
+                                                                        newQuizzes[qIdx] = { ...q, questions: newQuestions };
+                                                                        updateModule(mod.id, { quizzes: newQuizzes });
+                                                                    }}
+                                                                    className="text-[9px] font-black uppercase text-red-500/50 hover:text-red-500 transition-colors"
+                                                                >
+                                                                    Remover Questão
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    <Button
+                                                        onClick={() => {
+                                                            const newQuizzes = [...(mod.quizzes || [])];
+                                                            const newQuestions = [...q.questions, { id: `q${Date.now()}`, text: '', options: ['', '', '', ''], correctOptionIndex: 0 }];
+                                                            newQuizzes[qIdx] = { ...q, questions: newQuestions };
+                                                            updateModule(mod.id, { quizzes: newQuizzes });
+                                                        }}
+                                                        variant="secondary"
+                                                        className="!py-3 !text-[10px] bg-gray-900 border-gray-800 hover:border-brand-primary/50"
+                                                    >
+                                                        + Adicionar Questão Manualmente
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </MotionDiv>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                ))}
+            </div>
+
+            <div className="bg-gray-900 border border-gray-700 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-brand-primary/10 rounded-2xl border border-brand-primary/20"><CheckCircle className="w-6 h-6 text-brand-primary" /></div>
+                    <div>
+                        <p className="text-white font-black uppercase tracking-tight">Grade Concluída?</p>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Revise se todos os módulos e aulas estão corretos.</p>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <Button variant="secondary" onClick={onBack} className="!bg-gray-800 border-gray-700 text-gray-500 uppercase font-black text-[10px] tracking-widest !py-4 px-8"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar</Button>
+                    <Button onClick={onNext} disabled={!data.modules?.length} className="!px-12 !py-4 shadow-xl uppercase font-black text-[10px] tracking-widest !bg-green-600">Salvar e Avançar</Button>
+                </div>
+            </div>
+        </div >
+    );
+};
 
 /**
  * Step 4: Curriculum and materials (Enhanced with Dynamic Costing & Value Perception)
@@ -394,6 +996,18 @@ const Step4Content: React.FC<{
     userCredits: number;
     onRecharge: () => void;
 }> = ({ data, setData, context, fileQueue, setFileQueue, addedLinks, setAddedLinks, resourceLink, setResourceLink, handleAddLink, handleFileSelection, triggerAITask, handleGenerateSummary, isProcessingFiles, onBack, onNext, userCredits, onRecharge }) => {
+
+    // If Traditional mode, use the Manual structure editor
+    if (data.category === 'standard') {
+        return (
+            <Step4TraditionalContent
+                data={data} setData={setData}
+                onBack={onBack} onNext={onNext}
+                triggerAITask={triggerAITask}
+                isProcessing={isProcessingFiles}
+            />
+        );
+    }
 
     // Dynamic Cost Calculation (API Cost + 30% Margin)
     const calculateStructureCost = () => {

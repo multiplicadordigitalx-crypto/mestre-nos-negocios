@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ReactiveAudioVisualizer, VisualizerMode } from '@/components/ReactiveAudioVisualizer';
 import { GrokChatInterface, GrokChatHandle } from '@/components/GrokChatInterface';
@@ -14,6 +15,10 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { callMestreIA, generateQuizFromContent } from '@/services/mestreIaService';
 import { QuizInterface, Question } from '@/components/player/QuizInterface';
 import toast from 'react-hot-toast';
+import { CreditBalanceWidget } from '@/components/CreditBalanceWidget';
+import { useMentorState } from '@/context/MentorStateContext';
+import { LessonCheckpoint } from '@/types/legacy';
+import { NEXUS_TOOLS } from '@/services/ToolRegistry';
 
 
 
@@ -32,17 +37,24 @@ interface StudentPlayerViewProps {
     onBack: () => void;
     lesson: Lesson;
     course: Course;
+    onNavigate?: (page: string) => void;
 }
 
-export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, lesson, course }) => {
+export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, lesson, course, onNavigate }) => {
     const { user } = useAuth();
+    const navigate = useNavigate();
+    const { startMission } = useMentorState();
+    const [processedCheckpoints, setProcessedCheckpoints] = useState<string[]>([]);
+
+    // Safety Guard
+    if (!lesson) return <div className="p-8 text-white">Carregando aula...</div>;
     const [isPlaying, setIsPlaying] = useState(false);
     const [volume, setVolume] = useState(0.8);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(600);
     const [playbackRate, setPlaybackRate] = useState(1.0);
     const [loop, setLoop] = useState(false);
-    const [visualizerMode, setVisualizerMode] = useState<VisualizerMode>('STARFIELD');
+    const [visualizerMode, setVisualizerMode] = useState<VisualizerMode>('NUCLEUS');
     const [isLightMode, setIsLightMode] = useState(false);
 
     // Theme State
@@ -86,7 +98,12 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
     const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null); // Keep ref for direct access if needed, but sync with state
 
-    const audioSrc = lesson.videoUrl || "https://actions.google.com/sounds/v1/science_fiction/hum_in_a_spaceship.ogg";
+    // AI Audio State
+    const [aiAudioElement, setAiAudioElement] = useState<HTMLAudioElement | null>(null);
+    const aiAudioRef = useRef<HTMLAudioElement | null>(null);
+    const [activeSource, setActiveSource] = useState<'LESSON' | 'AI'>('LESSON');
+
+    const audioSrc = lesson.videoUrl || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"; // Valid placeholder
 
     // Hook for Mentorship Logic
     const { isLocked, unlockCurrentSegment, currentSegment } = useLessonFlow(
@@ -142,7 +159,44 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
     };
 
     const handleTimeUpdate = () => {
-        if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+        if (audioRef.current) {
+            const time = audioRef.current.currentTime;
+            setCurrentTime(time);
+
+            // Checkpoints Logic
+            if (lesson.checkpoints) {
+                lesson.checkpoints.forEach(cp => {
+                    // Trigger within 1s window, efficiently
+                    const isTime = Math.abs(time - cp.time) < 1.0;
+                    const id = `${lesson.id}-${cp.time}`;
+
+                    if (isTime && !processedCheckpoints.includes(id)) {
+                        setProcessedCheckpoints(prev => [...prev, id]);
+
+                        // Pause Player
+                        if (audioRef.current) audioRef.current.pause();
+                        setIsPlaying(false);
+
+                        // Handle Checkpoint Type
+                        if (cp.type === 'tool_redirect' && cp.toolId) {
+                            startMission({
+                                id: id,
+                                label: cp.toolTaskLabel || "Nova Missão",
+                                toolId: cp.toolId,
+                                status: 'pending',
+                                returnTimestamp: cp.time,
+                                lessonId: lesson.id,
+                                context: `The student stopped the lesson "${lesson.title}" at ${cp.time}s to use tool ${cp.toolId}.`
+                            });
+                            toast.success("🎯 Missão Iniciada! O Mentor está te aguardando.", { duration: 5000 });
+                        } else if (cp.type === 'quiz') {
+                            setActiveTab('quiz');
+                            toast("🧠 Checkpoint de Conhecimento!", { icon: "📝" });
+                        }
+                    }
+                });
+            }
+        }
     };
 
     const handleLoadedMetadata = () => {
@@ -155,12 +209,12 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
     const themeBorder = isLightMode ? 'border-gray-200' : 'border-gray-800';
     const themeTextMain = isLightMode ? 'text-gray-900' : 'text-white';
     const themeTextSub = isLightMode ? 'text-gray-500' : 'text-gray-500';
-    const themeBgSidebar = isLightMode ? 'bg-white' : 'bg-[#050510]';
+    const themeBgSidebar = isLightMode ? 'bg-gray-200' : 'bg-[#050510]';
     // Use theme-specific BG in dark mode if desired, or keep generic dark
-    const themeBgMain = isLightMode ? 'bg-[#F3F4F6]' : 'bg-gray-950';
+    const themeBgMain = isLightMode ? 'bg-[#d1d5db]' : 'bg-gray-950';
 
     return (
-        <div className={`flex h-[calc(100dvh-145px)] md:h-[calc(100vh-100px)] overflow-hidden rounded-2xl md:rounded-[2rem] border shadow-2xl relative transition-colors duration-300 ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-[#030712] border-gray-800'}`}>
+        <div className={`flex h-[calc(100dvh-145px)] md:h-[calc(100vh-100px)] overflow-hidden rounded-2xl md:rounded-[2rem] border shadow-2xl relative transition-colors duration-300 ${isLightMode ? 'bg-gray-300 border-gray-400' : 'bg-[#030712] border-gray-800'}`}>
             <audio
                 ref={setAudioElement}
                 src={audioSrc}
@@ -174,7 +228,7 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
             <div className={`w-[420px] shrink-0 border-r flex flex-col relative z-20 transition-colors duration-300 hidden md:flex ${themeBgSidebar} ${themeBorder}`}>
 
                 {/* Header Back & Theme Selector */}
-                <div className={`p-4 border-b flex flex-col gap-3 transition-colors duration-300 ${themeBorder} ${isLightMode ? 'bg-white' : 'bg-black/50'}`}>
+                <div className={`p-4 border-b flex flex-col gap-3 transition-colors duration-300 ${themeBorder} ${isLightMode ? 'bg-gray-100' : 'bg-black/50'}`}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <button onClick={onBack} className={`p-2 rounded-full transition-colors ${isLightMode ? 'bg-gray-100 hover:bg-gray-200 text-gray-600' : 'bg-gray-900 hover:bg-gray-800 text-gray-400'}`}>
@@ -191,42 +245,50 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                         </button>
                     </div>
 
-                    {/* Course Theme Selector - Student Control */}
-                    <div className="flex gap-2">
-                        {Object.values(COURSE_THEMES).map((t) => (
-                            <button
-                                key={t.id}
-                                onClick={() => setCurrentTheme(t)}
-                                className={`h-2 flex-1 rounded-full transition-all ${currentTheme.id === t.id ? 'scale-100 opacity-100 ring-2 ring-offset-1 ring-offset-transparent' : 'scale-90 opacity-40 hover:opacity-100'}`}
-                                style={{ backgroundColor: t.primary, boxShadow: currentTheme.id === t.id ? `0 0 10px ${t.primary}` : 'none' }}
-                                title={t.name}
-                            />
-                        ))}
+
+
+                    {/* Recharge Card */}
+                    <div className="w-full">
+                        <CreditBalanceWidget onRecharge={() => onNavigate && onNavigate('recharge')} />
                     </div>
+
+                    {/* Daily Limit Badge */}
+                    {user?.dailyMestreIALimit && (
+                        <div className={`px-3 py-2 rounded-xl border flex items-center justify-between gap-2 text-[10px] font-bold ${isLightMode ? 'bg-white border-gray-200 text-gray-600' : 'bg-white/5 border-white/10 text-gray-400'}`}>
+                            <span className="uppercase tracking-wider">Limite Diário</span>
+                            <span className={((user.dailyUsage || 0) >= user.dailyMestreIALimit) ? 'text-red-500' : 'text-green-500'}>
+                                {user.dailyUsage || 0}/{user.dailyMestreIALimit}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Visualizer Container */}
-                <div className={`flex-1 relative flex items-center justify-center overflow-hidden border-b transition-colors duration-300 ${themeBorder} ${isLightMode ? 'bg-gray-50' : 'bg-black'}`}>
+                <div className={`flex-1 relative flex items-center justify-center overflow-hidden border-b transition-colors duration-300 ${themeBorder} ${isLightMode ? 'bg-gray-200' : 'bg-black'}`}>
                     <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ background: `radial-gradient(circle at center, ${currentTheme.primary}22, transparent)` }}></div>
 
                     <ReactiveAudioVisualizer
-                        audioElement={audioElement || undefined}
-                        isPlaying={isPlaying}
+                        audioElement={activeSource === 'AI' ? (aiAudioElement || undefined) : (audioElement || undefined)}
+                        isPlaying={isPlaying || activeSource === 'AI'}
                         mode={visualizerMode}
                         primaryColor={currentTheme.primary}
                         secondaryColor={currentTheme.secondary}
                         theme={isLightMode ? 'light' : 'dark'}
                     />
 
-                    {/* Floating Mode Switcher */}
-                    <div className={`absolute top-4 left-1/2 -translate-x-1/2 flex gap-2 p-1.5 rounded-full border shadow-xl overflow-x-auto max-w-[90%] no-scrollbar backdrop-blur-md transition-colors duration-300 ${isLightMode ? 'bg-white/80 border-gray-200' : 'bg-black/60 border-white/10'}`}>
-                        <VisualizerIcon active={visualizerMode === 'STARFIELD'} onClick={() => setVisualizerMode('STARFIELD')} icon={<Star className="w-3 h-3" />} isLightMode={isLightMode} activeColor={currentTheme.primary} />
-                        <VisualizerIcon active={visualizerMode === 'NOVA'} onClick={() => setVisualizerMode('NOVA')} icon={<Aperture className="w-3 h-3" />} isLightMode={isLightMode} activeColor={currentTheme.primary} />
-                        <VisualizerIcon active={visualizerMode === 'SPIRAL'} onClick={() => setVisualizerMode('SPIRAL')} icon={<Radio className="w-3 h-3" />} isLightMode={isLightMode} activeColor={currentTheme.primary} />
-                        <VisualizerIcon active={visualizerMode === 'WAVEFORM'} onClick={() => setVisualizerMode('WAVEFORM')} icon={<Activity className="w-3 h-3" />} isLightMode={isLightMode} activeColor={currentTheme.primary} />
-                        <VisualizerIcon active={visualizerMode === 'SMOKE'} onClick={() => setVisualizerMode('SMOKE')} icon={<Wind className="w-3 h-3" />} isLightMode={isLightMode} activeColor={currentTheme.primary} />
-                        <VisualizerIcon active={visualizerMode === 'LIQUID'} onClick={() => setVisualizerMode('LIQUID')} icon={<FlaskConical className="w-3 h-3" />} isLightMode={isLightMode} activeColor={currentTheme.primary} />
-                    </div>
+
+
+                    {/* Effects Button (Mobile Aesthetic) */}
+                    <button
+                        onClick={() => {
+                            const modes: VisualizerMode[] = ['NUCLEUS', 'NEURAL', 'SPECTRUM', 'VORTEX', 'SYNAPSE', 'ECLIPSE'];
+                            const nextIndex = (modes.indexOf(visualizerMode) + 1) % modes.length;
+                            setVisualizerMode(modes[nextIndex]);
+                        }}
+                        className="absolute top-4 right-4 px-2 py-1 bg-black/40 backdrop-blur rounded text-[10px] text-white/50 hover:bg-black/60 hover:text-white transition-all uppercase font-bold tracking-wider border border-white/5 z-50"
+                    >
+                        Efeitos
+                    </button>
 
                     <div className="absolute bottom-4 right-4 animate-pulse">
                         <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border ${isLightMode ? 'bg-green-100 border-green-200' : 'bg-green-500/20 border-green-500/30'}`}>
@@ -239,7 +301,7 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
 
 
                 {/* Compact Player Controls */}
-                <div className={`p-6 space-y-4 transition-colors duration-300 ${isLightMode ? 'bg-white' : 'bg-[#080812]'}`}>
+                <div className={`p-6 space-y-4 transition-colors duration-300 ${isLightMode ? 'bg-gray-100' : 'bg-[#080812]'}`}>
 
                     {/* Status Banner for Logic */}
                     {isLocked && (
@@ -290,6 +352,21 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                             else startListening();
                         }}
                         isListening={isListening}
+                        showMaximize={false}
+                        customControls={
+                            <button
+                                onClick={() => {
+                                    const themes = Object.values(COURSE_THEMES);
+                                    const currentIndex = themes.findIndex(t => t.id === currentTheme.id);
+                                    const nextIndex = (currentIndex + 1) % themes.length;
+                                    setCurrentTheme(themes[nextIndex]);
+                                }}
+                                className={`absolute bottom-1 right-2 flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all active:scale-95 ${isLightMode ? 'bg-gray-100/50 border-gray-200 text-gray-600 hover:bg-gray-200' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: currentTheme.primary }}></div>
+                                <span className="text-[8px] font-bold uppercase tracking-wider">Estilo</span>
+                            </button>
+                        }
                     />
                 </div>
             </div>
@@ -299,22 +376,22 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                 <div className={`absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none transition-opacity duration-300 ${isLightMode ? 'opacity-20' : 'opacity-5'}`}></div>
 
                 {/* Floating Tab Switcher (Main Stage) */}
-                <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-30 gap-1 p-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-lg">
+                <div className={`hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-30 gap-1 p-1 rounded-full backdrop-blur-md border shadow-lg transition-colors duration-300 ${isLightMode ? 'bg-white/60 border-gray-200' : 'bg-black/60 border-white/10'}`}>
                     <button
                         onClick={() => setActiveTab('mentor')}
                         className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wide transition-all ${activeTab === 'mentor'
-                            ? 'text-black shadow-lg scale-105'
-                            : 'text-gray-400 hover:text-white hover:bg-white/10'
+                            ? (isLightMode ? 'bg-gray-900 text-white shadow-lg scale-105' : 'bg-white text-black shadow-lg scale-105')
+                            : (isLightMode ? 'text-gray-500 hover:text-gray-900 hover:bg-black/5' : 'text-gray-400 hover:text-white hover:bg-white/10')
                             }`}
-                        style={activeTab === 'mentor' ? { backgroundColor: currentTheme.primary } : {}}
+                        style={activeTab === 'mentor' ? {} : {}}
                     >
                         Mentor IA
                     </button>
                     <button
                         onClick={() => setActiveTab('quiz')}
                         className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wide transition-all ${activeTab === 'quiz'
-                            ? 'text-black shadow-lg scale-105'
-                            : 'text-gray-400 hover:text-white hover:bg-white/10'
+                            ? (isLightMode ? 'bg-gray-900 text-white shadow-lg scale-105' : 'bg-white text-black shadow-lg scale-105')
+                            : (isLightMode ? 'text-gray-500 hover:text-gray-900 hover:bg-black/5' : 'text-gray-400 hover:text-white hover:bg-white/10')
                             }`}
                         style={activeTab === 'quiz' ? { backgroundColor: currentTheme.primary } : {}}
                     >
@@ -324,7 +401,7 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                 </div>
 
                 {/* Top Title & Info */}
-                <div className={`border-b px-4 py-2 md:px-6 md:py-4 transition-colors duration-300 flex flex-col gap-1 ${themeBorder} ${isLightMode ? 'bg-white' : 'bg-[#050510]'}`}>
+                <div className={`border-b px-4 py-2 md:px-6 md:py-4 transition-colors duration-300 flex flex-col gap-1 ${themeBorder} ${isLightMode ? 'bg-gray-300' : 'bg-[#050510]'}`}>
                     <div className="flex flex-col gap-2">
                         {/* Row 1: Title & Badge */}
                         <div className="flex items-center justify-between">
@@ -356,12 +433,7 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                                 <span className={`text-[10px] font-bold ${isLightMode ? 'text-gray-700' : 'text-gray-400'}`}>{lesson.title}</span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 opacity-80">
-                                <span className="text-[10px] font-bold uppercase text-gray-500">Seu Saldo:</span>
-                                <div className="flex items-center gap-1 text-xs font-black" style={{ color: currentTheme.primary }}>
-                                    <Zap className="w-3.5 h-3.5" /> 50
-                                </div>
-                            </div>
+                            <CreditBalanceWidget onRecharge={() => onNavigate && onNavigate('recharge')} />
                         </div>
                     </div>
                 </div>
@@ -377,6 +449,7 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                                     hideHeader={true}
                                     dailyLimit={course.aiConfig?.monthlyCreditAllowance || 50}
                                     contextId={course.id}
+                                    isLightMode={isLightMode}
                                     externalIsListening={isListening}
                                     onExternalMicClick={() => {
                                         if (!isSupported) return toast.error("Seu navegador não suporta voz.");
@@ -389,6 +462,19 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                                     // Or I pass it via onBeforeSendMessage? No, GrokChatInterface calls checkAndConsume directly.
                                     // I should pass dailyLimit as a prop to GrokChatInterface.
                                     // Let's first remove this manual block.
+                                    // Handle AI Voice
+                                    onAudioGenerated={(url) => {
+                                        if (audioRef.current) {
+                                            audioRef.current.pause();
+                                            setIsPlaying(false);
+                                        }
+                                        if (aiAudioRef.current) {
+                                            aiAudioRef.current.src = url;
+                                            aiAudioRef.current.play();
+                                            setActiveSource('AI');
+                                            toast('Mentor IA falando...', { icon: '🗣️' });
+                                        }
+                                    }}
                                     onBeforeSendMessage={undefined} onAction={(action, payload) => {
                                         console.log("AI Command Received:", action, payload);
                                         if (action === 'OPEN_QUIZ' || action === 'NAVIGATE_QUIZ') {
@@ -401,6 +487,22 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                                 />
                             </div>
 
+                            {/* Hidden AI Audio Element */}
+                            <audio
+                                ref={(el) => {
+                                    aiAudioRef.current = el;
+                                    setAiAudioElement(el);
+                                }}
+                                className="hidden"
+                                onEnded={() => {
+                                    setActiveSource('LESSON'); // Revert visualizer to lesson
+                                    // Optional: Resume lesson automatically?
+                                    // setIsPlaying(true); 
+                                    // if(audioRef.current) audioRef.current.play();
+                                }}
+                                crossOrigin="anonymous"
+                            />
+
 
                         </>
                     ) : (
@@ -412,6 +514,7 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                                 toast.success(`Quiz Finalizado! +${score} XP`);
                                 // Could play a sound or unlock next module here
                             }}
+                            isLightMode={isLightMode}
                         />
                     )}
                 </div>
@@ -460,7 +563,7 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                     isPlaying={isPlaying}
                     visualizerMode={visualizerMode}
                     toggleVisualizerMode={() => {
-                        const modes: VisualizerMode[] = ['STARFIELD', 'NOVA', 'SPIRAL', 'WAVEFORM', 'SMOKE', 'LIQUID'];
+                        const modes: VisualizerMode[] = ['NUCLEUS', 'NEURAL', 'SPECTRUM', 'VORTEX', 'SYNAPSE', 'ECLIPSE'];
                         const nextIndex = (modes.indexOf(visualizerMode) + 1) % modes.length;
                         setVisualizerMode(modes[nextIndex]);
                     }}
@@ -487,6 +590,8 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                         else startListening();
                     }}
                     isListening={isListening}
+                    onToggleLightMode={toggleTheme}
+                    onNavigate={onNavigate}
                 />
             </div>
 

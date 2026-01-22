@@ -29,14 +29,25 @@ interface GrokChatProps {
     onExternalMicClick?: () => void;
     onAction?: (action: string, payload?: any) => void;
     onBeforeSendMessage?: () => Promise<boolean | { proceed: boolean, skipWallet: boolean }>;
+    onAudioGenerated?: (audioUrl: string) => void; // New prop for voice
     dailyLimit?: number;
     contextId?: string;
+    isLightMode?: boolean;
 }
+
+import { ElevenLabsService } from '@/services/ElevenLabsService'; // Import Service
 
 export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>((props, ref) => {
     const { user } = useAuth();
     const { checkAndConsume } = useCreditGuard();
-    const { currentTheme, hideHeader, externalIsListening, onExternalMicClick, onAction } = props;
+    const { currentTheme, hideHeader, externalIsListening, onExternalMicClick, onAction, onAudioGenerated, isLightMode = false } = props;
+
+    // Dynamic Theme Variables
+    const themeBg = isLightMode ? 'bg-[#fcfcfc]' : 'bg-[#0c0d12]';
+    const themeText = isLightMode ? 'text-gray-900' : 'text-white';
+    const themeBorder = isLightMode ? 'border-gray-200' : 'border-gray-800';
+    const msgUserBg = isLightMode ? 'bg-gray-200 text-gray-900' : 'bg-gray-800 text-white';
+    const msgAiBg = isLightMode ? 'bg-white border-gray-200 text-gray-900 shadow-sm' : 'bg-gradient-to-br from-gray-900 to-black border-gray-800 text-gray-200';
 
     // Default to brand-primary (yellow-400) if no theme provided
     const themeColor = currentTheme?.primary || '#FACC15';
@@ -192,6 +203,17 @@ export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, aiMsg]);
+
+            // 5. Generate Audio (Voice)
+            if (onAudioGenerated) {
+                // Use 'Rachel' (Warm) for Wellness/Marketing, 'Antoni' (Authoritative) for Business?
+                // For now, default to Rachel as per plan
+                ElevenLabsService.generateAudio(finalContent, '21m00Tcm4TlvDq8ikWAM')
+                    .then(url => {
+                        if (url) onAudioGenerated(url);
+                    });
+            }
+
         } catch (error) {
             toast.error("Erro ao falar com o Mentor.");
         } finally {
@@ -221,7 +243,7 @@ export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#0c0d12] border-l border-gray-800">
+        <div className={`flex flex-col h-full ${themeBg} border-l ${themeBorder}`}>
             {/* Hidden Inputs */}
             <input
                 type="file"
@@ -240,13 +262,13 @@ export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>
 
             {/* Header */}
             {!hideHeader && (
-                <div className="p-2 md:p-3 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 backdrop-blur">
+                <div className={`p-2 md:p-3 border-b ${themeBorder} flex justify-between items-center bg-gray-900/50 backdrop-blur`}>
                     <div className="flex items-center gap-2">
                         <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${themeColor}20` }}>
                             <Sparkles className="w-4 h-4" style={{ color: themeColor }} />
                         </div>
                         <div className="flex items-center gap-2">
-                            <h3 className="font-black text-white text-xs uppercase tracking-wide">Mentor IA</h3>
+                            <h3 className={`font-black ${themeText} text-xs uppercase tracking-wide`}>Mentor IA</h3>
                             <div className="flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                                 <span className="text-[9px] text-gray-500 font-bold uppercase">Online</span>
@@ -279,8 +301,8 @@ export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>
                         </div>
                         <div className={`flex flex-col max-w-[88%] md:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                             <div className={`p-3 md:p-5 rounded-2xl text-sm md:text-base leading-relaxed ${msg.role === 'user'
-                                ? 'bg-gray-800 text-white rounded-tr-none'
-                                : 'bg-gradient-to-br from-gray-900 to-black border border-gray-800 text-gray-200 rounded-tl-none shadow-lg'
+                                ? `${msgUserBg} rounded-tr-none`
+                                : `${msgAiBg} border rounded-tl-none shadow-lg`
                                 }`}>
                                 <div className="whitespace-pre-wrap">{msg.content}</div>
 
@@ -315,8 +337,8 @@ export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>
             <div
                 className="p-2 md:p-5 border-t transition-colors duration-300"
                 style={{
-                    borderTopColor: `${themeColor}20`,
-                    background: `linear-gradient(to top, ${themeColor}10, transparent)`
+                    borderTopColor: isLightMode ? `${currentTheme?.primary}40` : `${themeColor}20`,
+                    background: isLightMode ? `linear-gradient(to top, ${currentTheme?.primary}05, transparent)` : `linear-gradient(to top, ${themeColor}10, transparent)`
                 }}
             >
                 {/* PREVIEW AREA */}
@@ -343,7 +365,7 @@ export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>
                 )}
 
                 <div
-                    className="relative bg-[#0c0d12] border border-gray-700 rounded-3xl p-3 transition-colors shadow-lg"
+                    className={`relative border rounded-3xl p-3 transition-colors shadow-lg ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0c0d12] border-gray-700'}`}
                     style={{ borderColor: input.trim() ? themeColor : undefined }} // Optional: Dynamic focus border
                 >
                     <textarea
@@ -351,7 +373,7 @@ export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyPress}
                         placeholder="Pergunte sobre a aula..."
-                        className="w-full bg-transparent text-white text-base resize-none outline-none max-h-40 px-3 py-2 placeholder-gray-500 scrollbar-hide font-medium leading-relaxed"
+                        className={`w-full bg-transparent ${themeText} text-base resize-none outline-none max-h-40 px-3 py-2 placeholder-gray-500 scrollbar-hide font-medium leading-relaxed`}
                         rows={1}
                         style={{ minHeight: '56px' }}
                     />

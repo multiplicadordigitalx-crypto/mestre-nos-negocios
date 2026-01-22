@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Zap, CheckCircle, Brain, Layers, Star, XCircle, RotateCcw } from '../../Icons';
+import { Trophy, TrendingUp, Target, Award } from 'lucide-react';
+import { ChevronLeft, Zap, CheckCircle, Brain, Layers, Star, XCircle, RotateCcw, AlertCircle } from '../../Icons';
 import Button from '../../Button';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../../hooks/useAuth';
+import { consumeCredits } from '../../../services/mockFirebase';
+import { InsufficientFundsAlert } from '../language/InsufficientFundsAlert';
+
+
+import { StudentPage } from '../../../types';
 
 interface JurisMemoriaProps {
     onBack: () => void;
+    navigateTo?: (page: StudentPage) => void;
 }
 
 type SetupState = 'SETUP' | 'ESTIMATING' | 'ACTIVE' | 'ANALYSIS_POPUP' | 'SUMMARY';
 
-export const JurisMemoria: React.FC<JurisMemoriaProps> = ({ onBack }) => {
+export const JurisMemoria: React.FC<JurisMemoriaProps> = ({ onBack, navigateTo }) => {
+    const { user, refreshUser } = useAuth();
     const [step, setStep] = useState<SetupState>('SETUP');
     const [topic, setTopic] = useState('');
     const [area, setArea] = useState('');
@@ -26,6 +35,9 @@ export const JurisMemoria: React.FC<JurisMemoriaProps> = ({ onBack }) => {
     const [isFlipped, setIsFlipped] = useState(false);
 
     const [difficulty, setDifficulty] = useState('ASSOCIADO');
+
+    // Modal States
+    const [showInsufficientModal, setShowInsufficientModal] = useState(false);
 
     const DIFFICULTY_LEVELS = {
         'ESTAGIARIO': { label: 'Estagiário', cost: 1, color: 'text-blue-400', border: 'border-blue-500/50' },
@@ -166,12 +178,37 @@ export const JurisMemoria: React.FC<JurisMemoriaProps> = ({ onBack }) => {
         setShowProcessConfirm(true);
     };
 
-    const confirmProcessing = () => {
+    const confirmProcessing = async () => {
+        if (!user) {
+            toast.error("Erro de autenticação. Recarregue a página.");
+            return;
+        }
+
+        if ((user.creditBalance || 0) < reservedCredits) {
+            setShowInsufficientModal(true);
+            return;
+        }
+
         setShowProcessConfirm(false);
         setStep('ESTIMATING');
+
+        // Process consumption
+        const result = await consumeCredits(user.uid, 'util_jurismemoria', reservedCredits, `JurisMemória: ${topic} (${cardCount} cards)`);
+
+        if (!result.success) {
+            setStep('SETUP');
+            toast.error(result.message || "Erro ao processar pagamento.");
+            return;
+        }
+
+        // Update local balance immediately
+        if (refreshUser) refreshUser();
+
         setTimeout(() => {
             setDeck(generateDeck(topic, cardCount, area));
-            toast.success("Cards gerados com sucesso!", { icon: '🧠' });
+            // Package Logic: Charge FULL amount immediately upon generation
+            setConsumedCredits(reservedCredits);
+            toast.success("Deck gerado e debitado com sucesso!", { icon: '🧠' });
             setStep('ACTIVE');
         }, 2000);
     };
@@ -183,7 +220,7 @@ export const JurisMemoria: React.FC<JurisMemoriaProps> = ({ onBack }) => {
 
         const newReviewed = cardsReviewed + 1;
         setCardsReviewed(newReviewed);
-        setConsumedCredits(newReviewed * getCostPerCard());
+        // Cost is already fully consumed at start (Package Model)
 
         setIsFlipped(false);
         if (currentCardIdx < deck.length - 1) {
@@ -193,13 +230,9 @@ export const JurisMemoria: React.FC<JurisMemoriaProps> = ({ onBack }) => {
         }
     };
 
-    const finishSession = (finalReviewedCount?: number) => {
-        const viewed = finalReviewedCount || cardsReviewed;
-        const totalCost = viewed * getCostPerCard();
-        const refund = reservedCredits - totalCost;
-
-        setConsumedCredits(totalCost);
-        setRefundAmount(Math.max(0, refund));
+    const finishSession = (_finalReviewedCount?: number) => {
+        // No refunds for early exit - generation cost is sunk
+        setRefundAmount(0);
 
         // Show Analysis Pop-up FIRST
         setStep('ANALYSIS_POPUP');
@@ -240,6 +273,71 @@ export const JurisMemoria: React.FC<JurisMemoriaProps> = ({ onBack }) => {
                         <div className="text-center mb-8">
                             <h3 className="text-2xl font-bold text-white mb-2">O que vamos memorizar hoje?</h3>
                             <p className="text-gray-400 text-sm">A IA criará flashcards personalizados e cobrará apenas pelo que você estudar.</p>
+                        </div>
+
+                        {/* Gamification Dashboard (New) */}
+                        <div className="bg-gray-900/50 border border-gray-800 p-5 rounded-3xl relative overflow-hidden mb-8">
+                            <div className="absolute top-0 right-0 p-24 bg-purple-500/5 blur-3xl rounded-full -mr-12 -mt-12 pointer-events-none" />
+
+                            <div className="flex items-center gap-2 mb-6 relative z-10">
+                                <Trophy className="w-5 h-5 text-yellow-500" />
+                                <h3 className="text-white font-bold text-lg">Seu Progresso</h3>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 relative z-10">
+                                <div className="bg-gray-900 border border-gray-800 p-3 rounded-2xl flex flex-col items-center justify-center gap-1">
+                                    <span className="text-gray-400 text-[10px] uppercase tracking-wider">Cards Vistos</span>
+                                    <span className="text-2xl font-bold text-white">342</span>
+                                </div>
+                                <div className="bg-gray-900 border border-gray-800 p-3 rounded-2xl flex flex-col items-center justify-center gap-1">
+                                    <span className="text-gray-400 text-[10px] uppercase tracking-wider">Retenção</span>
+                                    <span className="text-2xl font-bold text-green-400">87%</span>
+                                </div>
+                                <div className="col-span-2 md:col-span-1 bg-gray-900 border border-gray-800 p-3 rounded-2xl flex flex-col items-center justify-center gap-1">
+                                    <span className="text-gray-400 text-[10px] uppercase tracking-wider">Ofensiva</span>
+                                    <div className="flex items-center gap-1">
+                                        <TrendingUp className="w-4 h-4 text-orange-500" />
+                                        <span className="text-lg font-bold text-white">12 Dias</span>
+                                    </div>
+                                </div>
+
+                                <div className="col-span-2 md:col-span-3 bg-gray-900 border border-gray-800 p-4 rounded-2xl">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-2">
+                                            <Award className="w-3 h-3 text-purple-500" /> Progresso da Carreira
+                                        </span>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-[10px] text-gray-300 font-bold uppercase">Estagiário</span>
+                                                <span className="text-[10px] text-green-400 font-bold">100%</span>
+                                            </div>
+                                            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                <div className="h-full bg-green-500 w-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-[10px] text-gray-300 font-bold uppercase">Associado</span>
+                                                <span className="text-[10px] text-purple-400 font-bold">45%</span>
+                                            </div>
+                                            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                <div className="h-full bg-purple-500 w-[45%] shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-[10px] text-gray-500 font-bold uppercase">Sócio Sênior</span>
+                                                <span className="text-[10px] text-gray-600 font-bold">12%</span>
+                                            </div>
+                                            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                <div className="h-full bg-gray-600 w-[12%]"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div className="space-y-4">
                             <div>
@@ -306,7 +404,7 @@ export const JurisMemoria: React.FC<JurisMemoriaProps> = ({ onBack }) => {
                             </p>
                             <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
                                 <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-gray-400">Reserva (IA):</span>
+                                    <span className="text-gray-400">Custo do Pacote:</span>
                                     <span className="text-white font-mono">{reservedCredits} Créditos</span>
                                 </div>
                                 <div className="flex justify-between text-xs text-gray-500 mt-2 border-t border-gray-700 pt-2">
@@ -404,28 +502,56 @@ export const JurisMemoria: React.FC<JurisMemoriaProps> = ({ onBack }) => {
                             <p className="text-gray-400">Confira seu extrato de créditos.</p>
                         </div>
                         <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 space-y-4 shadow-xl">
-                            <div className="flex justify-between items-center p-2 bg-gray-900/50 rounded-lg">
-                                <span className="text-gray-400 text-sm">Reserva Inicial</span>
-                                <span className="font-mono text-gray-300 line-through">{reservedCredits} CR</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-400 text-sm">Consumidos ({cardsReviewed} cards)</span>
-                                <span className="font-mono text-red-400 font-bold">-{consumedCredits} CR</span>
-                            </div>
-                            <div className="border-t border-gray-600 pt-4 flex justify-between items-center">
-                                <span className="text-green-400 font-black uppercase text-sm flex items-center gap-2">
-                                    <RotateCcw className="w-4 h-4" /> Estorno Automático
-                                </span>
-                                <span className="font-mono text-green-400 font-black text-xl">+{refundAmount} CR</span>
+                            {/* Detailed Statement */}
+                            <div className="space-y-3">
+                                {/* Previous Balance */}
+                                <div className="flex justify-between items-center text-sm text-gray-500 px-2">
+                                    <span>Saldo Anterior</span>
+                                    <span className="font-mono">{(user?.creditBalance || 0) + consumedCredits} CR</span>
+                                </div>
+
+                                {/* Debit Row */}
+                                <div className="flex justify-between items-center text-red-400 bg-red-500/10 p-4 rounded-xl border border-red-500/20">
+                                    <span className="font-bold text-sm">Investimento ({cardCount} cards)</span>
+                                    <span className="font-mono font-black text-lg">-{consumedCredits} CR</span>
+                                </div>
+
+                                {/* Current Balance */}
+                                <div className="flex justify-between items-center border-t border-gray-700 pt-4 px-2">
+                                    <span className="text-gray-300 font-bold uppercase text-xs tracking-wider">Saldo Atual</span>
+                                    <span className={`font-mono font-black text-2xl ${(user?.creditBalance || 0) < 10 ? 'text-red-500' : 'text-green-500'}`}>
+                                        {user?.creditBalance || 0} CR
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <Button onClick={() => { setStep('SETUP'); setCardsReviewed(0); setCorrectCount(0); }} className="w-full !py-4 font-bold !bg-white !text-black border border-gray-300 hover:!bg-gray-200">
+                        <Button onClick={() => { setStep('SETUP'); setCardsReviewed(0); setCorrectCount(0); setCurrentCardIdx(0); }} className="w-full !py-4 font-bold !bg-white !text-black border border-gray-300 hover:!bg-gray-200">
                             Iniciar Nova Rodada
                         </Button>
                     </div>
                 )}
 
             </div>
+            {/* Footer Note */}
+            <div className="p-4 border-t border-gray-800 bg-gray-950/50 flex items-center justify-center gap-2 text-center">
+                <AlertCircle className="w-4 h-4 text-gray-600" />
+                <p className="text-[10px] text-gray-500 max-w-lg">
+                    <strong>Nota:</strong> Ferramenta baseada em IA. As respostas servem de auxílio e aprendizado, não substituem consultoria legal oficial.
+                </p>
+            </div>
+
+            {/* Global Modals */}
+            <InsufficientFundsAlert
+                isOpen={showInsufficientModal}
+                onClose={() => setShowInsufficientModal(false)}
+                onRecharge={() => {
+                    setShowInsufficientModal(false);
+                    if (navigateTo) navigateTo('recharge');
+                    else toast.error("Navegação indisponível");
+                }}
+                requiredCredits={reservedCredits}
+                currentCredits={user?.creditBalance || 0}
+            />
         </div>
     );
 };

@@ -15,9 +15,9 @@ export const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive, onClick
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col md:flex-row items-center ${isCollapsed ? 'justify-center' : 'justify-center lg:justify-start lg:pl-4'} p-2 my-1 md:my-0.5 rounded-lg transition-all duration-300 ${isCollapsed ? 'w-full h-12' : 'w-16 h-16 md:w-full md:h-auto'} relative group flex-shrink-0 ${isActive
-          ? 'bg-brand-primary text-brand-secondary shadow-lg shadow-brand-primary/20'
-          : 'hover:bg-gray-700/50 text-gray-400 hover:text-white'
+      className={`flex flex-col md:flex-row items-center ${isCollapsed ? 'justify-center' : 'justify-center lg:justify-start lg:pl-4'} p-1 md:p-2 my-0.5 md:my-0.5 rounded-lg transition-all duration-300 ${isCollapsed ? 'w-full h-12' : 'w-14 h-auto py-2 md:w-full md:h-auto'} relative group flex-shrink-0 ${isActive
+        ? 'bg-brand-primary text-brand-secondary shadow-lg shadow-brand-primary/20'
+        : 'hover:bg-gray-700/50 text-gray-400 hover:text-white'
         }`}
     >
       <div className={`w-5 h-5 mb-1 md:mb-0 ${isCollapsed ? 'md:mr-0' : 'md:mr-0 lg:mr-3'} flex-shrink-0 ${isActive ? '' : (iconColor || 'text-brand-primary')} relative transition-all`}>

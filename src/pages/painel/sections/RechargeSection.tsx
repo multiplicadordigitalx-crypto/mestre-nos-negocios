@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../../../components/Card';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
-import { ShoppingBag, Zap, DollarSign, CheckCircle, Star, Calculator, ArrowRight, ShieldCheck, Mail, Film, Rocket, X as XIcon, CreditCard, FileText, Link as LinkIcon } from '../../../components/Icons';
+import { ShoppingBag, Zap, DollarSign, CheckCircle, Star, Calculator, ArrowRight, ShieldCheck, Mail, Film, Rocket, X as XIcon, CreditCard, FileText, Link as LinkIcon, Wallet } from '../../../components/Icons';
 import { purchaseCombo, getCreditCombos } from '../../../services/mockFirebase';
 import { useAuth } from '../../../hooks/useAuth';
 import { CreditCombo, PaymentMethod } from '../../../types';
@@ -14,6 +14,9 @@ import toast from 'react-hot-toast';
 // Mock Data updated to include paymentMethods for demonstration if backend data is sparse
 // Initial state empty, fetched on mount
 const COMBOS_INITIAL: CreditCombo[] = [];
+
+// Added prop type for navigation
+import { StudentPage } from '../../../types';
 
 // --- PAYMENT SELECTION MODAL ---
 const PaymentMethodModal: React.FC<{
@@ -74,7 +77,7 @@ const PaymentMethodModal: React.FC<{
     );
 };
 
-export const RechargeSection: React.FC = () => {
+export const RechargeSection: React.FC<{ navigateTo: (page: StudentPage) => void }> = ({ navigateTo }) => {
     const { user, refreshUser } = useAuth();
     const [brlAmount, setBrlAmount] = useState<string>('');
     const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -223,11 +226,29 @@ export const RechargeSection: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-fade-in pb-20">
-            <header className="text-center">
+            <header className="text-center relative">
+                <div className="absolute top-0 right-0 hidden md:block">
+                    <Button
+                        onClick={() => navigateTo('wallet')}
+                        className="!py-2 !px-4 !bg-gray-800 text-white border border-gray-700 hover:border-brand-primary flex items-center gap-2 text-xs font-bold uppercase"
+                    >
+                        <Wallet className="w-4 h-4 text-brand-primary" /> Minha Carteira
+                    </Button>
+                </div>
                 <h1 className="text-3xl font-black text-white uppercase tracking-tight">
                     Recarregue seu <span className="text-brand-primary">Estoque de Ativos</span>
                 </h1>
                 <p className="text-gray-400 mt-2">Escolha pacotes por objetivo ou invista o valor que desejar.</p>
+
+                {/* Mobile Button */}
+                <div className="md:hidden mt-4 flex justify-center">
+                    <Button
+                        onClick={() => navigateTo('wallet')}
+                        className="!py-2 !px-4 !bg-gray-800 text-white border border-gray-700 hover:border-brand-primary flex items-center gap-2 text-xs font-bold uppercase"
+                    >
+                        <Wallet className="w-4 h-4 text-brand-primary" /> Minha Carteira
+                    </Button>
+                </div>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -259,53 +280,6 @@ export const RechargeSection: React.FC = () => {
                 ))}
             </div>
 
-            <Card className="p-8 bg-gray-900 border-gray-700 relative overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-brand-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
-                    <div>
-                        <h3 className="text-2xl font-black text-white uppercase flex items-center gap-3">
-                            <Calculator className="w-6 h-6 text-brand-primary" /> Calculadora Dinâmica
-                        </h3>
-                        <p className="text-gray-400 mt-4 leading-relaxed">
-                            Quer investir um valor específico? Digite ao lado e veja quantos créditos sofredores você recebe no Bolso Global.
-                        </p>
-                        <div className="mt-8 space-y-4">
-                            <div className="flex items-center gap-3 text-sm text-gray-400">
-                                <CheckCircle className="w-5 h-5 text-green-500" />
-                                <span>Aprovação em menos de 2 minutos via Pix.</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-sm text-gray-400">
-                                <ShieldCheck className="w-5 h-5 text-blue-500" />
-                                <span>Segurança garantida pelo Mestre Shield.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-800 p-8 rounded-3xl border border-gray-700 shadow-2xl">
-                        <div className="space-y-6">
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Eu quero investir (R$)</label>
-                                <input
-                                    type="number"
-                                    className="w-full bg-gray-900 border border-gray-600 rounded-xl p-4 text-3xl font-black text-white focus:border-brand-primary outline-none"
-                                    placeholder="0,00"
-                                    value={brlAmount}
-                                    onChange={e => setBrlAmount(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex items-center justify-center p-4 bg-black/30 rounded-xl border border-dashed border-gray-600">
-                                <div className="text-center">
-                                    <p className="text-[10px] text-gray-500 uppercase font-bold">Você receberá:</p>
-                                    <p className="text-4xl font-black text-brand-primary">{calculatedCredits} <span className="text-sm font-bold uppercase">Créditos</span></p>
-                                </div>
-                            </div>
-                            <Button disabled={!brlAmount || calculatedCredits <= 0} onClick={handleManualPurchase} isLoading={loadingId === 'manual'} className="w-full !py-5 font-black text-lg">
-                                GERAR PIX AGORA <ArrowRight className="w-5 h-5 ml-2" />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </Card>
 
             {/* Payment Selection Modal */}
             {selectedComboForPayment && (

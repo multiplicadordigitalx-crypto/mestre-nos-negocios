@@ -1,11 +1,21 @@
 import { Transaction, TransactionStatus, TransactionStats, AuditLog } from '../types';
 
 class TransactionMockService {
+    private static PRODUCTS = [
+        { name: 'Mestre dos Negócios 50X', targetAudience: 'Empreendedores digitais buscando escala' },
+        { name: 'Consultoria Premium', targetAudience: 'CEOs e Diretores de empresas > 10M' },
+        { name: 'Mentoria 10x', targetAudience: 'Startups em fase de crescimento acelerado' },
+        { name: 'Ebook: O Segredo', targetAudience: 'Iniciantes no marketing digital' }
+    ];
     private transactions: Transaction[] = [];
     private initialized = false;
 
     constructor() {
         this.init();
+    }
+
+    public getAvailableProducts() {
+        return TransactionMockService.PRODUCTS;
     }
 
     private init() {
@@ -16,7 +26,7 @@ class TransactionMockService {
 
     private generateMockData(count: number) {
         const platforms = ['Hotmart', 'Kiwify', 'Eduzz', 'Stripe', 'Vindi'] as const;
-        const products = ['Mestre dos Negócios 50X', 'Consultoria Premium', 'Mentoria 10x', 'Ebook: O Segredo'];
+        const products = TransactionMockService.PRODUCTS.map(p => p.name);
         const names = ['Ana Silva', 'Carlos Souza', 'Mariana Oliveira', 'Roberto Santos', 'Fernanda Lima', 'Paulo Costa'];
         const statuses: TransactionStatus[] = ['approved', 'approved', 'approved', 'approved', 'refunded', 'pending', 'chargeback'];
 

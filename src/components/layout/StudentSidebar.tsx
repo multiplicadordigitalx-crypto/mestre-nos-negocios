@@ -173,7 +173,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
         )}
       </div>
 
-      <div className="flex md:flex-col w-full md:w-auto h-full md:h-auto md:flex-1 items-center md:items-stretch px-2 md:px-0 gap-2 md:gap-1 min-w-max md:min-w-0 md:overflow-y-auto no-scrollbar pb-20">
+      <div className="flex md:flex-col w-full md:w-auto h-full md:h-auto md:flex-1 items-center md:items-stretch px-2 md:px-0 gap-2 md:gap-1 min-w-max md:min-w-0 md:overflow-y-auto no-scrollbar pb-1 md:pb-24">
         {menuItems
           .filter(item => item.isEnabled)
           .filter(item => !visiblePages || visiblePages.includes(item.id)) // Apply White Label Filter

@@ -1,43 +1,83 @@
-import React, { useState } from 'react';
-import { X, CheckCircle, CreditCard, Zap, ShieldCheck } from '../../../components/Icons';
+import React, { useState, useEffect } from 'react';
+import { X, CheckCircle, CreditCard, Zap, ShieldCheck, Rocket, Film } from '../../../components/Icons';
 import Button from '../../../components/Button';
-import { buyCredits } from '../../../services/mockFirebase';
+import { getCreditCombos, purchaseCombo } from '../../../services/mockFirebase';
+import { LucPayService, LucPayGatewayProfile } from '../../../services/LucPayService';
+import { useAuth } from '../../../hooks/useAuth';
+import { CreditCombo } from '../../../types/legacy';
 import { toast } from 'react-hot-toast';
 
 interface CreditShopModalProps {
     target: 'student' | 'producer';
+    title?: string;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-const CREDIT_PACKAGES = [
-    { id: 'pack-100', credits: 100, price: 97.00, label: 'Básico', popular: false },
-    { id: 'pack-500', credits: 500, price: 447.00, label: 'Pro', popular: true },
-    { id: 'pack-1000', credits: 1000, price: 847.00, label: 'Enterprise', popular: false },
-    { id: 'pack-5000', credits: 5000, price: 3997.00, label: 'Unicórnio', popular: false },
-];
-
-export const CreditShopModal: React.FC<CreditShopModalProps> = ({ target, onClose, onSuccess }) => {
+export const CreditShopModal: React.FC<CreditShopModalProps> = ({ target, title, onClose, onSuccess }) => {
+    const { user, refreshUser } = useAuth();
+    const [combos, setCombos] = useState<CreditCombo[]>([]);
     const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('pix');
+    const [activeGateway, setActiveGateway] = useState<LucPayGatewayProfile | null>(null);
+
+    useEffect(() => {
+        // Load Real Combos
+        getCreditCombos().then(data => {
+            setCombos(data.filter(c => c.active));
+        });
+
+        // Load Active Gateway Config
+        LucPayService.getConfigs().then(configs => {
+            const active = configs.find(c => c.isActive);
+            if (active) setActiveGateway(active);
+        });
+    }, []);
 
     const handlePurchase = async () => {
-        if (!selectedPackage) return;
-        const pack = CREDIT_PACKAGES.find(p => p.id === selectedPackage);
+        if (!selectedPackage || !user) return;
+        const pack = combos.find(p => p.id === selectedPackage);
         if (!pack) return;
 
         setLoading(true);
         try {
-            const success = await buyCredits(target, pack.credits, paymentMethod, pack.price);
-            if (success) {
-                toast.success(`Compra realizada! +${pack.credits} créditos adicionados.`);
+            if (activeGateway) {
+                // REAL PAYMENT FLOW (REDESIGNED)
+                const response = await LucPayService.processPayment(
+                    pack.price,
+                    'brl',
+                    paymentMethod === 'pix' ? 'pix' : 'credit_card',
+                    activeGateway.id,
+                    pack.id
+                );
+
+                if (response.success) {
+                    if (response.paymentUrl) {
+                        toast.success("Redirecionando para checkout seguro...");
+                        window.open(response.paymentUrl, '_blank');
+                        onClose(); // Close shop after redirect
+                    } else {
+                        // Simulated/Direct Success
+                        await purchaseCombo(user.uid, pack);
+                        await refreshUser();
+                        toast.success(`Compra realizada! +${pack.credits} créditos adicionados.`);
+                        onSuccess();
+                        onClose();
+                    }
+                } else {
+                    toast.error(response.message);
+                }
+            } else {
+                // FALLBACK TO SIMULATION
+                await purchaseCombo(user.uid, pack);
+                await refreshUser();
+                toast.success(`Compra simulada! +${pack.credits} créditos adicionados.`);
                 onSuccess();
                 onClose();
-            } else {
-                toast.error("Erro ao processar compra.");
             }
         } catch (error) {
+            console.error("Purchase error:", error);
             toast.error("Falha na transação.");
         } finally {
             setLoading(false);
@@ -45,16 +85,16 @@ export const CreditShopModal: React.FC<CreditShopModalProps> = ({ target, onClos
     };
 
     return (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4 backdrop-blur-sm animate-fade-in">
             <div className="bg-gray-900 w-full max-w-2xl rounded-2xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
 
                 {/* Header */}
                 <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-gray-900 via-gray-900 to-indigo-900/20 flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                            <Zap className="text-yellow-400 w-6 h-6" /> Loja de Créditos
+                            <Zap className="text-yellow-400 w-6 h-6" /> {title || "Loja de Créditos"}
                         </h2>
-                        <p className="text-sm text-gray-400">Adicione créditos à sua conta {target === 'producer' ? 'Corporativa' : 'Pessoal'}.</p>
+                        <p className="text-sm text-gray-400">Adicione ativos à sua conta {target === 'producer' ? 'Corporativa' : 'Pessoal'}.</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
                         <X className="w-5 h-5" />
@@ -66,21 +106,19 @@ export const CreditShopModal: React.FC<CreditShopModalProps> = ({ target, onClos
 
                     {/* Packages Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                        {CREDIT_PACKAGES.map(pack => (
+                        {combos.map(pack => (
                             <div
                                 key={pack.id}
                                 onClick={() => setSelectedPackage(pack.id)}
                                 className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all ${selectedPackage === pack.id ? 'border-indigo-500 bg-indigo-900/20' : 'border-gray-700 bg-gray-800 hover:border-gray-600'}`}
                             >
-                                {pack.popular && (
-                                    <span className="absolute -top-3 right-4 bg-yellow-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                                        Mais Vendido
-                                    </span>
-                                )}
                                 <div className="flex justify-between items-start mb-2">
-                                    <span className={`text-xs font-bold uppercase tracking-wider ${selectedPackage === pack.id ? 'text-indigo-400' : 'text-gray-500'}`}>
-                                        {pack.label}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {pack.name.includes('Vídeo') ? <Film className="w-5 h-5 text-indigo-400" /> : <Rocket className="w-5 h-5 text-indigo-400" />}
+                                        <span className={`text-xs font-bold uppercase tracking-wider ${selectedPackage === pack.id ? 'text-indigo-400' : 'text-gray-500'}`}>
+                                            {pack.name}
+                                        </span>
+                                    </div>
                                     <div className="text-right">
                                         <span className="block text-2xl font-bold text-white">{pack.credits}</span>
                                         <span className="text-[10px] text-gray-400 uppercase">Créditos</span>
@@ -116,7 +154,7 @@ export const CreditShopModal: React.FC<CreditShopModalProps> = ({ target, onClos
                     </div>
 
                     <div className="text-center text-xs text-gray-500 mb-4">
-                        Ao continuar, você concorda com nossos termos de compra. Os créditos não expiram.
+                        Ao continuar, você será redirecionado para o checkout seguro. Os créditos não expiram.
                     </div>
 
                     <Button

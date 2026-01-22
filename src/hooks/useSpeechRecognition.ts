@@ -9,7 +9,7 @@ interface SpeechRecognitionHook {
     isSupported: boolean;
 }
 
-export const useSpeechRecognition = (onResult?: (text: string) => void): SpeechRecognitionHook => {
+export const useSpeechRecognition = (onResult?: (text: string) => void, lang: string = 'pt-BR'): SpeechRecognitionHook => {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [isSupported, setIsSupported] = useState(false);
@@ -28,7 +28,7 @@ export const useSpeechRecognition = (onResult?: (text: string) => void): SpeechR
             recognitionRef.current = new SpeechRecognition();
             recognitionRef.current.continuous = false; // Stop after one sentence
             recognitionRef.current.interimResults = false; // Wait for final result
-            recognitionRef.current.lang = 'pt-BR';
+            recognitionRef.current.lang = lang;
 
             recognitionRef.current.onstart = () => {
                 console.log('[Speech] Started');

@@ -15,6 +15,7 @@ import { SchoolConfig } from '../types';
 import { getAllowedPagesForStudent } from '../config/whiteLabel';
 import { Student } from '../types';
 import { getCoursesByIds } from '../services/mockFirebase'; // Import
+import { MentorProvider } from '../context/MentorStateContext';
 
 export const StudentLayout: React.FC = () => {
     const { user, isImpersonating, stopImpersonation } = useAuth();
@@ -123,41 +124,44 @@ export const StudentLayout: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col md:flex-row h-screen relative bg-brand-secondary overflow-hidden">
-            {isImpersonating && (
-                <div className="fixed top-0 left-0 w-full bg-indigo-600 z-[100] flex justify-between items-center px-4 py-2 shadow-lg">
-                    <div className="flex items-center gap-2 text-white font-bold text-sm">
-                        <Eye className="w-5 h-5" />
-                        <span>Modo Personificação: Visualizando como {user?.displayName}</span>
+        <MentorProvider>
+            <div className="flex flex-col md:flex-row h-screen relative bg-brand-secondary overflow-hidden">
+                {isImpersonating && (
+                    <div className="fixed top-0 left-0 w-full bg-indigo-600 z-[100] flex justify-between items-center px-4 py-2 shadow-lg">
+                        <div className="flex items-center gap-2 text-white font-bold text-sm">
+                            <Eye className="w-5 h-5" />
+                            <span>Modo Personificação: Visualizando como {user?.displayName}</span>
+                        </div>
+                        <Button
+                            onClick={stopImpersonation}
+                            className="!py-1 !px-3 !text-xs !bg-white !text-indigo-600 hover:!bg-gray-100 font-bold"
+                        >
+                            Voltar para Admin
+                        </Button>
                     </div>
-                    <Button
-                        onClick={stopImpersonation}
-                        className="!py-1 !px-3 !text-xs !bg-white !text-indigo-600 hover:!bg-gray-100 font-bold"
-                    >
-                        Voltar para Admin
-                    </Button>
-                </div>
-            )}
+                )}
 
-            <StudentSidebar
-                activePage={activePage}
-                navigateTo={navigateTo}
-                supportBadge={supportBadge}
-                isImpersonating={isImpersonating}
-                schoolConfig={schoolConfig}
-            // visiblePages={visiblePages} // Pass Filter (DISABLED)
-            />
+                <StudentSidebar
+                    activePage={activePage}
+                    navigateTo={navigateTo}
+                    supportBadge={supportBadge}
+                    isImpersonating={isImpersonating}
+                    schoolConfig={schoolConfig}
+                // visiblePages={visiblePages} // Pass Filter (DISABLED)
+                />
 
-            <main className={`flex-1 overflow-y-auto relative bg-gray-900 scroll-smooth ${isImpersonating ? 'pt-12' : ''}`}>
-                <div className="p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
-                    <StudentHeader
-                        canGoBack={history.length > 1}
-                        goBack={goBack}
-                        navigateTo={navigateTo}
-                    />
-                    <PainelDoAluno activePage={activePage} navigateTo={navigateTo} />
-                </div>
-            </main>
-        </div>
+                <main className={`flex-1 overflow-y-auto relative bg-gray-900 scroll-smooth ${isImpersonating ? 'pt-12' : ''}`}>
+                    <div className="p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
+                        <StudentHeader
+                            canGoBack={history.length > 1}
+                            goBack={goBack}
+                            navigateTo={navigateTo}
+                            schoolConfig={schoolConfig}
+                        />
+                        <PainelDoAluno activePage={activePage} navigateTo={navigateTo} />
+                    </div>
+                </main>
+            </div>
+        </MentorProvider>
     );
 };

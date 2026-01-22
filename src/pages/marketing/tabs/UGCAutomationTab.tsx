@@ -23,6 +23,9 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
     const [scriptResult, setScriptResult] = useState<string | null>(initialScript || null);
     const [videoProgress, setVideoProgress] = useState(0);
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+    const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
+    const [accountSearchTerm, setAccountSearchTerm] = useState('');
+    const [productSearchTerm, setProductSearchTerm] = useState('');
 
     // Card 11 Inputs
     const [niche, setNiche] = useState('');
@@ -72,30 +75,47 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
     };
 
     const handlePost = async () => {
-        // Explicitly map with correct status literal type
+        // Group accounts by product for logic
+        const productsWithAccounts: Record<string, SharedAccount[]> = {};
+        accounts.forEach(acc => {
+            const p = acc.product || 'Sem Produto';
+            if (!productsWithAccounts[p]) productsWithAccounts[p] = [];
+            productsWithAccounts[p].push(acc);
+        });
+
+        // First status change to 'posting'
         const postingAccounts: SharedAccount[] = accounts.map(a => ({
             ...a,
             postingStatus: 'posting' as const
         }));
-
         onUpdateAccounts(postingAccounts);
 
-        for (let i = 0; i < postingAccounts.length; i++) {
-            await new Promise(r => setTimeout(r, 1500));
-            // Create a new array to avoid mutation issues
-            const currentAccounts = [...postingAccounts];
-            // Update specific item with new status
-            currentAccounts[i] = {
-                ...currentAccounts[i],
-                postingStatus: 'success' as const
-            };
-            // Update state (in real app, we would update based on previous state to be safe)
-            onUpdateAccounts(currentAccounts);
-            // Update local reference for next iteration if needed, though we reconstruct from state usually
-            postingAccounts[i] = currentAccounts[i];
+        // Simulated distribution logic: Iterate through products then their accounts
+        for (const productName of Object.keys(productsWithAccounts)) {
+            console.log(`🚀 Iniciando distribuição para o produto: ${productName}`);
+            const productAccounts = productsWithAccounts[productName];
+
+            for (const acc of productAccounts) {
+                await new Promise(r => setTimeout(r, 1500));
+
+                // Get most recent accounts state to avoid race conditions
+                // Note: In a real app we'd use a functional update or a more robust state management
+                const currentAllAccounts = [...postingAccounts];
+                const index = currentAllAccounts.findIndex(a => a.id === acc.id);
+
+                if (index !== -1) {
+                    currentAllAccounts[index] = {
+                        ...currentAllAccounts[index],
+                        postingStatus: 'success' as const
+                    };
+                    onUpdateAccounts(currentAllAccounts);
+                    // Sync our local loop reference
+                    postingAccounts[index] = currentAllAccounts[index];
+                }
+            }
         }
 
-        toast.success("Postagem concluída em todas as contas!");
+        toast.success("Postagem concluída em todas as contas e produtos!");
     };
 
     const handleConnectAccount = (data: any) => {
@@ -107,9 +127,10 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
             followers: '0 seg',
             responseTime: '5s',
             postingStatus: 'idle',
-            product: data.product
+            product: data.product || 'Sem Produto'
         };
         onAddAccount(newAcc);
+        setExpandedProduct(newAcc.product || 'Sem Produto');
         toast.success(`Conta ${data.platform} conectada e vinculada ao produto: ${data.product}!`);
     };
 
@@ -277,52 +298,141 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
                                 + Add Conta
                             </Button>
                         </div>
-                        <p className="text-sm text-gray-400 mb-6">
+                        <p className="text-sm text-gray-400 mb-4">
                             Contas validadas e prontas para postagem. O Card 13 selecionou os melhores horários.
                         </p>
 
-                        <div className="space-y-3 mb-6 max-h-[300px] overflow-y-auto custom-scrollbar">
-                            {accounts.map(acc => (
-                                <div key={acc.id} className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex justify-between items-center">
-                                    <div>
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${acc.platform === 'TikTok' ? 'bg-black border border-gray-600' :
-                                                acc.platform === 'Instagram' ? 'bg-pink-600' :
-                                                    acc.platform === 'Kwai' ? 'bg-orange-500' : 'bg-red-600'
-                                                }`}>
-                                                {acc.platform[0]}
+                        {/* Global Product Search */}
+                        <div className="relative mb-4">
+                            <input
+                                type="text"
+                                placeholder="🔍 Pesquisar Produto (ex: Método Seca Barriga)..."
+                                value={productSearchTerm}
+                                onChange={(e) => setProductSearchTerm(e.target.value)}
+                                className="w-full bg-gray-900 border border-gray-700 rounded-lg py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-brand-primary outline-none transition-all placeholder:text-gray-600"
+                            />
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                <Box className="w-4 h-4 text-gray-500" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
+                            {Object.entries(
+                                accounts.reduce((grid, acc) => {
+                                    const p = acc.product || 'Sem Produto';
+                                    if (!grid[p]) grid[p] = [];
+                                    grid[p].push(acc);
+                                    return grid;
+                                }, {} as Record<string, SharedAccount[]>)
+                            ).filter(([productName]) =>
+                                productName.toLowerCase().includes(productSearchTerm.toLowerCase())
+                            ).map(([productName, productAccounts]) => {
+                                const postedCount = productAccounts.filter(a => a.postingStatus === 'success').length;
+                                const totalCount = productAccounts.length;
+                                const progressPercent = Math.round((postedCount / totalCount) * 100);
+
+                                return (
+                                    <div key={productName} className="space-y-2">
+                                        <button
+                                            onClick={() => {
+                                                setExpandedProduct(expandedProduct === productName ? null : productName);
+                                                setAccountSearchTerm(''); // Clear search on toggle
+                                            }}
+                                            className={`w-full p-3 rounded-lg border transition-all ${expandedProduct === productName ? 'bg-brand-primary/10 border-brand-primary/50' : 'bg-gray-900 border-gray-700 hover:border-gray-500'}`}
+                                        >
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-1.5 bg-gray-800 rounded">
+                                                        <Box className={`w-4 h-4 ${expandedProduct === productName ? 'text-brand-primary' : 'text-gray-500'}`} />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <p className="text-sm font-bold text-white">{productName}</p>
+                                                        <p className="text-[10px] text-gray-500">{totalCount} conta{totalCount !== 1 ? 's' : ''} vinculada{totalCount !== 1 ? 's' : ''}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-right hidden sm:block">
+                                                        <p className="text-[10px] font-bold text-white">{progressPercent}%</p>
+                                                        <p className="text-[8px] text-gray-500 uppercase">{postedCount}/{totalCount} Postados</p>
+                                                    </div>
+                                                    <div className={`transition-transform duration-200 ${expandedProduct === productName ? 'rotate-180' : ''}`}>
+                                                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-white text-sm">{acc.username}</p>
-                                                <p className="text-[10px] text-gray-500 flex items-center gap-1">
-                                                    {acc.platform} • <span className="text-green-400 font-bold">● {acc.status}</span>
-                                                </p>
+                                            {/* Product Progress Bar */}
+                                            <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-brand-primary transition-all duration-500 ease-out"
+                                                    style={{ width: `${progressPercent}%` }}
+                                                ></div>
                                             </div>
-                                        </div>
-                                        {acc.product && (
-                                            <span className="text-[10px] text-brand-primary flex items-center gap-1 mt-1 ml-11">
-                                                <Box className="w-3 h-3" /> {acc.product}
-                                            </span>
+                                        </button>
+
+                                        {expandedProduct === productName && (
+                                            <div className="ml-2 space-y-3 animate-slide-down bg-gray-900/40 p-3 rounded-lg border border-gray-800/50">
+                                                {/* Internal Search */}
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Buscar conta..."
+                                                        value={accountSearchTerm}
+                                                        onChange={(e) => setAccountSearchTerm(e.target.value)}
+                                                        className="w-full bg-black/40 border border-gray-800 rounded-md py-1.5 pl-8 pr-3 text-[10px] text-white focus:ring-1 focus:ring-brand-primary outline-none"
+                                                    />
+                                                    <svg className="w-3 h-3 text-gray-600 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                    </svg>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    {productAccounts
+                                                        .filter(acc => acc.username.toLowerCase().includes(accountSearchTerm.toLowerCase()))
+                                                        .map(acc => (
+                                                            <div key={acc.id} className="bg-gray-900/80 p-2.5 rounded-lg border border-gray-800 flex justify-between items-center hover:border-gray-700 transition-colors">
+                                                                <div className="flex items-center gap-2 max-w-[70%]">
+                                                                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white ${acc.platform === 'TikTok' ? 'bg-black border border-gray-600' :
+                                                                        acc.platform === 'Instagram' ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600' :
+                                                                            acc.platform === 'Kwai' ? 'bg-orange-500' : 'bg-red-600'
+                                                                        }`}>
+                                                                        {acc.platform[0]}
+                                                                    </div>
+                                                                    <div className="truncate">
+                                                                        <p className="font-bold text-white text-[10px] truncate">{acc.username}</p>
+                                                                        <p className="text-[8px] text-gray-500 flex items-center gap-1 uppercase">
+                                                                            {acc.platform}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-right flex-shrink-0">
+                                                                    {acc.postingStatus === 'idle' && (
+                                                                        <span className="text-[8px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20 font-bold">AGUARDANDO</span>
+                                                                    )}
+                                                                    {acc.postingStatus === 'posting' && (
+                                                                        <div className="flex items-center gap-1.5 text-[8px] text-blue-400 font-bold">
+                                                                            <div className="w-2 h-2 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                                                            <span>ENVIANDO</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {acc.postingStatus === 'success' && (
+                                                                        <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30 font-bold flex items-center gap-1">
+                                                                            <CheckCircle className="w-2.5 h-2.5" /> OK
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                                {productAccounts.filter(acc => acc.username.toLowerCase().includes(accountSearchTerm.toLowerCase())).length === 0 && (
+                                                    <p className="text-center text-[9px] text-gray-600 font-mono py-2">Nenhuma conta encontrada para "{accountSearchTerm}"</p>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
-                                    <div className="text-right">
-                                        {acc.postingStatus === 'idle' && (
-                                            <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">Aguardando</span>
-                                        )}
-                                        {acc.postingStatus === 'posting' && (
-                                            <div className="flex items-center gap-2 text-xs text-blue-400">
-                                                <LoadingSpinner size="sm" />
-                                                <span>Enviando...</span>
-                                            </div>
-                                        )}
-                                        {acc.postingStatus === 'success' && (
-                                            <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded border border-green-500/30 font-bold flex items-center gap-1">
-                                                <CheckCircle className="w-3 h-3" /> Postado
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         <Button
@@ -335,8 +445,8 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
                     </Card>
                     <div className="bg-gray-900 p-6 rounded-xl border border-gray-700">
                         <h4 className="text-gray-400 text-xs font-bold uppercase mb-4">Preview do Post</h4>
-                        <div className="bg-black rounded-lg p-4 font-mono text-xs text-gray-300 relative">
-                            <div className="w-full aspect-video bg-gray-800 rounded mb-4 flex items-center justify-center">
+                        <div className="bg-black rounded-lg p-4 font-mono text-xs text-gray-300 relative flex flex-col items-center">
+                            <div className="w-full max-w-[200px] aspect-[9/16] bg-gray-800 rounded mb-4 flex items-center justify-center border border-gray-700 shadow-inner">
                                 <PlayCircle className="w-10 h-10 text-gray-600" />
                             </div>
                             <p className="mb-2">Eu limpava casa dos outros... hoje quem limpa a minha sou eu ✨</p>

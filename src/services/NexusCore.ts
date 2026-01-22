@@ -10,7 +10,7 @@ import {
     UserSubscription,
     Student
 } from '../types/legacy';
-import { consumeCredits, getStudents, updateStudent, getSystemStatus, updateSystemStatus, getToolCosts } from './mockFirebase';
+import { consumeCredits, getStudents, updateStudent, getSystemStatus, updateSystemStatus, getToolCosts, saveToolCost } from './mockFirebase';
 import { callMestreIA } from './mestreIaService';
 
 // ... rest of imports ...
@@ -495,10 +495,122 @@ class NexusCoreService {
                 healthScore: this.systemHealth,
                 apiReady: this.systemHealth > 20
             });
+
+            // Run Financial Check periodically (every 10s for simulation, usually slower)
+            await this.runFinancialHealthCheck();
+
         }, 10000);
     }
 
-    // --- SAÚDE FINANCEIRA (INVISIBLE HOSTING MODEL) ---
+    // --- SAÚDE FINANCEIRA (INVISIBLE HOSTING MODEL & AUTO-BALANCE) ---
+
+    // Periodic Check inserted into Health Monitor or run explicitly
+    public async runFinancialHealthCheck() {
+        const tools = await getToolCosts();
+        const usdToBrl = 6.0; // Em produção, viria de uma API em tempo real (ex: AwesomeAPI)
+        // Para simulação, vamos assumir que o Nexus tem acesso à cotação atual.
+
+        let adjustmentMade = false;
+
+        for (const tool of tools) {
+            // Ignorar se não tiver proteção ativada ou margem alvo definida
+            if (!tool.autoAdjust || !tool.targetMargin) continue;
+
+            // 1. Calcular Margem Atual Real
+            // Preço (Créditos) * Valor do Crédito = Receita BRL
+            const systemStatus = await getSystemStatus();
+            const creditValue = systemStatus.creditValueBRL || 0.15; // Fallback to conservative 0.15
+            const usdRate = 6.0; // Mock rate for now, or fetch if available
+            const revenueBRL = tool.costPerTask * creditValue;
+            const costBRL = tool.realCostEstimate * usdToBrl;
+
+            if (revenueBRL <= 0) continue; // Evitar divisão por zero
+
+            const currentMargin = ((revenueBRL - costBRL) / costBRL) * 100;
+            const target = tool.targetMargin;
+            const threshold = tool.triggerThreshold || 10; // Default 10%
+
+            // 2. Cenário A: Queda Brusca de Margem (Dólar subiu ou Custo Provider aumentou)
+            // Gatilho: Margem caiu mais de X% abaixo do alvo
+            if (currentMargin < (target - threshold)) {
+                logger.warn(`[Nexus Auto-Balance] 📉 Margem Crítica em ${tool.toolName}: ${currentMargin.toFixed(1)}% (Alvo: ${target}%, Gatilho: ${threshold}%)`);
+
+                // Calcular Novo Preço para restaurar o Alvo
+                // Preço = Custo * (1 + Target/100)
+
+                const newPriceBRL = costBRL * (1 + (target / 100));
+                const newCredits = Math.ceil(newPriceBRL / creditValue * 100) / 100; // Arredondar 2 casas
+                const oldCredits = tool.costPerTask;
+
+                // Aplicar Ajuste
+                tool.costPerTask = newCredits;
+                tool.profitMargin = target; // Reset visual margin to target (since we just fixed price)
+
+                // Salvar Backup
+                tool.lastAutoAdjustment = {
+                    date: Date.now(),
+                    oldPrice: oldCredits,
+                    newPrice: newCredits,
+                    reason: 'margin_drop'
+                };
+
+                await saveToolCost(tool);
+                adjustmentMade = true;
+
+                // Notificar Admin
+                this.sendWhatsAppAlert(
+                    `🚨 *Nexus Finanças: Proteção Ativada*\n` +
+                    `Ferramenta: _${tool.toolName}_\n` +
+                    `Motivo: Queda de Margem > ${threshold}% (${currentMargin.toFixed(1)}% -> ${target}%)\n` +
+                    `Ação: Preço reajustado de ${oldCredits} para ${newCredits} créditos.\n` +
+                    `_Backup salvo. Reversão disponível no painel._`
+                );
+            }
+
+            // 3. Cenário B: Recuperação de Margem (Dólar caiu)
+            // Gatilho: Margem subiu mais de X% acima do alvo E existe um ajuste anterior
+            else if (currentMargin > (target + threshold) && tool.lastAutoAdjustment?.reason === 'margin_drop') {
+                logger.info(`[Nexus Auto-Balance] 📈 Margem Excessiva em ${tool.toolName}: ${currentMargin.toFixed(1)}%. Normalizando...`);
+
+                const newPriceBRL = costBRL * (1 + (target / 100));
+                const newCredits = Math.ceil(newPriceBRL / creditValue * 100) / 100;
+                const oldCredits = tool.costPerTask;
+
+                tool.costPerTask = newCredits;
+                tool.profitMargin = target;
+
+                tool.lastAutoAdjustment = {
+                    date: Date.now(),
+                    oldPrice: oldCredits,
+                    newPrice: newCredits,
+                    reason: 'margin_recovery'
+                };
+
+                await saveToolCost(tool);
+                adjustmentMade = true;
+
+                this.sendWhatsAppAlert(
+                    `✅ *Nexus Finanças: Normalização*\n` +
+                    `Ferramenta: _${tool.toolName}_\n` +
+                    `Motivo: Custo normalizado. Margem ajustada para evitar sobrepreço.\n` +
+                    `Ação: Preço reduzido de ${oldCredits} para ${newCredits} créditos.`
+                );
+            }
+        }
+
+        if (adjustmentMade) {
+            await updateSystemStatus({ lastSync: Date.now() }); // Force refresh hints
+        }
+    }
+
+    private sendWhatsAppAlert(message: string) {
+        // Enviar via Instância Oficial de Notificações
+        const instance = this.getOptimalInstance('notifications');
+        const sender = instance ? `${instance.name} (${instance.phoneNumber})` : 'SYSTEM_FALLBACK';
+
+        console.log(`[WHATSAPP ALERT] From: ${sender}\nMessage:\n${message}`);
+        // Em produção: whatsappService.sendMessage(adminNumber, message, instance.id);
+    }
 
     public async monitorFinancialHealth(): Promise<{ status: 'healthy' | 'warning' | 'critical', margin: number, revenue: number, cost: number }> {
         const students = await getStudents();

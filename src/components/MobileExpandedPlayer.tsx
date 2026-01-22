@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, MoreHorizontal, MessageSquare } from './Icons';
+import { ChevronDown, MoreHorizontal, MessageSquare, Sun, Moon } from './Icons';
 import { ReactiveAudioVisualizer, VisualizerMode } from './ReactiveAudioVisualizer';
 import { PlayerControls } from './PlayerControls';
+import { CreditBalanceWidget } from './CreditBalanceWidget';
+import { useAuth } from '../hooks/useAuth';
 
 interface MobileExpandedPlayerProps {
     isOpen: boolean;
@@ -24,6 +26,8 @@ interface MobileExpandedPlayerProps {
     onToggleTheme: () => void;
     onMicClick: () => void;
     isListening?: boolean;
+    onToggleLightMode?: () => void;
+    onNavigate?: (page: string) => void;
 }
 
 export const MobileExpandedPlayer: React.FC<MobileExpandedPlayerProps> = ({
@@ -43,8 +47,12 @@ export const MobileExpandedPlayer: React.FC<MobileExpandedPlayerProps> = ({
     onPlayPause,
     onToggleTheme,
     onMicClick,
-    isListening = false
+    isListening = false,
+    onToggleLightMode,
+    onNavigate
 }) => {
+    const { user } = useAuth();
+
     if (!isOpen) return null;
 
     return (
@@ -53,7 +61,7 @@ export const MobileExpandedPlayer: React.FC<MobileExpandedPlayerProps> = ({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className={`fixed inset-0 z-[60] flex flex-col ${isLightMode ? 'bg-white' : 'bg-[#050510]'}`}
+            className={`fixed inset-0 z-[60] flex flex-col ${isLightMode ? 'bg-[#f0f0f0]' : 'bg-[#050510]'}`}
         >
             {/* Header */}
             <div className="flex items-center justify-between p-6">
@@ -68,9 +76,29 @@ export const MobileExpandedPlayer: React.FC<MobileExpandedPlayerProps> = ({
                         Aula 01: Fundamentos
                     </h3>
                 </div>
-                <button className={`p-2 rounded-full ${isLightMode ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}>
-                    <MoreHorizontal className={`w-6 h-6 ${isLightMode ? 'text-gray-900' : 'text-white'}`} />
-                </button>
+                {onToggleLightMode && (
+                    <button onClick={onToggleLightMode} className={`p-2 rounded-full ${isLightMode ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}>
+                        {isLightMode ? <Sun className="w-6 h-6 text-gray-900" /> : <Moon className="w-6 h-6 text-white" />}
+                    </button>
+                )}
+
+                {/* Credit Widget & Daily Limit Badge */}
+                <div className="flex flex-col items-end gap-2 scale-90 origin-right">
+                    <CreditBalanceWidget onRecharge={() => {
+                        onCollapse();
+                        if (onNavigate) onNavigate('recharge');
+                    }} />
+
+                    {/* Daily Limit Badge (Mobile) */}
+                    {user?.dailyMestreIALimit && (
+                        <div className={`px-2 py-1 rounded-lg border flex items-center gap-1.5 text-[8px] font-bold ${isLightMode ? 'bg-white border-gray-200 text-gray-600' : 'bg-white/5 border-white/10 text-gray-400'}`}>
+                            <span className="uppercase tracking-wider">Limite</span>
+                            <span className={((user.dailyUsage || 0) >= user.dailyMestreIALimit) ? 'text-red-500' : 'text-green-500'}>
+                                {user.dailyUsage || 0}/{user.dailyMestreIALimit}
+                            </span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Visualizer Stage */}
@@ -167,6 +195,6 @@ export const MobileExpandedPlayer: React.FC<MobileExpandedPlayerProps> = ({
                     <span className="text-[8px] font-black uppercase mt-0.5" style={{ color: currentTheme.primary }}>Mentor</span>
                 </div>
             </motion.div>
-        </motion.div>
+        </motion.div >
     );
 };
