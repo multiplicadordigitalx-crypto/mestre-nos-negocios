@@ -41,6 +41,7 @@ interface AuthContextType {
     refreshUser: () => Promise<void>;
     impersonateUser: (uid: string) => Promise<void>;
     stopImpersonation: () => Promise<void>;
+    loginStandalone: (user: any) => void;
     updateProfilePhoto: (file: File) => Promise<void>;
 }
 
@@ -132,6 +133,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setFailedAttempts(0);
         localStorage.removeItem('user');
         toast.success('Você saiu da sua conta.');
+    };
+
+    const loginStandalone = (u: any) => {
+        const finalUser = enforceAdminPermissions(u);
+        setUser(finalUser);
+        localStorage.setItem('user', JSON.stringify(finalUser));
     };
 
     const signIn = async (email: string, password: string) => {
@@ -325,7 +332,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return (
         <AuthContext.Provider value={{
             user, loading, isImpersonating: !!originalUser, completePurchase, signOut, signIn, signInWithGoogle,
-            signUp, renewAccess, logDailyPosts, refreshUser, impersonateUser, stopImpersonation, updateProfilePhoto
+            signUp, renewAccess, logDailyPosts, refreshUser, impersonateUser, stopImpersonation, updateProfilePhoto,
+            loginStandalone
         }}>
             {children}
         </AuthContext.Provider>

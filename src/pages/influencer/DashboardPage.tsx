@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 
 // Layout & Components
 import { InfluencerSidebar, InfluencerTab } from './components/InfluencerSidebar';
-import Header from '../../components/Header';
 import CampaignBanner from '../../components/CampaignBanner';
 
 // Sections
@@ -140,7 +139,6 @@ const InfluencerDashboardPage: React.FC<InfluencerDashboardPageProps> = ({ influ
             />
 
             <main className="flex-1 overflow-y-auto relative scroll-smooth bg-gray-900">
-                <Header />
                 <div className="p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
                     {user && <CampaignBanner user={user} />}
 

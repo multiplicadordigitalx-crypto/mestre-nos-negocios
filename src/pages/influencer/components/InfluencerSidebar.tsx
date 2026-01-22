@@ -6,7 +6,7 @@ import {
 } from '@/components/Icons';
 import { NavItem } from '@/components/common/NavItem';
 
-export type InfluencerTab = 'overview' | 'links' | 'marketplace' | 'financial' | 'mestre_ia_partner' | 'videos' | 'support' | 'profile';
+export type InfluencerTab = 'overview' | 'links' | 'marketplace' | 'financial' | 'mestre_ia_partner' | 'videos' | 'support' | 'profile' | 'recharge';
 
 interface InfluencerSidebarProps {
     activeTab: InfluencerTab;

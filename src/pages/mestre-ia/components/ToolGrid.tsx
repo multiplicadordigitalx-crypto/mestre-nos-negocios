@@ -13,20 +13,20 @@ interface ToolGridProps {
 const ToolGrid: React.FC<ToolGridProps> = ({ onSelect, onInfo }) => {
     const { user } = useAuth();
 
-    // Verificação de Admin idêntica ao MestreIAPage para consistência
-    const isAdmin = user?.role === 'super_admin' ||
+    // Parceiros, admins e usuários com hasMestreIA têm acesso total
+    const hasAccess = user?.role === 'super_admin' ||
         user?.role === 'admin' ||
-        user?.role === 'influencer' || // Unblock for Partners
-        user?.role === 'coproducer' || // Unblock for Partners
-        user?.email === 'mestrodonegocio01@gmail.com' ||
-        user?.email === 'ana@mestredosnegocios.com' ||
+        user?.role === 'influencer' ||
+        user?.role === 'coproducer' ||
+        user?.role === 'affiliate' ||
+        user?.hasMestreIA ||
         user?.email?.endsWith('@mestredosnegocios.com');
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto pb-20">
             {FLOWS_CONFIG.map(flow => {
-                // Se for admin, nunca está bloqueado
-                const isLocked = !isAdmin && !user?.hasMestreIA;
+                // Bloqueia apenas para alunos regulares sem hasMestreIA
+                const isLocked = !hasAccess;
 
                 return (
                     <div
@@ -42,6 +42,7 @@ const ToolGrid: React.FC<ToolGridProps> = ({ onSelect, onInfo }) => {
                         }}
                         className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-800 to-gray-900 p-6 text-left hover:scale-[1.02] transition-all duration-300 border border-gray-700 hover:border-brand-primary/50 shadow-lg hover:shadow-brand-primary/10 flex flex-col h-full cursor-pointer ${isLocked ? 'opacity-80' : ''}`}
                     >
+                        {/* Tag "Exclusivo Elite" removida para parceiros - mostrada apenas para alunos regulares bloqueados */}
                         {isLocked && (
                             <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md text-red-500 text-[10px] font-bold px-2 py-1 rounded-full border border-red-500/30 flex items-center gap-1 z-10">
                                 <LockClosed className="w-3 h-3" /> Exclusivo Elite
@@ -52,6 +53,7 @@ const ToolGrid: React.FC<ToolGridProps> = ({ onSelect, onInfo }) => {
                             <div className="text-5xl filter drop-shadow-md group-hover:scale-110 transition-transform duration-300">
                                 {(flow as any).icon ? (flow as any).icon : flow.emoji}
                             </div>
+                            {/* Badge Zap sempre exibido quando não está bloqueado (incluindo parceiros) */}
                             {!isLocked && (
                                 <div className="bg-gray-900/80 backdrop-blur-sm rounded-full px-2 py-1 border border-gray-700">
                                     <Zap className="w-4 h-4 text-brand-primary" />

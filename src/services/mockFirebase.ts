@@ -461,7 +461,12 @@ export const getAllUsersFlat = async () => {
     await delay(300);
     const students = mockStudents.map(s => ({ ...s, type: 'Aluno', role: 'student' }));
     const sales = mockSalesTeam.map(s => ({ ...s, type: 'Vendedor', role: 'sales_agent' }));
-    const influencers = mockInfluencers.map(i => ({ ...i, type: 'Influencer', role: 'influencer' }));
+    // CRITICAL FIX: Preserve original role instead of overriding to 'influencer'
+    const influencers = mockInfluencers.map(i => ({
+        ...i,
+        type: i.role === 'affiliate' ? 'Afiliado' : i.role === 'coproducer' ? 'Co-Produtor' : 'Influencer',
+        role: i.role || 'influencer' // Preserves original role (affiliate/coproducer/influencer)
+    }));
     const support = mockSupportAgents.map(a => ({ ...a, type: 'Suporte', role: 'support_agent' }));
 
     return [...students, ...sales, ...influencers, ...support];

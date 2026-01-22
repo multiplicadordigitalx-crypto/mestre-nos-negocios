@@ -1,7 +1,7 @@
 
 export type StudentPage = 'dashboard' | 'training' | 'financial' | 'products' | 'marketing' | 'integrations' | 'funnels' | 'email_marketing' | 'nexus_ads' | 'support' | 'profile' | 'coach' | 'community' | 'mestre_ia' | 'my_results' | 'create_course' | 'wallet' | 'recharge' | 'producer_dashboard' | 'health_diary' | 'diario_alimentar' | 'jurista_ia' | 'knowledge_practice' | 'nexus_poliglota';
 
-export type UserRole = 'student' | 'admin' | 'super_admin' | 'support' | 'support_agent' | 'sales_agent' | 'sales_manager' | 'influencer' | 'finance' | 'viewer' | 'coproducer';
+export type UserRole = 'student' | 'admin' | 'super_admin' | 'support' | 'support_agent' | 'sales_agent' | 'sales_manager' | 'influencer' | 'finance' | 'viewer' | 'coproducer' | 'affiliate';
 
 export type ProductStatus = 'active' | 'inactive' | 'paused' | 'pending' | 'development' | 'archived';
 

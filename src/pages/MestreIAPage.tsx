@@ -34,16 +34,17 @@ const MestreIAPage: React.FC<MestreIAPageProps> = ({ navigateTo }) => {
 
   const { checkAndConsume } = useCreditGuard();
 
-  // Verificação de Admin robusta
-
-  // Verificação de Admin robusta
-  const isAdmin = user?.role === 'super_admin' ||
+  // Parceiros, admins e usuários com hasMestreIA têm acesso total
+  const hasAccess = user?.role === 'super_admin' ||
     user?.role === 'admin' ||
-    user?.role === 'influencer' || // Unblock for Partners
-    user?.role === 'coproducer' || // Unblock for Partners
+    user?.role === 'influencer' ||
+    user?.role === 'coproducer' ||
+    user?.role === 'affiliate' ||
+    user?.hasMestreIA ||
     user?.email?.endsWith('@mestredosnegocios.com');
 
-  const hasAccess = user?.hasMestreIA || isAdmin;
+  // Define isAdmin para verificar manutenção
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'admin';
 
   useEffect(() => {
     getSystemSettings().then(s => setIsMaintenance(!!s.mestreIAMaintenance));
@@ -122,7 +123,7 @@ const MestreIAPage: React.FC<MestreIAPageProps> = ({ navigateTo }) => {
     if (activeFlowId === 'gerador_logomarcas' && result) return <LogoGenerator result={result} onBack={() => setActiveFlowId(null)} user={user} onTriggerCost={(cost, action) => triggerCostAction('logo_download', cost, action)} />;
     if (result) return <StandardGenerator result={result} flowConfig={flowConfig} onBack={() => setActiveFlowId(null)} onRedo={() => setResult(null)} />;
 
-    return <GuidedForm title={flowConfig.title} emoji={flowConfig.emoji} description={flowConfig.subtitle} videoUrl={activeFlowId === 'vendas_hoje' ? "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" : undefined} questions={questions} onComplete={handleFlowComplete} onBack={() => setActiveFlowId(null)} loading={loading} creditCost={5} />;
+    return <GuidedForm title={flowConfig.title} emoji={flowConfig.emoji} description={flowConfig.subtitle} videoUrl={activeFlowId === 'vendas_hoje' ? "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" : undefined} questions={questions} onComplete={handleFlowComplete} onBack={() => setActiveFlowId(null)} loading={loading} creditCost={5} toolId={activeFlowId} />;
   }
 
   return (

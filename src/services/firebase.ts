@@ -1,27 +1,39 @@
-// Firebase is disabled due to missing dependencies in this environment.
-// Using mock implementations instead.
-
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
+import { getAnalytics } from "firebase/analytics";
 import { Student, User, AppProduct, TrainingModule } from '../types';
-import { 
-    getAppProducts, 
-    getTrainingModules, 
-    getSalesTeam, 
-    getTeamUsers, 
-    getInfluencers,
+import {
+    getAppProducts,
+    getTrainingModules,
     mockStudents,
-    signInWithGoogle as mockSignIn, 
-    createAccountAfterPurchase as mockCreateAccount, 
+    signInWithGoogle as mockSignIn,
+    createAccountAfterPurchase as mockCreateAccount,
     signOut as mockSignOut
 } from './mockFirebase';
 
-// Dummy exports for missing modules
-export const db = {} as any;
-export const auth = {} as any;
-export const functions = {} as any;
-export const storage = {} as any;
-export const analytics = {} as any;
+// Firebase production configuration
+const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
 
-export const signInWithGoogle = mockSignIn;
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const functions = getFunctions(app);
+export const analytics = getAnalytics(app);
+
+export const signInWithGoogle = mockSignIn; // Keep mocks for logic flow during transition if needed
 export const signOut = mockSignOut;
 export const createAccountAfterPurchase = mockCreateAccount;
 
@@ -40,7 +52,7 @@ export const getStudentsPaginated = async (limitCount: number = 20, startAfterId
 
 export const searchStudents = async (term: string): Promise<Student[]> => {
     const lowerTerm = term.toLowerCase();
-    return mockStudents.filter(s => 
+    return mockStudents.filter(s =>
         (s.displayName || '').toLowerCase().includes(lowerTerm) ||
         (s.email || '').toLowerCase().includes(lowerTerm) ||
         (s.cpf || '').includes(term)

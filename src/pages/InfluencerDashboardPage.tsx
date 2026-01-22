@@ -8,9 +8,9 @@ import toast from 'react-hot-toast';
 
 // Layout & Components
 import { InfluencerSidebar, InfluencerTab } from './influencer/components/InfluencerSidebar';
-import Header from '@/components/Header';
 import CampaignBanner from '@/components/CampaignBanner';
 import { ChevronDown } from '@/components/Icons';
+import { PartnerHeader } from '@/components/PartnerHeader';
 
 // Sections
 import { VisaoGeralSection } from './influencer/sections/VisaoGeralSection';
@@ -20,6 +20,7 @@ import { FinancialSection } from './influencer/sections/FinancialSection';
 import { MestreIASection } from './influencer/sections/MestreIASection';
 import { VideosEducativosSection } from './influencer/sections/VideosEducativosSection';
 import { SupportSection } from './influencer/sections/SupportSection';
+import { RechargeSection } from './painel/sections/RechargeSection';
 
 // Modals
 import { EditProfileModal } from './influencer/modals/EditProfileModal';
@@ -159,6 +160,7 @@ const InfluencerDashboardPage: React.FC<InfluencerDashboardPageProps> = ({ influ
             case 'mestre_ia_partner': return <MestreIASection user={user} credits={user.creditBalance || 0} setCredits={() => { }} />;
             case 'videos': return <VideosEducativosSection />;
             case 'support': return <SupportSection influencer={user} />;
+            case 'recharge': return <RechargeSection navigateTo={(page: any) => toast.info('Navegação: ' + page)} />;
             default: return <VisaoGeralSection influencer={user} setActiveTab={setActiveTab} />;
         }
     };
@@ -182,21 +184,14 @@ const InfluencerDashboardPage: React.FC<InfluencerDashboardPageProps> = ({ influ
             />
 
             <main className="flex-1 overflow-y-auto relative scroll-smooth bg-gray-900">
-                {/* Mobile Header Identidade */}
-                <div className="md:hidden bg-gray-800 border-b border-gray-700 sticky top-0 z-30">
-                    <div className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                            <img src={user.photoURL || `https://i.pravatar.cc/150?u=${user.email}`} alt="Profile" className="w-10 h-10 rounded-full border-2 border-brand-primary object-cover" />
-                            <div>
-                                <p className="font-bold text-white text-sm">@{user.displayName}</p>
-                                <p className="text-[10px] text-gray-400 uppercase">{getPartnerRoleLabel()}</p>
-                            </div>
-                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} />
-                        </div>
-                    </div>
-                </div>
-
-                <Header user={user} onLogout={onLogout} />
+                {/* Header Completo para Parceiros - Responsivo */}
+                <PartnerHeader
+                    canGoBack={false}
+                    onNavigateToFinancial={() => setActiveTab('financial')}
+                    onNavigateToSupport={() => setActiveTab('support')}
+                    onNavigateToProfile={() => setIsEditProfileOpen(true)}
+                    onRecharge={() => setActiveTab('recharge')}
+                />
 
                 <div className="p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
                     <div className="hidden md:block mb-6">

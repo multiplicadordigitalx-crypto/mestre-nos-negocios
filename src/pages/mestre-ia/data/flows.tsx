@@ -242,9 +242,49 @@ export const FLOWS_CONFIG = [
 
 export const FLOW_QUESTIONS: Record<string, any[]> = {
   mestre_dos_negocios: [
-    { id: 'revenue', label: 'Quanto você está faturando por mês hoje?', type: 'text', placeholder: 'Ex: R$ 5.000, Zero, R$ 100.000...', required: true },
-    { id: 'pain', label: 'Qual seu maior custo ou dor atual?', type: 'textarea', placeholder: 'Ex: Não tenho tempo, custo alto com equipe, não sei vender...', required: true },
-    { id: 'investment', label: 'Quanto dinheiro você tem pra investir agora?', type: 'text', placeholder: 'Ex: Zero, R$ 1.000, R$ 10.000...', required: true },
+    {
+      id: 'revenue',
+      label: 'Quanto você está faturando por mês hoje?',
+      type: 'select',
+      options: ['Zero - ainda não vendi', 'R$ 1-5 mil', 'R$ 5-20 mil', 'R$ 20-50 mil', 'R$ 50-100 mil', 'R$ 100k+'],
+      required: true
+    },
+    {
+      id: 'niche',
+      label: 'Qual é o seu nicho de atuação?',
+      type: 'text',
+      placeholder: 'Ex: Marketing Digital, Emagrecimento, Advocacia, E-commerce...',
+      required: true
+    },
+    {
+      id: 'pain',
+      label: 'Qual seu MAIOR obstáculo no momento?',
+      type: 'select',
+      options: [
+        'Não tenho tráfego/clientes',
+        'Tráfego muito caro',
+        'Não sei vender/converter',
+        'Produto não está convertendo',
+        'Equipe desorganizada',
+        'Não sei como escalar',
+        'Preciso de um método validado'
+      ],
+      required: true
+    },
+    {
+      id: 'investment',
+      label: 'Quanto você pode investir AGORA em marketing?',
+      type: 'select',
+      options: ['Zero - só orgânico', 'R$ 100-500', 'R$ 500-2 mil', 'R$ 2-5 mil', 'R$ 5-10 mil', 'R$ 10k+'],
+      required: true
+    },
+    {
+      id: 'goal',
+      label: 'Qual seu objetivo específico nos próximos 30 dias?',
+      type: 'textarea',
+      placeholder: 'Ex: Fazer minhas primeiras vendas / Triplicar faturamento / Montar equipe / Automatizar processos...',
+      required: true
+    }
   ],
   blindagem_legal: [
     { id: 'site_name', label: 'Nome do seu Site/Produto', type: 'text', placeholder: 'Ex: Método Mestre dos Negócios', required: true },
@@ -258,6 +298,205 @@ export const FLOW_QUESTIONS: Record<string, any[]> = {
     { id: 'ctr', label: 'Qual seu CTR (Taxa de Cliques)?', type: 'text', placeholder: 'Ex: 0.8% ou 2.5%', required: true },
     { id: 'cpm', label: 'Qual seu CPM (Custo por 1000 imp.)?', type: 'text', placeholder: 'Ex: R$ 25,00', required: true },
     { id: 'conversion_rate', label: 'Taxa de Conversão da Página (Se souber)', type: 'text', placeholder: 'Ex: 1% ou "Não sei"', required: false }
+  ],
+
+  // Ferramentas de tráfego e vendas
+  vendas_hoje: [
+    {
+      id: 'product',
+      label: 'O que você está vendendo?',
+      type: 'text',
+      placeholder: 'Ex: Curso de Marketing, Mentoria, Infoproduto...',
+      required: true
+    },
+    {
+      id: 'platform_choice',
+      label: 'Qual plataforma quer usar?',
+      type: 'select',
+      options: ['Google Ads (busca ativa)', 'Meta Ads (Facebook/Instagram)', 'Ambas'],
+      required: true
+    },
+    {
+      id: 'budget',
+      label: 'Qual seu orçamento para começar hoje?',
+      type: 'select',
+      options: ['R$ 100-300', 'R$ 300-1000', 'R$ 1-3 mil', 'R$ 3k+'],
+      required: true
+    },
+    {
+      id: 'target_audience',
+      label: 'Quem é seu cliente ideal?',
+      type: 'textarea',
+      placeholder: 'Ex: Empreendedoras 25-45 anos, interessadas em renda extra...',
+      required: true
+    },
+    {
+      id: 'urgency',
+      label: 'Qual o gancho de urgência do seu produto?',
+      type: 'text',
+      placeholder: 'Ex: Vagas limitadas, Desconto só hoje, Bônus exclusivo...',
+      required: false
+    }
+  ],
+
+  google_ads_zero: [
+    {
+      id: 'product',
+      label: 'O que você está vendendo?',
+      type: 'text',
+      placeholder: 'Ex: Curso Online, Serviço de Consultoria, Software...',
+      required: true
+    },
+    {
+      id: 'niche',
+      label: 'Qual seu nicho?',
+      type: 'text',
+      placeholder: 'Ex: Emagrecimento, Marketing Digital, Advocacia...',
+      required: true
+    },
+    {
+      id: 'budget',
+      label: 'Orçamento diário disponível?',
+      type: 'select',
+      options: ['R$ 20-50/dia', 'R$ 50-100/dia', 'R$ 100-300/dia', 'R$ 300+/dia'],
+      required: true
+    },
+    {
+      id: 'keywords',
+      label: 'Palavras-chave que seu cliente buscaria (Se souber)',
+      type: 'textarea',
+      placeholder: 'Ex: como emagrecer rápido, consultoria de marketing, advogado trabalhista...',
+      required: false
+    },
+    {
+      id: 'landing_url',
+      label: 'URL da sua página de vendas',
+      type: 'text',
+      placeholder: 'Ex: https://seusite.com/produto',
+      required: true
+    }
+  ],
+
+  meta_ads_zero: [
+    {
+      id: 'product',
+      label: 'O que você está vendendo?',
+      type: 'text',
+      placeholder: 'Ex: Ebook, Mentoria, Curso...',
+      required: true
+    },
+    {
+      id: 'niche',
+      label: 'Qual seu nicho?',
+      type: 'text',
+      placeholder: 'Ex: Beleza, Fitness, Negócios...',
+      required: true
+    },
+    {
+      id: 'budget',
+      label: 'Orçamento diário disponível?',
+      type: 'select',
+      options: ['R$ 20-50/dia', 'R$ 50-100/dia', 'R$ 100-300/dia', 'R$ 300+/dia'],
+      required: true
+    },
+    {
+      id: 'target_demographics',
+      label: 'Perfil do público (idade, gênero, interesses)',
+      type: 'textarea',
+      placeholder: 'Ex: Mulheres 25-45 anos, interessadas em empreendedorismo...',
+      required: true
+    },
+    {
+      id: 'landing_url',
+      label: 'URL da sua página de vendas',
+      type: 'text',
+      placeholder: 'Ex: https://seusite.com/oferta',
+      required: true
+    }
+  ],
+
+  gerador_logomarcas: [
+    {
+      id: 'brand_name',
+      label: 'Nome da sua marca/empresa',
+      type: 'text',
+      placeholder: 'Ex: Mestre dos Negócios',
+      required: true
+    },
+    {
+      id: 'niche',
+      label: 'Qual seu nicho de atuação?',
+      type: 'text',
+      placeholder: 'Ex: Educação Online, Tecnologia, Saúde...',
+      required: true
+    },
+    {
+      id: 'brand_values',
+      label: 'Quais valores sua marca representa?',
+      type: 'select',
+      options: [
+        'Inovação e Tecnologia',
+        'Confiança e Segurança',
+        'Luxo e Sofisticação',
+        'Acessibilidade e Inclusão',
+        'Sustentabilidade',
+        'Força e Poder',
+        'Criatividade e Arte'
+      ],
+      required: true
+    },
+    {
+      id: 'color_preference',
+      label: 'Preferência de cores (opcional)',
+      type: 'text',
+      placeholder: 'Ex: Azul e dourado, Minimalista preto/branco...',
+      required: false
+    },
+    {
+      id: 'target_audience',
+      label: 'Quem é seu público-alvo?',
+      type: 'text',
+      placeholder: 'Ex: Empreendedores iniciantes, Executivos C-Level...',
+      required: true
+    }
+  ],
+
+  seo_melhorar: [
+    {
+      id: 'site_url',
+      label: 'URL do seu site',
+      type: 'text',
+      placeholder: 'Ex: https://www.seusite.com.br',
+      required: true
+    },
+    {
+      id: 'page_topic',
+      label: 'Sobre o que é a página/site?',
+      type: 'textarea',
+      placeholder: 'Ex: Vendo cursos de marketing digital para iniciantes...',
+      required: true
+    },
+    {
+      id: 'current_keywords',
+      label: 'Palavras-chave que você já usa (se souber)',
+      type: 'textarea',
+      placeholder: 'Ex: marketing digital, curso online, renda extra...',
+      required: false
+    },
+    {
+      id: 'target_location',
+      label: 'Localização do seu público',
+      type: 'text',
+      placeholder: 'Ex: Brasil todo, São Paulo, Apenas online...',
+      required: false
+    },
+    {
+      id: 'competitors',
+      label: 'Sites concorrentes que estão no topo do Google (opcional)',
+      type: 'textarea',
+      placeholder: 'Ex: concorrente1.com, concorrente2.com...',
+      required: false
+    }
   ],
 
   // ... outras questões (mantidas conforme sistema original)

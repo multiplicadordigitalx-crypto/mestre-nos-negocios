@@ -42,7 +42,7 @@ export const MestreIASection: React.FC<{ user: any; credits: number; setCredits:
         const flowConfig = FLOWS_CONFIG.find(f => f.id === selectedTool);
         if (!flowConfig) return null;
         const questions = FLOW_QUESTIONS[selectedTool] || [{ id: 'context', label: 'Detalhes da solicitação:', type: 'textarea', required: true }];
-        if (selectedTool === 'gerador_logomarcas' && result) return <LogoGenerator result={result} onBack={() => setSelectedTool(null)} user={user} onTriggerCost={() => {}} />;
+        if (selectedTool === 'gerador_logomarcas' && result) return <LogoGenerator result={result} onBack={() => setSelectedTool(null)} user={user} onTriggerCost={() => { }} />;
         if (result) return <StandardGenerator result={result} flowConfig={flowConfig} onBack={() => setSelectedTool(null)} onRedo={() => setResult(null)} />;
         return <GuidedForm title={flowConfig.title} emoji={flowConfig.emoji} description={flowConfig.subtitle} questions={questions} onComplete={handleFlowComplete} onBack={() => setSelectedTool(null)} loading={loading} creditCost={5} />;
     }

@@ -32,7 +32,7 @@ const ADMIN_EMAIL = 'mestrodonegocio01@gmail.com';
 export function AppRoutes() {
     const location = useLocation();
     const [isLoggingInAsAdmin, setIsLoggingInAsAdmin] = useState(true);
-    const { user, signOut, isImpersonating, loading } = useAuth();
+    const { user, signOut, isImpersonating, loading, loginStandalone } = useAuth();
 
     // Routing States for Pre-Auth Flows
     const [viewMode, setViewMode] = useState<'student' | 'admin' | 'influencer' | 'sales' | 'support_agent' | 'affiliate_invite'>('student');
@@ -55,18 +55,21 @@ export function AppRoutes() {
 
     // --- Handlers for Standalone Logins ---
     const handleInfluencerLogin = (inf: Influencer) => {
+        loginStandalone(inf);
         setInfluencerUser(inf);
         setIsInfluencerLoginOpen(false);
         setViewMode('influencer');
     }
 
     const handleSalesLogin = (sp: SalesPerson) => {
+        loginStandalone(sp);
         setSalesUser(sp);
         setIsSalesLoginOpen(false);
         setViewMode('sales');
     }
 
     const handleSupportLogin = (agent: SupportAgent) => {
+        loginStandalone(agent);
         setSupportUser(agent);
         setIsLoggingInAsAdmin(false);
         setViewMode('support_agent');
