@@ -5,7 +5,7 @@ import Button from './Button';
 import Input from './Input';
 import Card from './Card';
 import {
-    X as XIcon, AlertTriangle, CloudUpload, Brain, Zap,
+    X as XIcon, AlertTriangle, CloudUpload, Brain, Zap, Sparkles,
     CheckCircle, Info, Trash, Link as LinkIcon, BookOpen, Smartphone, FileText, Server,
     HeartPulse, Activity, Target, Search, Database, PlusCircle, DollarSign, User as UserIcon,
     Wallet, CreditCard, ShoppingBag, Users, MapPin, Globe, ShieldCheck, File, Whatsapp, Share2,

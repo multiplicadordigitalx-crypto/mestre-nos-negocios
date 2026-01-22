@@ -32,6 +32,7 @@ import SystemSettingsView from './admin/views/SystemSettingsView';
 import { WithdrawalsManagerView } from './finance/views/WithdrawalsManagerView';
 import LucPayDashboard from './admin/views/LucPayDashboard';
 import { FinancialCommandCenter } from './admin/views/FinancialCommandCenter';
+import CommunityManagementView from './admin/views/CommunityManagementView';
 
 // Import Layout Components
 import AdminNavigation, { AdminView } from './admin/components/AdminNavigation';
@@ -322,6 +323,7 @@ const AdminPage: React.FC = () => {
                         {currentView === 'verification' && <VerificationView />}
                         {currentView === 'levels' && <LevelsView />}
                         {currentView === 'chat' && <AdvancedChatView adminUser={user} />}
+                        {currentView === 'community' && <CommunityManagementView />}
                         {currentView === 'refunds' && <RefundsView requests={refundRequests} onOpenTriage={r => setRefundTriageModal(r)} onOpenApproval={r => setRefundApprovalModal(r)} currentUserRole={currentAdminProfile?.role || 'viewer'} />}
                         {currentView === 'access_recovery' && <AccessRecoveryView adminName={user.displayName || 'Admin'} />}
                         {currentView === 'lucpay_center' && <LucPayDashboard />}

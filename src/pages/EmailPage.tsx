@@ -21,6 +21,8 @@ import toast from 'react-hot-toast';
 import { callMestreIA } from '../services/mestreIaService';
 import { getAppProducts, getProductSmtpConfig } from '../services/mockFirebase';
 import { AppProduct } from '../types';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
+import { StudentPage } from '../types';
 
 // --- CONFIG & TYPES ---
 const CAMPAIGN_TYPES = [
@@ -169,7 +171,11 @@ const OptimizerStatus: React.FC<{ isActive: boolean, onToggle: (val: boolean) =>
 
 // --- MAIN PAGE ---
 
-const EmailPage: React.FC = () => {
+interface EmailPageProps {
+    navigateTo?: (page: StudentPage) => void;
+}
+
+const EmailPage: React.FC<EmailPageProps> = ({ navigateTo }) => {
     // State
     const [activeTab, setActiveTab] = useState<'dashboard' | 'creator' | 'lists' | 'settings'>('creator');
     const [isMestreFull, setIsMestreFull] = useState(false);
@@ -360,7 +366,7 @@ const EmailPage: React.FC = () => {
                 <div>
                     <h1 className="text-3xl font-black text-white flex items-center gap-3">
                         <Mail className="w-10 h-10 text-brand-primary" />
-                        E-mail Marketing <span className="text-purple-500">360º</span>
+                        E-mail Marketing <span className="text-purple-500 hidden md:inline">360º</span>
                     </h1>
                     <p className="text-gray-400 mt-2 max-w-xl">
                         A única plataforma que integra Funil, WhatsApp e E-mail em um organismo vivo.
@@ -368,8 +374,11 @@ const EmailPage: React.FC = () => {
                     </p>
                 </div>
 
-                {/* CONTROL SWITCHES */}
+                {/* CONTROL SWITCHES + CREDIT WIDGET */}
                 <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
+                    <div className="flex justify-end sm:justify-start">
+                        <CreditBalanceWidget onRecharge={() => navigateTo ? navigateTo('recharge') : null} />
+                    </div>
                     <OptimizerStatus isActive={isOptimizer} onToggle={setIsOptimizer} />
                     <MestreFullControl isActive={isMestreFull} onToggle={handleMestreFullToggle} syncStatus="synced" />
                 </div>

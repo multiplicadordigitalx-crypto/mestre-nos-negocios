@@ -20,6 +20,7 @@ import { getAppProducts, saveAppProduct, updateProductDNA, calibrateAutonomousDN
 import { ProductWizardModal } from '../components/ProductWizardModal';
 import { NexusOnboardingModal } from '../components/NexusOnboardingModal';
 import { callMestreIA } from '../services/mestreIaService';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
 
 // --- HELPERS INTERNOS ---
 const KpiCard: React.FC<{ label: string, value: string, icon: React.ReactNode, color: string, subValue?: string, onClick?: () => void }> = ({ label, value, icon, color, subValue, onClick }) => (
@@ -187,6 +188,10 @@ const AppProductsView: React.FC<AppProductsViewProps> = ({ navigateTo }) => {
 
     return (
         <div className="space-y-8 animate-fade-in">
+            {/* Credit Balance Widget - Mobile Priority */}
+            <div className="flex justify-end mb-4">
+                <CreditBalanceWidget onRecharge={() => navigateTo ? navigateTo('recharge') : null} />
+            </div>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">

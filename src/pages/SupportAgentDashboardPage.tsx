@@ -34,6 +34,7 @@ import { PartnerApprovalView } from './support/views/PartnerApprovalView';
 import { RefundsTriageView } from './support/views/RefundsTriageView';
 import { SupportProfileView } from './support/views/SupportProfileView';
 import { ProductivityView } from './support/views/ProductivityView';
+import { SupportCommunityView } from './support/views/SupportCommunityView';
 import { EscalationModal, RefundTriageModal, CreditManagementModal, FinanceStatementModal } from './support/components/SupportModals';
 import { StudentIntelligenceSidebar } from './support/components/StudentIntelligenceSidebar';
 
@@ -155,7 +156,7 @@ const StudentsListView: React.FC<{ onOpenStudent: (s: Student) => void, agent: S
 
 const SupportAgentDashboardPage: React.FC<SupportAgentDashboardProps> = ({ agent, onLogout }) => {
     const { refreshUser } = useAuth();
-    const [view, setView] = useState<'tickets' | 'chat' | 'partners' | 'refunds' | 'productivity' | 'profile' | 'students'>('tickets');
+    const [view, setView] = useState<'tickets' | 'chat' | 'partners' | 'refunds' | 'productivity' | 'profile' | 'students' | 'community'>('tickets');
     // UI State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -347,6 +348,7 @@ const SupportAgentDashboardPage: React.FC<SupportAgentDashboardProps> = ({ agent
             case 'refunds': return <RefundsTriageView requests={refundRequests} onAnalyze={setRefundModalRequest} />;
             case 'students': return <StudentsListView onOpenStudent={handleViewStudent} agent={agent} />;
             case 'productivity': return <ProductivityView agent={agent} />;
+            case 'community': return <SupportCommunityView agent={agent} />;
             case 'profile': return <SupportProfileView agent={agent} />;
             default: return null;
         }
@@ -380,6 +382,7 @@ const SupportAgentDashboardPage: React.FC<SupportAgentDashboardProps> = ({ agent
                     <MenuButton id="partners" label="Aprovar Parceiros" icon={ShieldCheck} />
                     <MenuButton id="productivity" label="Produtividade" icon={Activity} />
                     <MenuButton id="chat" label="Chat Interno" icon={Users} />
+                    <MenuButton id="community" label="Comunidades" icon={MessageSquare} />
                     <MenuButton id="hr" label="Meu RH" icon={FileText} />
 
                     {agent.permissions.viewFinance && (
@@ -418,6 +421,7 @@ const SupportAgentDashboardPage: React.FC<SupportAgentDashboardProps> = ({ agent
                     <MenuButton id="partners" label="Aprovar Parceiros" icon={ShieldCheck} />
                     <MenuButton id="productivity" label="Produtividade" icon={Activity} />
                     <MenuButton id="chat" label="Chat Interno" icon={Users} />
+                    <MenuButton id="community" label="Comunidades" icon={MessageSquare} />
                     {agent.permissions.viewFinance && <MenuButton id="refunds" label="Reembolsos" icon={DollarSign} />}
                     <div className="h-px bg-gray-700 my-2"></div>
                     <MenuButton id="profile" label="Meu Perfil" icon={User} />
@@ -435,7 +439,7 @@ const SupportAgentDashboardPage: React.FC<SupportAgentDashboardProps> = ({ agent
                     <button onClick={() => setIsMobileMenuOpen(true)} className="text-white"><Menu className="w-6 h-6" /></button>
                 </div>
 
-                <div className={`${view === 'tickets' ? 'p-0' : 'p-4 md:p-6 pb-0'} flex-shrink-0 transition-all`}><CampaignBanner user={agent} /></div>
+                <div className={`${(view === 'tickets' || view === 'community') ? 'p-0' : 'p-4 md:p-6 pb-0'} flex-shrink-0 transition-all`}><CampaignBanner user={agent} /></div>
 
                 <div className="flex-1 overflow-hidden relative">
                     <AnimatePresence mode="wait">

@@ -16,8 +16,14 @@ import ToolInfoModal from './mestre-ia/components/ToolInfoModal';
 import LogoGenerator from './mestre-ia/components/generators/LogoGenerator';
 import StandardGenerator from './mestre-ia/components/generators/StandardGenerator';
 import { AICreditGate } from '../components/AICreditGate';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
+import { StudentPage } from '../types';
 
-const MestreIAPage = () => {
+interface MestreIAPageProps {
+  navigateTo?: (page: StudentPage) => void;
+}
+
+const MestreIAPage: React.FC<MestreIAPageProps> = ({ navigateTo }) => {
   const { user, refreshUser } = useAuth();
   const [activeFlowId, setActiveFlowId] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
@@ -121,6 +127,10 @@ const MestreIAPage = () => {
 
   return (
     <div className="p-4 md:p-8 animate-fade-in relative">
+      {/* Credit Balance Widget - Mobile Priority */}
+      <div className="flex justify-end mb-4">
+        <CreditBalanceWidget onRecharge={() => navigateTo ? navigateTo('recharge') : null} />
+      </div>
       <header className="text-center mb-12">
         <div className="flex justify-center mb-6"><div className="w-20 h-20 bg-gradient-to-br from-brand-primary to-purple-600 rounded-3xl flex items-center justify-center shadow-lg shadow-brand-primary/20 rotate-3 transform hover:rotate-6 transition-transform"><Brain className="w-10 h-10 text-black" /></div></div>
         <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">Mestre <span className="text-brand-primary">IA</span></h1>

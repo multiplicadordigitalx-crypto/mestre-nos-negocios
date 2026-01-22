@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Card from '../components/Card';
-import { 
-    Link as LinkIcon, Smartphone, Brain, Server, 
-    Share2, Globe, Target, Mail as MailIcon, LockClosed, CreditCard 
+import {
+    Link as LinkIcon, Smartphone, Brain, Server,
+    Share2, Globe, Target, Mail as MailIcon, LockClosed, CreditCard
 } from '../components/Icons';
 import { useAuth } from '../hooks/useAuth';
 
@@ -29,7 +29,7 @@ const IntegrationsPage: React.FC = () => {
             setActiveTab('whatsapp');
         }
     }, [isAdmin, activeTab]);
-    
+
     return (
         <div className="pb-10 animate-fade-in">
             <div className="mb-8">
@@ -38,7 +38,7 @@ const IntegrationsPage: React.FC = () => {
                     Hub de Integrações
                 </h1>
                 <p className="text-gray-400 mt-2">
-                    {isAdmin 
+                    {isAdmin
                         ? "Configure o sistema nervoso da sua plataforma: Pagamentos, APIs, Redes Sociais e Ferramentas."
                         : "Gerencie suas conexões de mensagens, tráfego e e-mail para automação."
                     }
@@ -49,65 +49,65 @@ const IntegrationsPage: React.FC = () => {
                 {/* Navigation Tabs */}
                 <div className="flex border-b border-gray-700 bg-gray-900/50 overflow-x-auto custom-scrollbar">
                     {isAdmin && (
-                        <button 
+                        <button
                             onClick={() => setActiveTab('payments')}
                             className={`flex-1 min-w-[140px] py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'payments' ? 'text-white border-b-2 border-green-500 bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}
                         >
-                            <CreditCard className="w-4 h-4"/> Pagamentos
+                            <CreditCard className="w-4 h-4" /> Pagamentos
                         </button>
                     )}
 
                     {isAdmin && (
-                        <button 
+                        <button
                             onClick={() => setActiveTab('webhooks')}
                             className={`flex-1 min-w-[140px] py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'webhooks' ? 'text-white border-b-2 border-orange-500 bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}
                         >
-                            <LinkIcon className="w-4 h-4"/> Webhooks
+                            <LinkIcon className="w-4 h-4" /> Webhooks
                         </button>
                     )}
-                    
-                    <button 
+
+                    <button
                         onClick={() => setActiveTab('whatsapp')}
                         className={`flex-1 min-w-[140px] py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'whatsapp' ? 'text-white border-b-2 border-green-500 bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}
                     >
-                        <Smartphone className="w-4 h-4"/> WhatsApp
+                        <Smartphone className="w-4 h-4" /> WhatsApp
                     </button>
 
                     {isAdmin && (
-                        <button 
+                        <button
                             onClick={() => setActiveTab('social')}
                             className={`flex-1 min-w-[140px] py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'social' ? 'text-white border-b-2 border-pink-500 bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}
                         >
-                            <Share2 className="w-4 h-4"/> Redes Sociais
+                            <Share2 className="w-4 h-4" /> Redes Sociais
                         </button>
                     )}
 
                     {isAdmin && (
-                        <button 
+                        <button
                             onClick={() => setActiveTab('ai')}
                             className={`flex-1 min-w-[140px] py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'ai' ? 'text-white border-b-2 border-yellow-500 bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}
                         >
-                            <Brain className="w-4 h-4"/> Cérebro I.A.
+                            <Brain className="w-4 h-4" /> Cérebro I.A.
                         </button>
                     )}
 
-                    <button 
+                    <button
                         onClick={() => setActiveTab('traffic')}
                         className={`flex-1 min-w-[140px] py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'traffic' ? 'text-white border-b-2 border-red-500 bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}
                     >
-                        <Target className="w-4 h-4"/> Contas Ads
+                        <Target className="w-4 h-4" /> Contas Ads
                     </button>
-                    <button 
+                    <button
                         onClick={() => setActiveTab('domains')}
                         className={`flex-1 min-w-[140px] py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'domains' ? 'text-white border-b-2 border-blue-500 bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}
                     >
-                        <Globe className="w-4 h-4"/> Domínios
+                        <Globe className="w-4 h-4" /> Domínios
                     </button>
-                    <button 
+                    <button
                         onClick={() => setActiveTab('smtp')}
                         className={`flex-1 min-w-[140px] py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'smtp' ? 'text-white border-b-2 border-green-400 bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}
                     >
-                        <Server className="w-4 h-4"/> SMTP
+                        <Server className="w-4 h-4" /> SMTP
                     </button>
                 </div>
 
@@ -121,11 +121,11 @@ const IntegrationsPage: React.FC = () => {
                     {activeTab === 'traffic' && <TrafficView />}
                     {activeTab === 'domains' && <DomainsView />}
                     {activeTab === 'smtp' && <SmtpView />}
-                    
+
                     {/* Fallback for restricted access attempt */}
                     {!isAdmin && (activeTab === 'webhooks' || activeTab === 'social' || activeTab === 'ai' || activeTab === 'payments') && (
                         <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                            <LockClosed className="w-16 h-16 mb-4 opacity-20"/>
+                            <LockClosed className="w-16 h-16 mb-4 opacity-20" />
                             <p>Acesso restrito a administradores.</p>
                         </div>
                     )}

@@ -69,7 +69,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
     { id: 'health_diary', label: 'Saúde & Mente', icon: 'HeartPulse', path: 'health_diary', isEnabled: true },
     { id: 'create_course', label: 'Criar Curso', icon: 'PlusCircle', path: 'create_course', isEnabled: true },
     { id: 'minhas_escolas', label: 'Minhas Escolas', icon: 'Monitor', path: 'producer_dashboard', isEnabled: true },
-    { id: 'mestre_ia', label: 'Mentor IA', icon: 'Sparkles', path: 'mestre_ia', isEnabled: true },
+    { id: 'mestre_ia', label: 'Mestre IA', icon: 'Sparkles', path: 'mestre_ia', isEnabled: true },
     { id: 'coach', label: 'Coach IA', icon: 'Bot', path: 'coach', isEnabled: true },
     { id: 'products', label: 'Produtos', icon: 'ShoppingBag', path: 'products', isEnabled: true },
     // Marketing Tools
@@ -91,6 +91,11 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
 
   // --- DYNAMIC FILTERING LOGIC ---
   menuItems = menuItems.map(item => {
+    // Force label override for mestre_ia to ensure it always shows "Mestre IA"
+    if (item.id === 'mestre_ia') {
+      return { ...item, label: 'Mestre IA' };
+    }
+
     // 1. Minhas Escolas: Only for producers with published courses
     if (item.id === 'minhas_escolas') {
       const hasCourses = user?.publishedCourses && user.publishedCourses.length > 0;

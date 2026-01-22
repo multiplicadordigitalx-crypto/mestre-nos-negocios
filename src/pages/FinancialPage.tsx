@@ -14,6 +14,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Student } from '../types';
 import { StudentPage } from '../types';
 import { SharedWithdrawalModal } from '../components/modals/SharedWithdrawalModal';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
 
 interface FinancialPageProps {
     navigateTo: (page: StudentPage) => void;
@@ -240,6 +241,10 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ navigateTo }) => {
 
     return (
         <div className="pb-20 space-y-8 animate-fade-in max-w-7xl mx-auto">
+            {/* Credit Balance Widget - Mobile Priority */}
+            <div className="flex justify-end mb-4">
+                <CreditBalanceWidget onRecharge={() => navigateTo('recharge')} />
+            </div>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
                     <LucPayLogo />

@@ -23,7 +23,7 @@ import {
     Star, Crown, Film, Mic, FileText, Globe, Search, Palette,
     Monitor, Megaphone, Link as LinkIcon, ChevronRight, Eye,
     ShieldAlert, Server, Calculator, Clock, Settings,
-    ChevronUp, ChevronDown, Video, Upload, HardDrive, Download, FileBox, ExternalLink
+    ChevronUp, ChevronDown, Video, Upload, HardDrive, Download, ExternalLink
 } from '../components/Icons';
 import toast from 'react-hot-toast';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -36,6 +36,8 @@ import {
 import { callMestreIA, generateCourseCoverImage } from '../services/mestreIaService';
 import { useAuth } from '../hooks/useAuth';
 import { SchoolSetupModal } from '../components/SchoolSetupModal';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
+import { StudentPage } from '../types';
 
 import { CreditControlCard, ToolSelectionGrid, CostSummaryCard } from '../components/SchoolToolsSelector';
 import { SchoolConfig } from '../types';
@@ -172,13 +174,7 @@ const Hint: React.FC<{ title: string, text: string, type?: 'info' | 'warning' }>
     </div>
 );
 
-interface PhysicalKitItem {
-    id: string;
-    name: string;
-    description: string;
-    cost: number;
-    requiresOCR: boolean;
-}
+
 
 interface FileQueueItem {
     id: string;
@@ -1738,6 +1734,10 @@ const AdminTrainingPage: React.FC = () => {
         <div className="space-y-8 pb-20">
             {viewMode === 'courses' ? (
                 <div className="animate-fade-in">
+                    {/* Credit Balance Widget - Mobile Priority */}
+                    <div className="flex justify-end mb-4">
+                        <CreditBalanceWidget onRecharge={() => window.location.href = '#/painel/recharge'} />
+                    </div>
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <h1 className="text-3xl font-black text-white uppercase tracking-tighter">Gestão de Treinamentos</h1>

@@ -146,7 +146,7 @@ const NexusStrategyOrchestrator: React.FC = () => {
                     <Cpu className="w-8 h-8 text-brand-primary animate-pulse-slow" /> Orquestrador de Estratégia Nexus
                 </h3>
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] bg-gray-800 text-gray-400 px-3 py-1 rounded-full border border-gray-700">v5.0.0 (Custom Build)</span>
+
                     {stage === 'deploying' && <span className="text-xs text-green-400 font-bold animate-pulse">● EXECUTANDO</span>}
                 </div>
             </div>

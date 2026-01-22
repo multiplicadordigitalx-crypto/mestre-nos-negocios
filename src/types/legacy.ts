@@ -448,6 +448,7 @@ export interface ChatChannel {
     icon?: string;
     isLocked?: boolean;
     unreadCount?: number;
+    moderators?: string[]; // Array of user UIDs
 }
 
 export interface SystemSettings {

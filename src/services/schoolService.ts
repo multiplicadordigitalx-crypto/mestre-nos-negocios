@@ -7,7 +7,7 @@ const DEFAULT_MENU_ITEMS: StudentMenuItem[] = [
     { id: 'training', label: 'Treinamento', icon: 'BookOpen', path: 'training', isEnabled: true },
     { id: 'financial', label: 'Financeiro', icon: 'DollarSign', path: 'financial', isEnabled: true },
     { id: 'create_course', label: 'Criar Curso', icon: 'PlusCircle', path: 'create_course', isEnabled: true },
-    { id: 'mestre_ia', label: 'Mentor IA', icon: 'Sparkles', path: 'mestre_ia', isEnabled: true },
+    { id: 'mestre_ia', label: 'Mestre IA', icon: 'Sparkles', path: 'mestre_ia', isEnabled: true },
     { id: 'coach', label: 'Coach IA', icon: 'Bot', path: 'coach', isEnabled: true },
     { id: 'products', label: 'Produtos', icon: 'ShoppingBag', path: 'products', isEnabled: true },
     { id: 'community', label: 'Comunidade', icon: 'Users', path: 'community', isEnabled: true },

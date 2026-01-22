@@ -12,6 +12,8 @@ import { SharedAccount } from '../types';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 import { MestreFullModal } from './funnels/modals/FunnelsModals';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
+import { StudentPage } from '../types';
 
 type MarketingTab = 'dashboard' | 'ugc_automation' | 'bot_automation' | 'viral_creatives' | 'whatsapp' | 'nexus_studio';
 
@@ -24,7 +26,11 @@ const ALL_TABS: { id: MarketingTab; label: string; description: string; icon: an
     { id: 'whatsapp', label: 'WhatsApp Evo', description: 'Vendedor Implacável', icon: Phone, color: 'text-green-500', bgColor: 'bg-green-500/10' },
 ];
 
-const MarketingPage: React.FC = () => {
+interface MarketingPageProps {
+    navigateTo?: (page: StudentPage) => void;
+}
+
+const MarketingPage: React.FC<MarketingPageProps> = ({ navigateTo }) => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<MarketingTab>('dashboard');
     const [isMestreFullMode, setIsMestreFullMode] = useState(false);
@@ -53,19 +59,25 @@ const MarketingPage: React.FC = () => {
                     <p className="text-gray-400 mt-2">Central de comando de marketing automatizado.</p>
                 </div>
 
-                <div className={`flex items-center gap-4 p-3 rounded-xl border shadow-inner ${isMestreFullMode ? 'bg-gray-800 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]' : 'bg-black border-gray-800'}`}>
-                    <div className="text-right">
-                        <p className="text-[10px] text-gray-500 font-bold uppercase">Modo Mestre Full</p>
-                        <p className={`text-xs font-bold ${isMestreFullMode ? 'text-yellow-400 animate-pulse' : 'text-gray-500'}`}>
-                            {isMestreFullMode ? 'LIGADO (AUTO)' : 'DESLIGADO'}
-                        </p>
+                <div className="flex items-center gap-3">
+                    {/* Credit Balance Widget */}
+                    <CreditBalanceWidget onRecharge={() => navigateTo ? navigateTo('recharge') : null} />
+
+                    {/* Mestre Full Toggle */}
+                    <div className={`flex items-center gap-4 p-3 rounded-xl border shadow-inner ${isMestreFullMode ? 'bg-gray-800 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]' : 'bg-black border-gray-800'}`}>
+                        <div className="text-right">
+                            <p className="text-[10px] text-gray-500 font-bold uppercase">Modo Mestre Full</p>
+                            <p className={`text-xs font-bold ${isMestreFullMode ? 'text-yellow-400 animate-pulse' : 'text-gray-500'}`}>
+                                {isMestreFullMode ? 'LIGADO (AUTO)' : 'DESLIGADO'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => !isMestreFullMode ? setShowFullModeModal(true) : setIsMestreFullMode(false)}
+                            className={`w-14 h-8 rounded-full relative transition-all duration-300 ease-in-out shadow-inner border-2 ${isMestreFullMode ? 'bg-yellow-500 border-yellow-600 shadow-[0_0_15px_rgba(234,179,8,0.5)]' : 'bg-gray-800 border-gray-600'}`}
+                        >
+                            <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white transition-all duration-300 shadow-md ${isMestreFullMode ? 'left-6' : 'left-0.5'}`}></div>
+                        </button>
                     </div>
-                    <button
-                        onClick={() => !isMestreFullMode ? setShowFullModeModal(true) : setIsMestreFullMode(false)}
-                        className={`w-14 h-8 rounded-full relative transition-all duration-300 ease-in-out shadow-inner border-2 ${isMestreFullMode ? 'bg-yellow-500 border-yellow-600 shadow-[0_0_15px_rgba(234,179,8,0.5)]' : 'bg-gray-800 border-gray-600'}`}
-                    >
-                        <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white transition-all duration-300 shadow-md ${isMestreFullMode ? 'left-6' : 'left-0.5'}`}></div>
-                    </button>
                 </div>
             </div>
 

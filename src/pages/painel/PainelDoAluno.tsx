@@ -20,6 +20,7 @@ import FunnelsPage from '../FunnelsPage';
 import EmailPage from '../EmailPage';
 import CoachPage from '../CoachPage';
 import ChatPage from '../ChatPage';
+import CommunityPage from '../community/CommunityPage';
 import ProfilePage from '../ProfilePage';
 import SupportPage from '../SupportPage';
 import FinancialPage from '../FinancialPage';
@@ -154,7 +155,7 @@ export const PainelDoAluno: React.FC<PainelDoAlunoProps> = ({ activePage, naviga
             case 'funnels': return <FunnelsPage />;
             case 'email_marketing': return <EmailPage />;
             case 'support': return <SupportPage />;
-            case 'community': return <ChatPage />;
+            case 'community': return <CommunityPage />;
             case 'profile': return <ProfilePage onOpenRefund={() => setShowRefundModal(true)} onOpenRenewal={handleOpenRenewal} />;
             case 'create_course': return <StudentCourseCreatorView navigateTo={navigateTo} />;
             case 'wallet': return <WalletSection navigateTo={navigateTo} />;

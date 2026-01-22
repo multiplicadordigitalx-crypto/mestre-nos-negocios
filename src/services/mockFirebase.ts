@@ -854,7 +854,7 @@ export const markChannelAsRead = (channelId: string) => {
     }
 };
 
-export const sendMessage = async (text: string, user: User, channelId: string) => {
+export const sendMessage = async (text: string, user: User, channelId: string, attachmentUrl?: string, messageType: 'text' | 'image' | 'file' = 'text') => {
     const allMessages = loadJSON<Record<string, ChatMessage[]>>('mockChatMessages', {});
     if (!allMessages[channelId]) allMessages[channelId] = [];
 
@@ -868,11 +868,71 @@ export const sendMessage = async (text: string, user: User, channelId: string) =
             name: user.displayName || 'Usuário',
             avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.email}`,
             role: user.role
-        }
+        },
+        attachmentUrl,
+        messageType
     };
 
     allMessages[channelId].push(msg);
     saveJSON('mockChatMessages', allMessages);
+};
+
+export const deleteMessage = async (channelId: string, messageId: string) => {
+    const allMessages = loadJSON<Record<string, ChatMessage[]>>('mockChatMessages', {});
+    if (allMessages[channelId]) {
+        allMessages[channelId] = allMessages[channelId].filter(m => m.id !== messageId);
+        saveJSON('mockChatMessages', allMessages);
+    }
+};
+
+export const saveChannel = async (channel: ChatChannel) => {
+    const channels = await getChannels();
+    const idx = channels.findIndex(c => c.id === channel.id);
+    if (idx !== -1) {
+        channels[idx] = channel;
+    } else {
+        channels.push(channel);
+    }
+    saveJSON('mockChatChannels', channels);
+    return channel;
+};
+
+export const deleteChannel = async (channelId: string) => {
+    const channels = await getChannels();
+    const filtered = channels.filter(c => String(c.id) !== String(channelId));
+
+    if (channels.length === filtered.length) {
+        console.warn(`Channel with ID ${channelId} not found for deletion.`);
+    }
+
+    saveJSON('mockChatChannels', filtered);
+
+    // Also cleanup messages
+    const allMessages = loadJSON<Record<string, ChatMessage[]>>('mockChatMessages', {});
+    delete allMessages[channelId];
+    saveJSON('mockChatMessages', allMessages);
+};
+
+export const addModeratorToChannel = async (channelId: string, userId: string) => {
+    const channels = await getChannels();
+    const idx = channels.findIndex(c => c.id === channelId);
+    if (idx !== -1) {
+        const moderators = channels[idx].moderators || [];
+        if (!moderators.includes(userId)) {
+            channels[idx].moderators = [...moderators, userId];
+            saveJSON('mockChatChannels', channels);
+        }
+    }
+};
+
+export const removeModeratorFromChannel = async (channelId: string, userId: string) => {
+    const channels = await getChannels();
+    const idx = channels.findIndex(c => c.id === channelId);
+    if (idx !== -1) {
+        const moderators = channels[idx].moderators || [];
+        channels[idx].moderators = moderators.filter(id => id !== userId);
+        saveJSON('mockChatChannels', channels);
+    }
 };
 
 export const getSupportTickets = async () => {

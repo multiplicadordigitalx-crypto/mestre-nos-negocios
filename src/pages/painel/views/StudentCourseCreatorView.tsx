@@ -23,6 +23,7 @@ import { useCreditGuard } from '../../../hooks/useCreditGuard';
 import { SchoolSetupModal } from '../../../components/SchoolSetupModal';
 import { SchoolToolsSelector, CreditControlCard, ToolSelectionGrid, CostSummaryCard } from '../../../components/SchoolToolsSelector';
 import { PremiumToolId, FinancialModel } from '../../../types/legacy';
+import { CreditBalanceWidget } from '../../../components/CreditBalanceWidget';
 
 const MotionDiv = motion.div as any;
 
@@ -1885,6 +1886,10 @@ export const StudentCourseCreatorView: React.FC<StudentCourseCreatorViewProps> =
 
     return (
         <div className="space-y-6 pb-24">
+            {/* Credit Balance Widget - Mobile Priority */}
+            <div className="flex justify-end mb-4">
+                <CreditBalanceWidget onRecharge={() => navigateTo ? navigateTo('recharge') : null} />
+            </div>
             <div className="flex justify-between items-center bg-gray-800 p-6 rounded-[2rem] border border-gray-700 shadow-xl">
                 <div>
                     <h2 className="text-2xl font-black text-white flex items-center gap-3 uppercase tracking-tighter">
@@ -1927,8 +1932,8 @@ export const StudentCourseCreatorView: React.FC<StudentCourseCreatorViewProps> =
                 {isWizardOpen && (
                     <div className="fixed inset-0 bg-black/98 flex items-center justify-center z-[140] p-4 overflow-y-auto">
                         <MotionDiv initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-gray-800 w-full max-w-5xl rounded-3xl border border-gray-700 shadow-2xl flex flex-col max-h-[95vh] relative overflow-hidden">
-                            <div className="p-8 border-b border-gray-700 flex justify-between items-center bg-gray-900/50">
-                                <div>
+                            <div className="p-4 md:p-8 border-b border-gray-700 flex justify-between items-center bg-gray-900/50">
+                                <div className="flex-1">
                                     <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2">
                                         <span>Painel do Aluno</span>
                                         <span className="text-gray-700">/</span>
@@ -1936,12 +1941,12 @@ export const StudentCourseCreatorView: React.FC<StudentCourseCreatorViewProps> =
                                         <span className="text-gray-700">/</span>
                                         <span className="text-brand-primary">Passo {step} de 7</span>
                                     </div>
-                                    <h3 className="text-xl font-black text-white uppercase">Orquestrador de Lançamentos</h3>
-                                    <div className="flex gap-2 mt-2">
-                                        {[1, 2, 3, 4, 5, 6, 7].map(s => <div key={s} className={`h-1 w-12 rounded-full transition-all duration-500 ${s <= step ? 'bg-brand-primary shadow-[0_0_10px_#FACC15]' : 'bg-gray-700'}`}></div>)}
+                                    <h3 className="text-sm md:text-xl font-black text-white uppercase leading-tight">Orquestrador de Lançamentos</h3>
+                                    <div className="flex gap-1 md:gap-2 mt-2">
+                                        {[1, 2, 3, 4, 5, 6, 7].map(s => <div key={s} className={`h-1 w-6 md:w-12 rounded-full transition-all duration-500 ${s <= step ? 'bg-brand-primary shadow-[0_0_10px_#FACC15]' : 'bg-gray-700'}`}></div>)}
                                     </div>
                                 </div>
-                                <button onClick={() => setIsWizardOpen(false)} className="bg-gray-700 p-2 rounded-full text-gray-400 hover:text-white transition-colors"><XIcon className="w-6 h-6" /></button>
+                                <button onClick={() => setIsWizardOpen(false)} className="bg-gray-700 p-2 rounded-full text-gray-400 hover:text-white transition-colors flex-shrink-0"><XIcon className="w-5 h-5 md:w-6 md:h-6" /></button>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">

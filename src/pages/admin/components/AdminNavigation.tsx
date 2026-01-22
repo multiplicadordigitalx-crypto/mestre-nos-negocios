@@ -4,13 +4,13 @@ import {
     ShieldCheck, FileText, Link as LinkIcon,
     ShoppingBag, Briefcase,
     TrendingUp, MessageSquare, DollarSign, BarChart3, Wallet, Activity,
-    Unlock, Smartphone, Settings, CreditCard
+    Unlock, Smartphone, Settings, CreditCard, Users
 } from '../../../components/Icons';
 
 // Helper components needed for icons
 import { CheckCircle, Trophy } from '../../../components/Icons';
 
-export type AdminView = 'dashboard' | 'app_products' | 'requests' | 'influencers' | 'sales_team' | 'verification' | 'levels' | 'chat' | 'refunds' | 'access_recovery' | 'financial' | 'team' | 'productivity' | 'audit' | 'evolution' | 'settings' | 'commissions' | 'withdrawals' | 'lucpay_center';
+export type AdminView = 'dashboard' | 'app_products' | 'requests' | 'influencers' | 'sales_team' | 'verification' | 'levels' | 'chat' | 'community' | 'refunds' | 'access_recovery' | 'financial' | 'team' | 'productivity' | 'audit' | 'evolution' | 'settings' | 'commissions' | 'withdrawals' | 'lucpay_center';
 
 interface AdminNavigationProps {
     currentView: AdminView;
@@ -48,6 +48,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({ currentView, setCurre
             <NavButton view="verification" label="Verificação" icon={<CheckCircle className="w-4 h-4 text-blue-400" />} />
             <NavButton view="levels" label="Níveis" icon={<Trophy className="w-4 h-4 text-yellow-400" />} />
             <NavButton view="chat" label="Chat" icon={<MessageSquare className="w-4 h-4" />} />
+            <NavButton view="community" label="Comunidade" icon={<Users className="w-4 h-4 text-indigo-400" />} />
             <NavButton view="refunds" label="Reembolsos" icon={<DollarSign className="w-4 h-4 text-red-400" />} />
             <NavButton view="financial" label="Financeiro" icon={<BarChart3 className="w-4 h-4" />} />
             <NavButton view="withdrawals" label="Saques" icon={<DollarSign className="w-4 h-4 text-green-400" />} />

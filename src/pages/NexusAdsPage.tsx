@@ -23,6 +23,8 @@ import { nexusCore } from '../services/NexusCore'; // NOVA INTEGRAÇÃO
 import { useAuth } from '../hooks/useAuth';
 import { NexusTask, User, UserSubscription } from '../types/legacy';
 import { SubscriptionModal } from './financial/SubscriptionModal';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
+import { StudentPage } from '../types';
 
 // ... (MANTÉM AS CONSTANTES DE PLATAFORMA COMO ESTÃO: PLATFORM_OBJECTIVES, PLATFORMS_CONFIG) ...
 // --- CONFIGURAÇÃO DE OBJETIVOS POR PLATAFORMA ---
@@ -73,7 +75,11 @@ const PLATFORMS_CONFIG = [
     { id: 'Taboola', name: 'Taboola', icon: () => <span className="font-black text-blue-800">T</span>, color: 'text-blue-800', border: 'border-blue-800' },
 ];
 
-const NexusAdsPage: React.FC = () => {
+interface NexusAdsPageProps {
+    navigateTo?: (page: StudentPage) => void;
+}
+
+const NexusAdsPage: React.FC<NexusAdsPageProps> = ({ navigateTo }) => {
     // ... (STATES INALTERADOS) ...
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'intelligence' | 'generator' | 'campaigns'>('generator');
@@ -242,25 +248,30 @@ const NexusAdsPage: React.FC = () => {
     // ... (RENDERIZAÇÃO MANTIDA IGUAL, APENAS ADICIONANDO EXIBIÇÃO DO NEXUS REASONING) ...
 
     return (
-        <div className="p-6 animate-fade-in space-y-6 pb-20">
-            {/* Header e Mestre Full Panels mantidos... */}
-            <div className={`border rounded-2xl p-6 relative overflow-hidden shadow-2xl transition-all duration-500 mb-6 ${isMestreFullMode ? 'bg-gray-800 border-yellow-500/50 shadow-[0_0_30px_rgba(234,179,8,0.15)]' : 'bg-gray-900 border-gray-700'}`}>
+        <div className="p-2 md:p-6 animate-fade-in space-y-4 md:space-y-6 pb-20">
+            {/* Credit Balance Widget - Above Header */}
+            <div className="flex justify-end">
+                <CreditBalanceWidget onRecharge={() => navigateTo ? navigateTo('recharge') : null} />
+            </div>
+
+            {/* Header Section - Optimized for Mobile */}
+            <div className="bg-gray-900 rounded-xl md:rounded-2xl p-3 md:p-6 relative overflow-hidden shadow-lg">
                 {isMestreFullMode && <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500"></div>}
 
-                <div className="flex flex-col md:flex-row justify-between items-start gap-4 relative z-10">
-                    <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shadow-lg ${isMestreFullMode ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400' : 'bg-gray-800 border-gray-700 text-red-500'}`}>
-                            <Target className="w-7 h-7" />
+                <div className="flex flex-col lg:flex-row justify-between items-start gap-3 md:gap-4 relative z-10">
+                    <div className="flex items-center gap-2 md:gap-4 w-full lg:w-auto">
+                        <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center border shadow-lg ${isMestreFullMode ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400' : 'bg-gray-800 border-gray-700 text-red-500'}`}>
+                            <Target className="w-5 h-5 md:w-7 md:h-7" />
                         </div>
-                        <div>
-                            <h1 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2">
+                        <div className="flex-1">
+                            <h1 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight flex flex-wrap items-center gap-1 md:gap-2">
                                 Nexus <span className={isMestreFullMode ? "text-yellow-400" : "text-red-500"}>Ads</span> Command
-                                {isMestreFullMode && <span className="text-[10px] bg-yellow-500 text-black px-2 py-0.5 rounded font-black tracking-widest border border-yellow-600">MESTRE FULL ON</span>}
+                                {isMestreFullMode && <span className="text-[9px] md:text-[10px] bg-yellow-500 text-black px-1.5 md:px-2 py-0.5 rounded font-black tracking-widest border border-yellow-600">MESTRE FULL</span>}
                             </h1>
-                            <p className="text-gray-400 text-sm">Central de Inteligência e Orquestração de Tráfego Pago.</p>
+                            <p className="text-gray-400 text-xs md:text-sm hidden md:block">Central de Inteligência e Orquestração de Tráfego Pago.</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 md:gap-4 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
                         <div className="bg-red-900/20 border border-red-500/30 px-4 py-2 rounded-xl flex items-center gap-3">
                             <Activity className="w-5 h-5 text-red-500 animate-pulse" />
                             <div>
@@ -304,10 +315,30 @@ const NexusAdsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex bg-gray-800 p-1 rounded-xl border border-gray-700 w-full md:w-fit">
-                    <button onClick={() => setActiveTab('generator')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'generator' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>Gerador de Campanhas</button>
-                    <button onClick={() => setActiveTab('intelligence')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'intelligence' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>Inteligência de Persona</button>
-                    <button onClick={() => setActiveTab('campaigns')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'campaigns' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>Campanhas Ativas</button>
+                {/* Tabs - Mobile Scrollable */}
+                <div className="mt-3 md:mt-0 mb-4 md:mb-6">
+                    <div className="overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0">
+                        <div className="flex justify-center bg-gray-800 p-1 rounded-xl border border-gray-700 gap-1 min-w-max md:w-full shadow-inner">
+                            <button
+                                onClick={() => setActiveTab('generator')}
+                                className={`px-3 md:px-6 py-2.5 md:py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'generator' ? 'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-500/30' : 'text-gray-400 hover:text-white hover:bg-gray-700/50'}`}
+                            >
+                                Gerador
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('intelligence')}
+                                className={`px-3 md:px-6 py-2.5 md:py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'intelligence' ? 'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-500/30' : 'text-gray-400 hover:text-white hover:bg-gray-700/50'}`}
+                            >
+                                Inteligência
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('campaigns')}
+                                className={`px-3 md:px-6 py-2.5 md:py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'campaigns' ? 'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-500/30' : 'text-gray-400 hover:text-white hover:bg-gray-700/50'}`}
+                            >
+                                Campanhas
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <AnimatePresence mode="wait">
@@ -342,9 +373,17 @@ const NexusAdsPage: React.FC = () => {
                                             {opp.type === 'viral' ? <Zap className="w-5 h-5" /> : <RefreshCw className="w-5 h-5" />}
                                         </div>
                                         <div className="flex-1">
-                                            <div className="flex justify-between items-start">
-                                                <h4 className="text-white font-bold text-sm group-hover:text-red-400 transition-colors">{opp.title}</h4>
-                                                <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full border border-red-500/20">{opp.confidence}% Match</span>
+                                            <div className="flex justify-between items-start gap-2">
+                                                <h4 className="text-white font-bold text-sm group-hover:text-red-400 transition-colors flex-1">{opp.title}</h4>
+                                                <span className={`text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg border ${opp.confidence >= 95
+                                                    ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border-green-500/40 shadow-green-500/20'
+                                                    : opp.confidence >= 85
+                                                        ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border-yellow-500/40 shadow-yellow-500/20'
+                                                        : 'bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-400 border-red-500/40 shadow-red-500/20'
+                                                    }`}>
+                                                    <CheckCircle className="w-3 h-3" />
+                                                    {opp.confidence}% MATCH
+                                                </span>
                                             </div>
                                             <p className="text-xs text-gray-400 mt-1">{opp.action} • via {opp.source}</p>
                                         </div>

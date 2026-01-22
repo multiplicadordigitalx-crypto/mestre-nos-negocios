@@ -11,6 +11,7 @@ import { TrainingModule, Lesson, Student, Course } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import CertificateModal from '../components/CertificateModal';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
 
 type TrainingState = 'courses_list' | 'modules_list' | 'video' | 'quiz' | 'completed';
 
@@ -179,6 +180,10 @@ const TrainingPage: React.FC<TrainingPageProps> = ({ navigateTo }) => {
         if (state === 'courses_list') {
             return (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    {/* Credit Balance Widget - Mobile Priority */}
+                    <div className="flex justify-end mb-4">
+                        <CreditBalanceWidget onRecharge={() => navigateTo('recharge')} />
+                    </div>
                     <h1 className="text-3xl font-bold text-white mb-6">Meus Treinamentos</h1>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {courses.map(course => {

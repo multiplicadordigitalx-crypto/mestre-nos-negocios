@@ -18,8 +18,13 @@ import { OptimizerTab } from './funnels/tabs/OptimizerTab';
 import { StrategiesTab } from './funnels/tabs/StrategiesTab';
 import { AnalyticsTab } from './funnels/tabs/AnalyticsTab';
 import { PersonaTab } from './funnels/tabs/PersonaTab';
+import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
 
-const FunnelsPage: React.FC = () => {
+interface FunnelsPageProps {
+    navigateTo?: (page: string) => void;
+}
+
+const FunnelsPage: React.FC<FunnelsPageProps> = ({ navigateTo }) => {
     const { user } = useAuth();
     const isStudent = user?.role === 'student' || user?.role === 'influencer' || !user?.role;
     const studentTitle = "Meus Funis de Venda";
@@ -59,18 +64,40 @@ const FunnelsPage: React.FC = () => {
                 {isMestreFullMode && <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-yellow-500 to-green-500"></div>}
 
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-                    <div>
-                        <h2 className={`text-2xl font-black uppercase tracking-wider flex items-center gap-3 ${isMestreFullMode ? 'text-white' : 'text-gray-400'}`}>
-                            <Layers className={`w-8 h-8 ${isMestreFullMode ? 'text-brand-primary' : 'text-gray-600'}`} />
+                    <div className="flex-1 w-full md:w-auto">
+                        <h2 className={`text-xl md:text-2xl font-black uppercase tracking-wider flex items-center gap-2 md:gap-3 ${isMestreFullMode ? 'text-white' : 'text-gray-400'}`}>
+                            <Layers className={`w-6 h-6 md:w-8 md:h-8 ${isMestreFullMode ? 'text-brand-primary' : 'text-gray-600'}`} />
                             {isStudent ? studentTitle : adminTitle}
-                            <span className={`text-xs px-2 py-1 rounded border font-normal normal-case ml-2 ${isMestreFullMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>Mestre das Conversões</span>
+                            <span className={`hidden md:inline text-xs px-2 py-1 rounded border font-normal normal-case ml-2 ${isMestreFullMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>Mestre das Conversões</span>
                         </h2>
-                        <p className="text-gray-400 text-sm mt-1 max-w-2xl">
+                        <p className="text-gray-400 text-xs md:text-sm mt-1 max-w-2xl">
                             Arquiteto supremo de fluxos. Deixe a IA criar, testar e escalar suas páginas de vendas automaticamente.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* Mobile: CreditBalanceWidget + Mestre Full in row */}
+                    <div className="flex md:hidden items-center gap-2 w-full">
+                        <div className="flex-1">
+                            <CreditBalanceWidget onRecharge={() => navigateTo ? navigateTo('recharge') : window.location.href = '/painel?page=recharge'} />
+                        </div>
+                        <div className={`flex items-center gap-2 p-2 rounded-xl border shadow-inner ${isMestreFullMode ? 'bg-gray-900 border-gray-700' : 'bg-black border-gray-800'}`}>
+                            <div className="text-right">
+                                <p className="text-[9px] text-gray-500 font-bold uppercase">Mestre Full</p>
+                                <p className={`text-[10px] font-bold ${isMestreFullMode ? 'text-yellow-400 animate-pulse' : 'text-gray-500'}`}>
+                                    {isMestreFullMode ? 'ON' : 'OFF'}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => !isMestreFullMode ? setShowFullModeModal(true) : setIsMestreFullMode(false)}
+                                className={`w-12 h-7 rounded-full relative transition-all duration-300 ease-in-out shadow-inner border-2 ${isMestreFullMode ? 'bg-yellow-500 border-yellow-600 shadow-[0_0_15px_rgba(234,179,8,0.5)]' : 'bg-gray-800 border-gray-600'}`}
+                            >
+                                <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all duration-300 shadow-md ${isMestreFullMode ? 'left-5' : 'left-0.5'}`}></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Desktop: Original layout with Settings + Mestre Full */}
+                    <div className="hidden md:flex items-center gap-2">
                         {!isStudent && (
                             <button
                                 onClick={() => setShowConfigModal(true)}
