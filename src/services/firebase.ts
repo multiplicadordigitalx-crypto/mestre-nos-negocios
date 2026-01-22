@@ -33,6 +33,43 @@ export const storage = getStorage(app);
 export const functions = getFunctions(app);
 export const analytics = getAnalytics(app);
 
+// Services
+import { httpsCallable } from "firebase/functions";
+import { doc, setDoc, collection } from "firebase/firestore";
+
+export const publishProduct = async (product: AppProduct) => {
+    // 1. Logic for Stripe Automation
+    const syncStripe = httpsCallable(functions, 'syncProductToStripe');
+
+    try {
+        const stripeResult: any = await syncStripe({ productData: product });
+
+        if (stripeResult.data.success) {
+            // Update product with Stripe data
+            const updatedProduct = {
+                ...product,
+                stripeProductId: stripeResult.data.stripeProductId,
+                checkoutLinks: stripeResult.data.plans.map((p: any) => ({
+                    id: p.planId,
+                    platform: 'Stripe',
+                    url: p.checkoutUrl,
+                    active: true
+                }))
+            };
+
+            // 2. Save to Firestore
+            const productRef = doc(collection(db, 'products'), updatedProduct.id);
+            await setDoc(productRef, updatedProduct);
+
+            return updatedProduct;
+        }
+        throw new Error("Stripe sync failed");
+    } catch (error: any) {
+        console.error("Publishing error:", error);
+        throw error;
+    }
+};
+
 export const signInWithGoogle = mockSignIn; // Keep mocks for logic flow during transition if needed
 export const signOut = mockSignOut;
 export const createAccountAfterPurchase = mockCreateAccount;
