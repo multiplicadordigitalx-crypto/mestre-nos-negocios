@@ -10,7 +10,7 @@ import {
     CheckCircle, Info, ChevronRight, ArrowLeft, CloudUpload, Trash, Layers, ArrowRight,
     Smartphone, FileText, BarChart3, AlertTriangle, Coins, ShoppingBag, Phone, Mic, ShieldAlert,
     Layout, List, Gauge, Film, Clock, Rocket, Link as LinkIcon, Image, Youtube, Palette, Monitor, Megaphone, Eye, Star,
-    ChevronUp, ChevronDown, Video, Upload, HardDrive, Download, FileBox, ExternalLink
+    ChevronUp, ChevronDown, Video, Upload, HardDrive, Download, ExternalLink
 } from '../../../components/Icons';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { Course, CourseCategory, FinancialViability, SchoolSettings, StudentPage } from '../../../types';

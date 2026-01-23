@@ -79,6 +79,7 @@ interface ILucPayProvider {
     getConnectedAccounts(): Promise<LucPayAccount[]>;
     getTransactions(): Promise<LucPayTransaction[]>;
     generateOnboardingLink(accountId: string): Promise<string>;
+    completeConnect(code: string): Promise<{ success: boolean; stripeAccountId?: string }>;
     processPayment(amount: number, currency: string, method: string, configId: string, productId?: string): Promise<{ success: boolean; message: string; paymentUrl?: string }>;
 }
 
@@ -261,6 +262,12 @@ const MockLucPayProvider: ILucPayProvider = {
         return `https://connect.stripe.com/setup/s/${accountId}/...`;
     },
 
+    completeConnect: async (code: string) => {
+        await delay(1500);
+        console.log("Mocking Connect completion for code:", code);
+        return { success: true, stripeAccountId: 'acct_mock' };
+    },
+
     processPayment: async (amount: number, currency: string, method: string, configId: string, productId?: string): Promise<{ success: boolean; message: string; paymentUrl?: string }> => {
         await delay(1500); // Simulate network latency
 
@@ -355,6 +362,11 @@ const FirebaseLucPayProvider: ILucPayProvider = {
         const result: any = await genLinkFn({ accountId });
         return result.data.url;
     },
+    completeConnect: async (code: string): Promise<{ success: boolean; stripeAccountId?: string }> => {
+        const completeFn = httpsCallable(functions, 'completeStripeConnect');
+        const result: any = await completeFn({ code });
+        return result.data;
+    },
     processPayment: async (amount: number, currency: string, method: string, configId: string, productId?: string): Promise<{ success: boolean; message: string; paymentUrl?: string }> => {
         const createSessionFn = httpsCallable(functions, 'createStripeCheckoutSession');
         const result: any = await createSessionFn({ amount, currency, configId, productId });
@@ -382,5 +394,6 @@ export const LucPayService = {
     getConnectedAccounts: () => CURRENT_PROVIDER.getConnectedAccounts(),
     getTransactions: () => CURRENT_PROVIDER.getTransactions(),
     generateOnboardingLink: (accountId: string) => CURRENT_PROVIDER.generateOnboardingLink(accountId),
+    completeConnect: (code: string) => CURRENT_PROVIDER.completeConnect(code),
     processPayment: (amount: number, currency: string, method: string, configId: string, productId?: string) => CURRENT_PROVIDER.processPayment(amount, currency, method, configId, productId)
 };

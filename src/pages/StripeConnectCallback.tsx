@@ -31,21 +31,22 @@ export const StripeConnectCallback: React.FC = () => {
 
     const handleCompleteConnect = async (code: string) => {
         try {
-            // Aqui chamaremos uma Cloud Function no futuro para trocar o CODE pelo AccountID real
-            // Por enquanto, simulamos o sucesso para o fluxo de UI
-            console.log("Stripe Code recebido:", code);
+            const { LucPayService } = await import('../services/LucPayService');
+            const result = await LucPayService.completeConnect(code);
 
-            // Simulação de delay de rede
-            await new Promise(r => setTimeout(r, 2000));
+            if (result.success) {
+                setStatus('success');
+                toast.success("Conta bancária vinculada com sucesso!");
 
-            setStatus('success');
-            toast.success("Conta bancária vinculada com sucesso!");
-
-            // Redireciona de volta para o Dashboard do Produtor após 3 segundos
-            setTimeout(() => {
-                navigate('/producer');
-            }, 3000);
+                // Redireciona de volta para o Dashboard do Produtor após 3 segundos
+                setTimeout(() => {
+                    navigate('/producer');
+                }, 3000);
+            } else {
+                setStatus('error');
+            }
         } catch (err) {
+            console.error(err);
             setStatus('error');
             toast.error("Erro ao finalizar vinculação.");
         }

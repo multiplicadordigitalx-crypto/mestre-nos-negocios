@@ -6,14 +6,7 @@
  * 3. Checkout Link generation
  */
 
-const STRIPE_API_URL = 'https://api.stripe.com/v1';
-const SECRET_KEY = import.meta.env.STRIPE_SECRET_KEY || 'sk_test_...'; // Fallback for dev
 const CONNECT_CLIENT_ID = import.meta.env.VITE_STRIPE_CONNECT_CLIENT_ID || 'ca_Tq9wn6x2AnFUT4qybXnpEWStfgJAIaof';
-
-const headers = {
-    'Authorization': `Bearer ${SECRET_KEY}`,
-    'Content-Type': 'application/x-www-form-urlencoded'
-};
 
 /**
  * Generates the Stripe Connect OAuth URL for LucPay partners.
@@ -39,38 +32,20 @@ export const generateConnectAuthUrl = (userUid: string) => {
  */
 export const createStripeProduct = async (productData: any) => {
     try {
-        // 1. Create Product
-        const productResponse = await fetch(`${STRIPE_API_URL}/products`, {
-            method: 'POST',
-            headers,
-            body: new URLSearchParams({
-                name: productData.name,
-                description: productData.description,
-                'metadata[mestre_product_id]': productData.id,
-                'metadata[warranty_days]': productData.guaranteeDays.toString(),
-                'metadata[anchor_price]': productData.anchorPrice.toString()
-            })
-        });
+        const { functions } = await import('./firebase');
+        const { httpsCallable } = await import('firebase/functions');
 
-        const product = await productResponse.json();
-        if (product.error) throw new Error(product.error.message);
+        const syncFn = httpsCallable(functions, 'syncProductToStripe');
+        const result: any = await syncFn({ productData });
 
-        // 2. Create Price for the Product
-        const priceResponse = await fetch(`${STRIPE_API_URL}/prices`, {
-            method: 'POST',
-            headers,
-            body: new URLSearchParams({
-                product: product.id,
-                unit_amount: (productData.price * 100).toString(), // Stripe uses cents
-                currency: 'brl',
-                ...(productData.validity !== 'Vitalício' && {
-                    'recurring[interval]': mapValidityToInterval(productData.validity)
-                })
-            })
-        });
+        if (!result.data.success) {
+            throw new Error(result.data.message || "Falha ao sincronizar produto");
+        }
 
-        const price = await priceResponse.json();
-        return { stripeProductId: product.id, stripePriceId: price.id };
+        return {
+            stripeProductId: result.data.stripeProductId,
+            stripePriceId: result.data.plans[0]?.stripePriceId // Assuming first plan for compatibility
+        };
     } catch (error) {
         console.error("Stripe Product Creation Error:", error);
         throw error;
