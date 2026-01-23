@@ -2,6 +2,15 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { User, Student, TeamUser } from '../types';
 import {
+    signOut as firebaseSignOut,
+    signInWithGoogle as firebaseSignInWithGoogle,
+    signInWithEmail as firebaseSignInWithEmail,
+    db,
+    auth,
+    createAccountAfterPurchase as realCreateAccount,
+    sendPasswordReset as firebaseSendPasswordReset
+} from '../services/firebase';
+import {
     submitDailyProductStats,
     mockStudents,
     updateStudent,
@@ -9,12 +18,10 @@ import {
     mockSupportAgents,
     mockSalesTeam,
     mockTeamUsers,
-    signOut as realSignOut,
-    signInWithGoogle as realSignInWithGoogle,
-    createAccountAfterPurchase as realCreateAccount,
     getAllUsersFlat,
     updateSupportAgent
 } from '../services/mockFirebase';
+import { getDoc, doc, setDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
 // Fix: Add missing delay helper
@@ -43,6 +50,7 @@ interface AuthContextType {
     stopImpersonation: () => Promise<void>;
     loginStandalone: (user: any) => void;
     updateProfilePhoto: (file: File) => Promise<void>;
+    resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -126,8 +134,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const loginStandalone = (u: any) => {
+        const finalUser = enforceAdminPermissions(u);
+        setUser(finalUser);
+        localStorage.setItem('user', JSON.stringify(finalUser));
+    };
+
     const signOut = async () => {
-        await realSignOut();
+        try {
+            await firebaseSignOut();
+        } catch (e) {
+            console.error("Sign out error", e);
+        }
         setUser(null);
         setOriginalUser(null);
         setFailedAttempts(0);
@@ -135,22 +153,69 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast.success('Você saiu da sua conta.');
     };
 
-    const loginStandalone = (u: any) => {
-        const finalUser = enforceAdminPermissions(u);
-        setUser(finalUser);
-        localStorage.setItem('user', JSON.stringify(finalUser));
-    };
-
     const signIn = async (email: string, password: string) => {
         setLoading(true);
         try {
             if (!email || !password) throw new Error('Email e senha são obrigatórios.');
 
-            await delay(1000);
             const normalizedEmail = email.trim().toLowerCase();
+
+            // Try REAL Firebase Auth first
+            try {
+                const firebaseUser = await firebaseSignInWithEmail(normalizedEmail, password);
+                if (firebaseUser) {
+                    // Fetch user data from Firestore
+                    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data() as User;
+                        const finalUser = enforceAdminPermissions({
+                            ...userData,
+                            uid: firebaseUser.uid,
+                            email: firebaseUser.email || normalizedEmail
+                        });
+                        setUser(finalUser);
+                        localStorage.setItem('user', JSON.stringify(finalUser));
+                        toast.success(`Bem-vindo(a), ${finalUser.displayName || 'Admin'}!`);
+                        return;
+                    }
+
+                    // AUTO-PROVISIONING logic for ADMINS
+                    if (ADMIN_EMAILS.includes(normalizedEmail)) {
+                        console.log("Auto-provisioning admin user in Firestore...");
+                        const adminData: User = {
+                            uid: firebaseUser.uid,
+                            email: normalizedEmail,
+                            displayName: firebaseUser.displayName || 'Admin',
+                            photoURL: firebaseUser.photoURL || '',
+                            role: 'super_admin',
+                            permissions: ['all']
+                        };
+
+                        await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
+
+                        const finalUser = enforceAdminPermissions(adminData);
+                        setUser(finalUser);
+                        localStorage.setItem('user', JSON.stringify(finalUser));
+                        toast.success(`Conta Administradora provisionada para ${finalUser.email}!`);
+                        return;
+                    }
+                }
+            } catch (firebaseError: any) {
+                console.warn("Firebase Auth Error (falling back to mock):", firebaseError.message);
+                // If it's a real auth error like "wrong password", we might want to throw it
+                if (firebaseError.code?.includes('auth/')) {
+                    if (firebaseError.code === 'auth/wrong-password' || firebaseError.code === 'auth/invalid-credential') {
+                        throw new Error("Credenciais inválidas no Firebase.");
+                    }
+                }
+            }
+
+            // FALLBACK to MOCK behavior if real auth fails or user doesn't exist in Firestore
+            await delay(500);
 
             const staffMember = [...mockTeamUsers, ...mockSalesTeam, ...mockSupportAgents].find(u => u.email?.toLowerCase() === normalizedEmail);
             if (staffMember) {
+                // ... rest of mock logic ...
                 if ((staffMember as any).password && (staffMember as any).password !== password) {
                     throw new Error("Senha incorreta.");
                 }
@@ -212,15 +277,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const signInWithGoogle = async () => {
         setLoading(true);
         try {
-            const googleUser = await realSignInWithGoogle();
-            if (!googleUser) throw new Error('Conta não encontrada. Por favor, adquira o curso primeiro.');
-            const finalUser = enforceAdminPermissions(googleUser);
-            setUser(finalUser);
-            localStorage.setItem('user', JSON.stringify(finalUser));
-            setFailedAttempts(0);
-            toast.success(`Bem-vindo(a), ${googleUser.displayName}!`);
+            const firebaseUser = await firebaseSignInWithGoogle();
+            if (firebaseUser) {
+                // Fetch user data from Firestore
+                const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data() as User;
+                    const finalUser = enforceAdminPermissions({
+                        ...userData,
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email || ''
+                    });
+                    setUser(finalUser);
+                    localStorage.setItem('user', JSON.stringify(finalUser));
+                    toast.success(`Bem-vindo(a), ${finalUser.displayName}!`);
+                    return;
+                }
+
+                // AUTO-PROVISIONING logic for ADMINS (Google Sign-In)
+                const normalizedEmail = firebaseUser.email?.toLowerCase() || '';
+                if (normalizedEmail && ADMIN_EMAILS.includes(normalizedEmail)) {
+                    console.log("Auto-provisioning admin user (Google) in Firestore...");
+                    const adminData: User = {
+                        uid: firebaseUser.uid,
+                        email: normalizedEmail,
+                        displayName: firebaseUser.displayName || 'Admin',
+                        photoURL: firebaseUser.photoURL || '',
+                        role: 'super_admin',
+                        permissions: ['all']
+                    };
+
+                    await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
+
+                    const finalUser = enforceAdminPermissions(adminData);
+                    setUser(finalUser);
+                    localStorage.setItem('user', JSON.stringify(finalUser));
+                    toast.success(`Conta Administradora provisionada (Google) para ${finalUser.email}!`);
+                    return;
+                }
+            }
+            throw new Error('Conta não encontrada no Firestore. Entre em contato com o administrador.');
         } catch (error: any) {
-            handleLoginError(error.message === 'SECURITY_BLOCK_NO_PURCHASE' ? 'Conta não encontrada. Por favor, adquira o curso primeiro.' : error.message);
+            handleLoginError(error.message);
         } finally {
             setLoading(false);
         }
@@ -329,11 +427,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const resetPassword = async (email: string) => {
+        setLoading(true);
+        try {
+            await firebaseSendPasswordReset(email);
+            toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+        } catch (error: any) {
+            toast.error("Erro ao enviar e-mail de recuperação: " + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user, loading, isImpersonating: !!originalUser, completePurchase, signOut, signIn, signInWithGoogle,
             signUp, renewAccess, logDailyPosts, refreshUser, impersonateUser, stopImpersonation, updateProfilePhoto,
-            loginStandalone
+            loginStandalone, resetPassword
         }}>
             {children}
         </AuthContext.Provider>

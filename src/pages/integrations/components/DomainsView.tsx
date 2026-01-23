@@ -33,11 +33,20 @@ export const DomainsView: React.FC = () => {
                 getDomainProviders(),
                 getAppProducts()
             ]);
-            setProviders(data);
-            setAvailableProducts(products);
+            setProviders(data || []);
+            setAvailableProducts(products || []);
         } catch (error) {
             console.error("Error loading domain data:", error);
-            toast.error("Erro ao carregar dados de domínios");
+            const toastId = "domains-load-error";
+            if (error instanceof Error && (
+                error.message.includes('permission-denied') ||
+                error.message.includes('insufficient permissions') ||
+                error.message.toLowerCase().includes('permission')
+            )) {
+                toast.error("Acesso restrito: Sem permissão para ler domínios", { id: toastId });
+            } else {
+                toast.error("Erro ao carregar dados de domínios", { id: toastId });
+            }
         } finally {
             setIsLoading(false);
         }

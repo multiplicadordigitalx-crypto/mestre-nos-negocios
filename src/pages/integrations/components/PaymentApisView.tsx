@@ -47,7 +47,16 @@ export const PaymentApisView: React.FC = () => {
                 setGateways(gws || []);
             } catch (e) {
                 console.error("Firestore Error (Gateways):", e);
-                toast.error("Erro ao carregar Gateways. Verifique as permissões do Firestore.");
+                const toastId = "payment-gateways-error";
+                if (e instanceof Error && (
+                    e.message.includes('permission-denied') ||
+                    e.message.includes('insufficient permissions') ||
+                    e.message.toLowerCase().includes('permission')
+                )) {
+                    toast.error("Acesso restrito: Gateways de Pagamento", { id: toastId });
+                } else {
+                    toast.error("Erro ao carregar Gateways.", { id: toastId });
+                }
             }
 
             try {
@@ -55,7 +64,16 @@ export const PaymentApisView: React.FC = () => {
                 if (rules) setRouting(rules);
             } catch (e) {
                 console.error("Firestore Error (Routing Rules):", e);
-                toast.error("Erro ao carregar Regras de Roteamento.");
+                const toastId = "routing-rules-error";
+                if (e instanceof Error && (
+                    e.message.includes('permission-denied') ||
+                    e.message.includes('insufficient permissions') ||
+                    e.message.toLowerCase().includes('permission')
+                )) {
+                    toast.error("Acesso restrito: Regras de Roteamento", { id: toastId });
+                } else {
+                    toast.error("Erro ao carregar Regras de Roteamento.", { id: toastId });
+                }
             }
         } catch (error) {
             console.error("Critical Error in loadData:", error);

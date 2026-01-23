@@ -7,15 +7,17 @@ import {
 } from '../components/Icons';
 import { useAuth } from '../hooks/useAuth';
 
-// Import Component Views
-import { WebhooksView } from './integrations/components/WebhooksView';
-import { WhatsAppView } from './integrations/components/WhatsAppView';
-import { SocialApisView } from './integrations/components/SocialApisView';
-import { AIBrainsView } from './integrations/components/AIBrainsView';
-import { TrafficView } from './integrations/components/TrafficView';
-import { DomainsView } from './integrations/components/DomainsView';
-import { SmtpView } from './integrations/components/SmtpView';
-import { PaymentApisView } from './integrations/components/PaymentApisView';
+// Lazy Loading Component Views for Performance and Isolation
+const WebhooksView = React.lazy(() => import('./integrations/components/WebhooksView').then(m => ({ default: m.WebhooksView })));
+const WhatsAppView = React.lazy(() => import('./integrations/components/WhatsAppView').then(m => ({ default: m.WhatsAppView })));
+const SocialApisView = React.lazy(() => import('./integrations/components/SocialApisView').then(m => ({ default: m.SocialApisView })));
+const AIBrainsView = React.lazy(() => import('./integrations/components/AIBrainsView').then(m => ({ default: m.AIBrainsView })));
+const TrafficView = React.lazy(() => import('./integrations/components/TrafficView').then(m => ({ default: m.TrafficView })));
+const DomainsView = React.lazy(() => import('./integrations/components/DomainsView').then(m => ({ default: m.DomainsView })));
+const SmtpView = React.lazy(() => import('./integrations/components/SmtpView').then(m => ({ default: m.SmtpView })));
+const PaymentApisView = React.lazy(() => import('./integrations/components/PaymentApisView').then(m => ({ default: m.PaymentApisView })));
+
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 // --- MAIN HUB INTEGRATIONS VIEW ---
 const IntegrationsPage: React.FC = () => {
@@ -113,22 +115,24 @@ const IntegrationsPage: React.FC = () => {
 
                 {/* Content Area */}
                 <div className="p-6 flex-1 bg-gray-800">
-                    {activeTab === 'payments' && isAdmin && <PaymentApisView />}
-                    {activeTab === 'webhooks' && isAdmin && <WebhooksView isAdmin={isAdmin} />}
-                    {activeTab === 'whatsapp' && <WhatsAppView isAdmin={isAdmin} />}
-                    {activeTab === 'social' && isAdmin && <SocialApisView isAdmin={isAdmin} />}
-                    {activeTab === 'ai' && isAdmin && <AIBrainsView isAdmin={isAdmin} />}
-                    {activeTab === 'traffic' && <TrafficView />}
-                    {activeTab === 'domains' && <DomainsView />}
-                    {activeTab === 'smtp' && <SmtpView />}
+                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSpinner /></div>}>
+                        {activeTab === 'payments' && isAdmin && <PaymentApisView />}
+                        {activeTab === 'webhooks' && isAdmin && <WebhooksView isAdmin={isAdmin} />}
+                        {activeTab === 'whatsapp' && <WhatsAppView isAdmin={isAdmin} />}
+                        {activeTab === 'social' && isAdmin && <SocialApisView isAdmin={isAdmin} />}
+                        {activeTab === 'ai' && isAdmin && <AIBrainsView isAdmin={isAdmin} />}
+                        {activeTab === 'traffic' && <TrafficView />}
+                        {activeTab === 'domains' && <DomainsView />}
+                        {activeTab === 'smtp' && <SmtpView />}
 
-                    {/* Fallback for restricted access attempt */}
-                    {!isAdmin && (activeTab === 'webhooks' || activeTab === 'social' || activeTab === 'ai' || activeTab === 'payments') && (
-                        <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                            <LockClosed className="w-16 h-16 mb-4 opacity-20" />
-                            <p>Acesso restrito a administradores.</p>
-                        </div>
-                    )}
+                        {/* Fallback for restricted access attempt */}
+                        {!isAdmin && (activeTab === 'webhooks' || activeTab === 'social' || activeTab === 'ai' || activeTab === 'payments') && (
+                            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                                <LockClosed className="w-16 h-16 mb-4 opacity-20" />
+                                <p>Acesso restrito a administradores.</p>
+                            </div>
+                        )}
+                    </React.Suspense>
                 </div>
             </Card>
         </div>

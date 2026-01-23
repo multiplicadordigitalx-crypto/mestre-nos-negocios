@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut as firebaseSignOut } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
@@ -97,9 +97,34 @@ export const publishProduct = async (product: AppProduct) => {
     }
 };
 
-export const signInWithGoogle = mockSignIn; // Keep mocks for logic flow during transition if needed
-export const signOut = mockSignOut;
+// Auth Functions
+export const signInWithGoogle = async () => {
+    if (hasFirebaseCredentials && auth) {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        return result.user;
+    }
+    return mockSignIn();
+};
+
+export const signInWithEmail = async (email: string, pass: string) => {
+    if (hasFirebaseCredentials && auth) {
+        const result = await signInWithEmailAndPassword(auth, email, pass);
+        return result.user;
+    }
+    throw new Error("MOCK_ONLY: Real email auth requires configuration.");
+};
+
+export const signOut = async () => {
+    if (hasFirebaseCredentials && auth) {
+        await firebaseSignOut(auth);
+    } else {
+        await mockSignOut();
+    }
+};
+
 export const createAccountAfterPurchase = mockCreateAccount;
+
 
 // Data Fetching Mocks
 export const getStudentsPaginated = async (limitCount: number = 20, startAfterId?: string) => {

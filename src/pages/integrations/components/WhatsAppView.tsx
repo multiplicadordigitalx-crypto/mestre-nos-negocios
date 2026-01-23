@@ -36,12 +36,20 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
 
     const loadInstances = async () => {
         try {
-            // Filtra por motor se desejar, ou carrega todas
             const data = await getWhatsAppInstances(whatsAppEngine);
             setWaInstances(data || []);
         } catch (error) {
             console.error("Error loading WhatsApp instances:", error);
-            toast.error("Erro ao carregar instâncias de WhatsApp");
+            const toastId = "whatsapp-load-error";
+            if (error instanceof Error && (
+                error.message.includes('permission-denied') ||
+                error.message.includes('insufficient permissions') ||
+                error.message.toLowerCase().includes('permission')
+            )) {
+                toast.error("Acesso restrito: Sem permissão para ler instâncias", { id: toastId });
+            } else {
+                toast.error("Erro ao carregar instâncias de WhatsApp", { id: toastId });
+            }
         }
     };
 
