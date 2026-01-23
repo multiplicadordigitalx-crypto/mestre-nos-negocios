@@ -21,7 +21,22 @@ export interface RoutingRules {
     international: string;
 }
 
+export interface WhatsAppInstance {
+    id: string;
+    instanceName: string;
+    status: 'connected' | 'disconnected';
+    phone?: string;
+    profilePic?: string;
+    battery?: number;
+    lastActivity?: any;
+    engine: 'whatsmeow' | 'evolution';
+    port?: number;
+    ram?: string;
+    goroutines?: number;
+}
+
 const GATEWAYS_COLLECTION = 'payment_gateways';
+const WHATSAPP_COLLECTION = 'whatsapp_instances';
 const CONFIGS_COLLECTION = 'lucpay_configs';
 
 export const getPaymentGateways = async (): Promise<PaymentGateway[]> => {
@@ -64,4 +79,25 @@ export const saveRoutingRules = async (rules: RoutingRules) => {
         ...rules,
         updatedAt: new Date()
     }, { merge: true });
+};
+
+export const getWhatsAppInstances = async (engine?: 'whatsmeow' | 'evolution'): Promise<WhatsAppInstance[]> => {
+    let q = query(collection(db, WHATSAPP_COLLECTION));
+    if (engine) {
+        q = query(collection(db, WHATSAPP_COLLECTION), where('engine', '==', engine));
+    }
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WhatsAppInstance));
+};
+
+export const saveWhatsAppInstance = async (instance: WhatsAppInstance) => {
+    const docRef = doc(db, WHATSAPP_COLLECTION, instance.id);
+    await setDoc(docRef, {
+        ...instance,
+        updatedAt: new Date()
+    }, { merge: true });
+};
+
+export const deleteWhatsAppInstance = async (id: string) => {
+    await deleteDoc(doc(db, WHATSAPP_COLLECTION, id));
 };

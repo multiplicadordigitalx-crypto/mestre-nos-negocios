@@ -2,7 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../../../components/Button';
 import { Smartphone, Zap, Server, PlusCircle, Trash, RefreshCw, LogOut, Eye, EyeOff } from '../../../components/Icons';
-import { getAdminIntegrations, saveAdminIntegration, deleteAdminIntegration } from '../../../services/mockFirebase';
+import {
+    getWhatsAppInstances,
+    saveWhatsAppInstance,
+    deleteWhatsAppInstance,
+    WhatsAppInstance
+} from '../../../services/integrationService';
 import toast from 'react-hot-toast';
 import { WhatsmeowManager } from './WhatsmeowManager';
 import { CreateInstanceModal } from '../modals/CreateInstanceModal';
@@ -18,7 +23,7 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
 
     // Evolution Config
     const [evolutionConfig, setEvolutionConfig] = useState({ serverUrl: 'https://api.evolution.com', globalKey: 'global-secret-key-123456' });
-    const [waInstances, setWaInstances] = useState<any[]>([]);
+    const [waInstances, setWaInstances] = useState<WhatsAppInstance[]>([]);
     const [showSecrets, setShowSecrets] = useState(false);
     const [isCreateInstanceOpen, setIsCreateInstanceOpen] = useState(false);
     const [connectingInstance, setConnectingInstance] = useState<string | null>(null);
@@ -26,14 +31,19 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
     const [confirmAction, setConfirmAction] = useState<{ isOpen: boolean, type: 'logout' | 'delete', instanceId: string | null }>({ isOpen: false, type: 'logout', instanceId: null });
 
     useEffect(() => {
-        if (isAdmin) {
-            getAdminIntegrations('whatsapp').then(setWaInstances);
-        } else {
-            // For students, fetch instances they own if applicable, but for this mockup
-            // we assume personal instance management via Whatsmeow is default
-            setWaInstances([]);
+        loadInstances();
+    }, [isAdmin, whatsAppEngine]);
+
+    const loadInstances = async () => {
+        try {
+            // Filtra por motor se desejar, ou carrega todas
+            const data = await getWhatsAppInstances(whatsAppEngine);
+            setWaInstances(data || []);
+        } catch (error) {
+            console.error("Error loading WhatsApp instances:", error);
+            toast.error("Erro ao carregar instâncias de WhatsApp");
         }
-    }, [isAdmin]);
+    };
 
     // Added useEffect to handle side effect that was previously in render return
     useEffect(() => {
@@ -43,46 +53,63 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
     }, [isAdmin, enableEvolutionBackup, whatsAppEngine]);
 
     const handleCreateInstance = async (name: string) => {
-        // SECURITY CHECK: Subscription for Evolution API
-        if (!isAdmin && whatsAppEngine === 'evolution' && user) {
-            const confirm = window.confirm("Atenção: A Evolution API é um recurso Premium (Backup Profissional).\n\nAo criar esta instância, você ativará uma assinatura MENSAL de ≈40 Créditos ($2.75).\n\nDeseja confirmar a assinatura e criar?");
-            if (!confirm) return;
+        try {
+            // SECURITY CHECK: Subscription for Evolution API
+            if (!isAdmin && whatsAppEngine === 'evolution' && user) {
+                const confirm = window.confirm("Atenção: A Evolution API é um recurso Premium (Backup Profissional).\n\nAo criar esta instância, você ativará uma assinatura MENSAL de ≈40 Créditos ($2.75).\n\nDeseja confirmar a assinatura e criar?");
+                if (!confirm) return;
 
-            const subResult = await nexusCore.subscribe(user.uid, 'wa_evolution_api');
-            if (!subResult.success) {
-                toast.error(subResult.message); // e.g. "Saldo Insuficiente"
-                return;
+                const subResult = await nexusCore.subscribe(user.uid, 'wa_evolution_api');
+                if (!subResult.success) {
+                    toast.error(subResult.message);
+                    return;
+                }
+                toast.success("Assinatura Ativada! Criando instância...");
             }
-            toast.success("Assinatura Ativada/Renovada! Criando instância...");
-        }
 
-        const newInst = { id: `wa-${Date.now()}`, instanceName: name, status: 'disconnected', battery: 0, phone: '', profilePic: '', lastActivity: 'Agora' };
-        await saveAdminIntegration('whatsapp', newInst);
-        setWaInstances(prev => [...prev, newInst]);
-        toast.success("Instância criada! Escaneie o QR Code para conectar.");
+            const newInst: WhatsAppInstance = {
+                id: `wa-${Date.now()}`,
+                instanceName: name,
+                status: 'disconnected',
+                lastActivity: new Date(),
+                engine: whatsAppEngine
+            };
+
+            await saveWhatsAppInstance(newInst);
+            setWaInstances(prev => [...prev, newInst]);
+            toast.success("Instância criada! Escaneie o QR Code para conectar.");
+        } catch (error) {
+            toast.error("Erro ao criar instância no Firestore");
+        }
     };
 
     const handleScanQR = (id: string) => {
         setConnectingInstance(id);
-        // Simulate QR Scan Process
-        setTimeout(() => {
-            setWaInstances(prev => {
-                const updated = prev.map(inst =>
+        // Simulate QR Scan Process (In Production this would connect to WhatsApp API)
+        setTimeout(async () => {
+            try {
+                const updatedInstances = waInstances.map(inst =>
                     inst.id === id ? {
                         ...inst,
-                        status: 'connected',
+                        status: 'connected' as const,
                         battery: 98,
                         phone: '5511988887777',
-                        profilePic: `https://i.pravatar.cc/150?u=${id}`
+                        profilePic: `https://i.pravatar.cc/150?u=${id}`,
+                        lastActivity: new Date()
                     } : inst
                 );
-                const connectedItem = updated.find(i => i.id === id);
-                if (connectedItem) saveAdminIntegration('whatsapp', connectedItem);
-                return updated;
-            });
 
-            setConnectingInstance(null);
-            toast.success("WhatsApp Conectado com Sucesso!", { icon: '🟢' });
+                const connectedItem = updatedInstances.find(i => i.id === id);
+                if (connectedItem) {
+                    await saveWhatsAppInstance(connectedItem);
+                    setWaInstances(updatedInstances);
+                    toast.success("WhatsApp Conectado com Sucesso!", { icon: '🟢' });
+                }
+            } catch (error) {
+                toast.error("Erro ao sincronizar conexão no Firestore");
+            } finally {
+                setConnectingInstance(null);
+            }
         }, 3000);
     };
 
@@ -98,22 +125,25 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
         const { type, instanceId } = confirmAction;
         if (!instanceId) return;
 
-        if (type === 'logout') {
-            setWaInstances(prev => {
-                const updated = prev.map(inst =>
-                    inst.id === instanceId ? { ...inst, status: 'disconnected', battery: 0, phone: '', profilePic: '' } : inst
-                );
-                const item = updated.find(i => i.id === instanceId);
-                if (item) saveAdminIntegration('whatsapp', item);
-                return updated;
-            });
-            toast.success("Instância desconectada.");
-        } else if (type === 'delete') {
-            await deleteAdminIntegration('whatsapp', instanceId);
-            setWaInstances(prev => prev.filter(inst => inst.id !== instanceId));
-            toast.success("Instância removida.");
+        try {
+            if (type === 'logout') {
+                const instance = waInstances.find(i => i.id === instanceId);
+                if (instance) {
+                    const updated = { ...instance, status: 'disconnected' as const, battery: 0, phone: '', profilePic: '' };
+                    await saveWhatsAppInstance(updated);
+                    setWaInstances(prev => prev.map(inst => inst.id === instanceId ? updated : inst));
+                    toast.success("Instância desconectada.");
+                }
+            } else if (type === 'delete') {
+                await deleteWhatsAppInstance(instanceId);
+                setWaInstances(prev => prev.filter(inst => inst.id !== instanceId));
+                toast.success("Instância removida.");
+            }
+        } catch (error) {
+            toast.error("Erro ao processar ação no Firestore");
+        } finally {
+            setConfirmAction({ ...confirmAction, isOpen: false });
         }
-        setConfirmAction({ ...confirmAction, isOpen: false });
     };
 
     const handleRestartInstance = (id: string) => {

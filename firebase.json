@@ -4,6 +4,9 @@
         "runtime": "nodejs20",
         "predeploy": []
     },
+    "firestore": {
+        "rules": "firestore.rules"
+    },
     "hosting": {
         "public": "dist",
         "ignore": [

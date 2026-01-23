@@ -41,15 +41,24 @@ export const PaymentApisView: React.FC = () => {
 
     const loadData = async () => {
         try {
-            const [gws, rules] = await Promise.all([
-                getPaymentGateways(),
-                getRoutingRules()
-            ]);
-            setGateways(gws);
-            setRouting(rules);
+            // Load gateways individually to isolate errors
+            try {
+                const gws = await getPaymentGateways();
+                setGateways(gws || []);
+            } catch (e) {
+                console.error("Firestore Error (Gateways):", e);
+                toast.error("Erro ao carregar Gateways. Verifique as permissões do Firestore.");
+            }
+
+            try {
+                const rules = await getRoutingRules();
+                if (rules) setRouting(rules);
+            } catch (e) {
+                console.error("Firestore Error (Routing Rules):", e);
+                toast.error("Erro ao carregar Regras de Roteamento.");
+            }
         } catch (error) {
-            console.error("Error loading payment data:", error);
-            toast.error("Erro ao carregar configurações de pagamento");
+            console.error("Critical Error in loadData:", error);
         }
     };
 
