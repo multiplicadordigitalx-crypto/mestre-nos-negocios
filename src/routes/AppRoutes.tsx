@@ -18,6 +18,7 @@ import SupportAgentDashboardPage from '../pages/SupportAgentDashboardPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import AffiliateInvitePage from '../pages/AffiliateInvitePage';
 import { BonusSchoolsPreview } from '../pages/BonusSchoolsPreview';
+import { StripeConnectCallback } from '../pages/StripeConnectCallback';
 
 // Import Layouts
 import { StudentLayout } from '../layouts/StudentLayout';
@@ -87,6 +88,10 @@ export function AppRoutes() {
 
     if (location.pathname === '/bonus-schools-preview') {
         return <BonusSchoolsPreview />;
+    }
+
+    if (location.pathname === '/connect/callback') {
+        return <StripeConnectCallback />;
     }
 
     if (viewMode === 'affiliate_invite') {

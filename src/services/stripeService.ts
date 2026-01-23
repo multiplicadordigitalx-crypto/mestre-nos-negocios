@@ -8,10 +8,29 @@
 
 const STRIPE_API_URL = 'https://api.stripe.com/v1';
 const SECRET_KEY = import.meta.env.STRIPE_SECRET_KEY || 'sk_test_...'; // Fallback for dev
+const CONNECT_CLIENT_ID = import.meta.env.VITE_STRIPE_CONNECT_CLIENT_ID || 'ca_Tq9wn6x2AnFUT4qybXnpEWStfgJAIaof';
 
 const headers = {
     'Authorization': `Bearer ${SECRET_KEY}`,
     'Content-Type': 'application/x-www-form-urlencoded'
+};
+
+/**
+ * Generates the Stripe Connect OAuth URL for LucPay partners.
+ * This links their bank account to the platform for automatic splits.
+ */
+export const generateConnectAuthUrl = (userUid: string) => {
+    const baseUrl = "https://connect.stripe.com/express/oauth/authorize";
+    const redirectUri = window.location.origin + "/connect/callback";
+
+    const params = new URLSearchParams({
+        client_id: CONNECT_CLIENT_ID,
+        state: userUid,
+        'suggested_capabilities[]': 'transfers',
+        redirect_uri: redirectUri
+    });
+
+    return `${baseUrl}?${params.toString()}`;
 };
 
 /**

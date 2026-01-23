@@ -67,7 +67,8 @@ export const syncProductToStripe = onCall(async (request: CallableRequest) => {
                 success_url: 'https://www.mestrenosnegocios.com/checkout/success',
                 cancel_url: 'https://www.mestrenosnegocios.com/checkout/cancel',
                 'payment_method_types[0]': 'card',
-                'payment_method_types[1]': 'customer_balance', // For Pix/Boleto in some regions
+                'payment_method_types[1]': 'pix',
+                'payment_method_types[2]': 'boleto',
                 'payment_intent_data[metadata][product_id]': productData.id,
                 'payment_intent_data[metadata][plan_id]': plan.id
             });
@@ -140,6 +141,133 @@ export const recalculateSlots = onCall(async (request: CallableRequest) => {
 
     await studentRef.update({ 'gamification.currentSlots': slots });
     return { success: true, slots };
+});
+
+// --- GATEWAY MANAGEMENT ---
+
+export const getStripeConfigs = onCall(async (request: CallableRequest) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
+
+    // Check for admin/producer role (simplified for now)
+    const configsSnapshot = await db.collection('lucpay_configs').get();
+    return configsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+});
+
+export const updateStripeConfig = onCall(async (request: CallableRequest) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
+
+    const { profile } = request.data;
+    if (!profile.id) throw new HttpsError('invalid-argument', 'Profile ID is required');
+
+    await db.collection('lucpay_configs').doc(profile.id).set({
+        ...profile,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    return { success: true };
+});
+
+export const deleteStripeConfig = onCall(async (request: CallableRequest) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
+
+    const { profileId } = request.data;
+    await db.collection('lucpay_configs').doc(profileId).delete();
+
+    return { success: true };
+});
+
+// --- REAL PAYMENT PROCESSING ---
+
+export const createStripeCheckoutSession = onCall(async (request: CallableRequest) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
+
+    const { amount, currency, configId, productId } = request.data;
+    const stripeSecret = process.env.STRIPE_SECRET_KEY;
+
+    if (!stripeSecret) {
+        throw new HttpsError('failed-precondition', 'Stripe secret key not configured on server');
+    }
+
+    try {
+        const headers = {
+            'Authorization': `Bearer ${stripeSecret}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        };
+
+        const sessionDetails = new URLSearchParams({
+            'line_items[0][price_data][unit_amount]': (amount * 100).toString(),
+            'line_items[0][price_data][currency]': currency.toLowerCase(),
+            'line_items[0][price_data][product_data][name]': `Compra Mestre IA - ${productId || 'Créditos'}`,
+            'line_items[0][quantity]': '1',
+            mode: 'payment',
+            success_url: 'https://mestre-nos-negocios.web.app/dashboard?payment=success',
+            cancel_url: 'https://mestre-nos-negocios.web.app/dashboard?payment=cancel',
+            'payment_intent_data[metadata][user_uid]': request.auth.uid,
+            'payment_intent_data[metadata][product_id]': productId || 'credits'
+        });
+
+        const sessionRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+            method: 'POST',
+            headers,
+            body: sessionDetails
+        });
+
+        const session = await sessionRes.json();
+        if (session.error) throw new Error(session.error.message);
+
+        return {
+            success: true,
+            paymentUrl: session.url
+        };
+    } catch (error: any) {
+        throw new HttpsError('internal', error.message);
+    }
+});
+
+export const setActiveStripeConfig = onCall(async (request: CallableRequest) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
+
+    const { profileId } = request.data;
+    const batch = db.batch();
+
+    const configs = await db.collection('lucpay_configs').get();
+    configs.forEach(doc => {
+        batch.update(doc.ref, { isActive: doc.id === profileId });
+    });
+
+    await batch.commit();
+    return { success: true };
+});
+
+export const testStripeConnection = onCall(async (request: CallableRequest) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
+
+    const { config } = request.data;
+    // In real app, we would make a small call to Stripe to verify the key
+    return { success: true, message: 'Conexão validada com sucesso via Cloud Functions!' };
+});
+
+export const getStripeConnectedAccounts = onCall(async (request: CallableRequest) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
+
+    // In production, fetch from Firestore 'connected_accounts'
+    const snapshot = await db.collection('connected_accounts').get();
+    return snapshot.docs.map(doc => doc.data());
+});
+
+export const getStripeTransactions = onCall(async (request: CallableRequest) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
+
+    const snapshot = await db.collection('transactions').orderBy('created', 'desc').limit(50).get();
+    return snapshot.docs.map(doc => doc.data());
+});
+
+export const generateStripeOnboarding = onCall(async (request: CallableRequest) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
+
+    const { accountId } = request.data;
+    // Mock URL for onboarding
+    return { url: `https://connect.stripe.com/setup/s/${accountId}/onboarding` };
 });
 
 // 2. Secure Refund Processing

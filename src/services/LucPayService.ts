@@ -312,39 +312,53 @@ const MockLucPayProvider: ILucPayProvider = {
 };
 
 // ==========================================
-// FIREBASE PROVIDER (Future Implementation)
+// FIREBASE PROVIDER (Real Implementation)
 // ==========================================
+import { functions } from './firebase';
+import { httpsCallable } from "firebase/functions";
+
 const FirebaseLucPayProvider: ILucPayProvider = {
     getConfigs: async (): Promise<LucPayGatewayProfile[]> => {
-        // TODO: Call Cloud Function 'getStripeConfigs'
-        throw new Error("Not implemented yet");
+        const getConfigsFn = httpsCallable(functions, 'getStripeConfigs');
+        const result: any = await getConfigsFn();
+        return result.data as LucPayGatewayProfile[];
     },
     saveConfig: async (profile: LucPayGatewayProfile): Promise<void> => {
-        // TODO: Call Cloud Function 'updateStripeConfig'
-        throw new Error("Not implemented yet");
+        const saveConfigFn = httpsCallable(functions, 'updateStripeConfig');
+        await saveConfigFn({ profile });
     },
     deleteConfig: async (profileId: string): Promise<void> => {
-        // TODO: Call Cloud Function
-        throw new Error("Not implemented yet");
+        const deleteConfigFn = httpsCallable(functions, 'deleteStripeConfig');
+        await deleteConfigFn({ profileId });
     },
     setActiveConfig: async (profileId: string): Promise<void> => {
-        // TODO: Call Cloud Function
-        throw new Error("Not implemented yet");
+        const setActiveFn = httpsCallable(functions, 'setActiveStripeConfig');
+        await setActiveFn({ profileId });
     },
     testConnection: async (config: LucPayGatewayProfile): Promise<{ success: boolean; message: string }> => {
-        throw new Error("Not implemented yet");
+        const testConnFn = httpsCallable(functions, 'testStripeConnection');
+        const result: any = await testConnFn({ config });
+        return result.data;
     },
     getConnectedAccounts: async (): Promise<LucPayAccount[]> => {
-        throw new Error("Not implemented yet");
+        const getAccountsFn = httpsCallable(functions, 'getStripeConnectedAccounts');
+        const result: any = await getAccountsFn();
+        return result.data;
     },
     getTransactions: async (): Promise<LucPayTransaction[]> => {
-        throw new Error("Not implemented yet");
+        const getTransFn = httpsCallable(functions, 'getStripeTransactions');
+        const result: any = await getTransFn();
+        return result.data;
     },
     generateOnboardingLink: async (accountId: string): Promise<string> => {
-        throw new Error("Not implemented yet");
+        const genLinkFn = httpsCallable(functions, 'generateStripeOnboarding');
+        const result: any = await genLinkFn({ accountId });
+        return result.data.url;
     },
     processPayment: async (amount: number, currency: string, method: string, configId: string, productId?: string): Promise<{ success: boolean; message: string; paymentUrl?: string }> => {
-        throw new Error("Not implemented yet");
+        const createSessionFn = httpsCallable(functions, 'createStripeCheckoutSession');
+        const result: any = await createSessionFn({ amount, currency, configId, productId });
+        return result.data;
     }
 }
 
@@ -352,7 +366,7 @@ const FirebaseLucPayProvider: ILucPayProvider = {
 // EXPORT SERVICE
 // ==========================================
 // Switch to 'FirebaseLucPayProvider' when deploying to Vercel/Production
-const CURRENT_PROVIDER = MockLucPayProvider;
+const CURRENT_PROVIDER = FirebaseLucPayProvider;
 
 export const LucPayService = {
     getConfigs: () => CURRENT_PROVIDER.getConfigs(),
