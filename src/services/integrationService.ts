@@ -35,8 +35,22 @@ export interface WhatsAppInstance {
     goroutines?: number;
 }
 
+export interface DomainProvider {
+    id: string;
+    name: string;
+    type: string;
+    status: 'active' | 'inactive';
+    domain: string;
+    apiKey: string;
+    zoneId?: string;
+    dnsRecords: number;
+    product: string;
+    updatedAt: any;
+}
+
 const GATEWAYS_COLLECTION = 'payment_gateways';
 const WHATSAPP_COLLECTION = 'whatsapp_instances';
+const DOMAINS_COLLECTION = 'domain_providers';
 const CONFIGS_COLLECTION = 'lucpay_configs';
 
 export const getPaymentGateways = async (): Promise<PaymentGateway[]> => {
@@ -100,4 +114,21 @@ export const saveWhatsAppInstance = async (instance: WhatsAppInstance) => {
 
 export const deleteWhatsAppInstance = async (id: string) => {
     await deleteDoc(doc(db, WHATSAPP_COLLECTION, id));
+};
+
+export const getDomainProviders = async (): Promise<DomainProvider[]> => {
+    const querySnapshot = await getDocs(collection(db, DOMAINS_COLLECTION));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DomainProvider));
+};
+
+export const saveDomainProvider = async (provider: DomainProvider) => {
+    const docRef = doc(db, DOMAINS_COLLECTION, provider.id);
+    await setDoc(docRef, {
+        ...provider,
+        updatedAt: new Date()
+    }, { merge: true });
+};
+
+export const deleteDomainProvider = async (id: string) => {
+    await deleteDoc(doc(db, DOMAINS_COLLECTION, id));
 };
