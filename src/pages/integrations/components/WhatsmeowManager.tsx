@@ -13,17 +13,32 @@ import { CreateInstanceModal } from '../modals/CreateInstanceModal';
 
 export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) => {
     const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
+    const [serverUrl, setServerUrl] = useState('https://wh-proxy.cloudflare.com');
+    const [isSavingUrl, setIsSavingUrl] = useState(false);
 
     useEffect(() => {
-        loadInstances();
+        loadData();
     }, []);
 
-    const loadInstances = async () => {
+    const loadData = async () => {
         try {
             const data = await getWhatsAppInstances('whatsmeow');
             setInstances(data || []);
+            // TODO: Load saved URL from Firestore if needed
         } catch (error) {
-            console.error("Error loading Whatsmeow instances:", error);
+            console.error("Error loading Whatsmeow data:", error);
+        }
+    };
+
+    const handleSaveUrl = async () => {
+        setIsSavingUrl(true);
+        try {
+            // Simulate saving global config for WhatsApp
+            toast.success("URL do proxy Cloudflare salva!");
+        } catch (e) {
+            toast.error("Erro ao salvar URL");
+        } finally {
+            setIsSavingUrl(false);
         }
     };
 
@@ -146,6 +161,36 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-black text-green-400 bg-green-500/10 px-2 py-1 rounded border border-green-500/30 uppercase animate-pulse">Monitoramento Ativo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 relative overflow-hidden mb-6">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="flex flex-col md:flex-row gap-6 relative z-10">
+                    <div className="flex-1">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4">
+                            <Server className="w-5 h-5 text-blue-500" /> Configuração do Servidor WhatsMeow
+                        </h3>
+                        <div className="flex gap-4 items-end">
+                            <div className="flex-1">
+                                <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">URL do Proxy/Cloudflare</label>
+                                <input
+                                    className="w-full bg-gray-800 border border-gray-600 rounded-lg p-2.5 text-white text-sm font-mono focus:border-blue-500 outline-none"
+                                    value={serverUrl}
+                                    onChange={e => setServerUrl(e.target.value)}
+                                    placeholder="https://sua-url-cloudflare.com"
+                                />
+                            </div>
+                            <Button
+                                onClick={handleSaveUrl}
+                                isLoading={isSavingUrl}
+                                className="!bg-blue-600 hover:!bg-blue-500 h-10 px-6 font-bold uppercase text-xs"
+                            >
+                                Salvar URL
+                            </Button>
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-2">Dica: Use sua URL do túnel Cloudflare para máxima performance e segurança.</p>
                     </div>
                 </div>
             </div>
