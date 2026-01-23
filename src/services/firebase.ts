@@ -14,24 +14,51 @@ import {
     signOut as mockSignOut
 } from './mockFirebase';
 
+// Verificar se as credenciais do Firebase estão configuradas
+const hasFirebaseCredentials = !!(
+    import.meta.env.VITE_FIREBASE_API_KEY &&
+    import.meta.env.VITE_FIREBASE_PROJECT_ID
+);
+
 // Firebase production configuration
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "demo-project.firebaseapp.com",
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "demo-project.appspot.com",
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "000000000000",
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:000000000000:web:0000000000000000000000",
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-XXXXXXXXXX"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-export const functions = getFunctions(app);
-export const analytics = getAnalytics(app);
+// Log de aviso se estiver usando modo mock
+if (!hasFirebaseCredentials) {
+    console.warn("⚠️ Credenciais do Firebase não configuradas. Usando modo MOCK para desenvolvimento.");
+    console.warn("📝 Para usar Firebase real, crie um arquivo .env com as credenciais do Firebase.");
+}
+
+// Initialize Firebase (não inicializa se estiver em modo mock)
+let app: any = null;
+let auth: any = null;
+let db: any = null;
+let storage: any = null;
+let functions: any = null;
+let analytics: any = null;
+
+if (hasFirebaseCredentials) {
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        storage = getStorage(app);
+        functions = getFunctions(app);
+        analytics = getAnalytics(app);
+    } catch (error) {
+        console.error("Erro ao inicializar Firebase:", error);
+    }
+}
+
+export { auth, db, storage, functions, analytics };
 
 // Services
 import { httpsCallable } from "firebase/functions";
