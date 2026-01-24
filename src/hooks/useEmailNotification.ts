@@ -23,6 +23,13 @@ import {
     affiliateCommissionTemplate
 } from '../services/emailTemplates/financial';
 
+import {
+    affiliateInviteTemplate,
+    coProducerInviteTemplate,
+    teamMemberInviteTemplate,
+    partnershipRequestTemplate
+} from '../services/emailTemplates/invites';
+
 export const useEmailNotification = () => {
 
     const sendWelcomeEmail = async (to: string, name: string, loginUrl: string) => {
@@ -89,6 +96,39 @@ export const useEmailNotification = () => {
         });
     };
 
+    // Invite functions
+    const sendAffiliateInvite = async (to: string, inviterName: string, productName: string, joinLink: string, commission: number) => {
+        return await sendEmail({
+            to,
+            subject: `🤝 ${inviterName} convidou você para ser afiliado!`,
+            html: affiliateInviteTemplate(inviterName, productName, joinLink, commission)
+        });
+    };
+
+    const sendCoProducerInvite = async (to: string, inviterName: string, productName: string, joinLink: string) => {
+        return await sendEmail({
+            to,
+            subject: `🎯 ${inviterName} quer criar um produto com você!`,
+            html: coProducerInviteTemplate(inviterName, productName, joinLink)
+        });
+    };
+
+    const sendTeamMemberInvite = async (to: string, inviterName: string, role: string, joinLink: string) => {
+        return await sendEmail({
+            to,
+            subject: `👥 Convite para Equipe - ${role}`,
+            html: teamMemberInviteTemplate(inviterName, role, joinLink)
+        });
+    };
+
+    const sendPartnershipRequest = async (to: string, requesterName: string, productName: string, acceptLink: string, message?: string) => {
+        return await sendEmail({
+            to,
+            subject: `🤝 Solicitação de Parceria - ${productName}`,
+            html: partnershipRequestTemplate(requesterName, productName, acceptLink, message)
+        });
+    };
+
     return {
         sendWelcomeEmail,
         sendPasswordChanged,
@@ -98,5 +138,10 @@ export const useEmailNotification = () => {
         sendStripeTransfer,
         sendWithdrawalApproved,
         sendAffiliateCommission,
+        // Invites
+        sendAffiliateInvite,
+        sendCoProducerInvite,
+        sendTeamMemberInvite,
+        sendPartnershipRequest,
     };
 };
