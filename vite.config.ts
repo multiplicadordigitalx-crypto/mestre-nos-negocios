@@ -23,7 +23,9 @@ export default defineConfig(({ mode }) => {
               if (id.includes('firebase')) return 'vendor-firebase';
               if (id.includes('react')) return 'vendor-react';
               if (id.includes('lucide') || id.includes('framer-motion') || id.includes('headlessui')) return 'vendor-ui';
-              if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('google/genai')) return 'vendor-utils';
+              if (id.includes('jspdf')) return 'vendor-jspdf';
+              if (id.includes('html2canvas')) return 'vendor-html2canvas';
+              if (id.includes('google/genai')) return 'vendor-gemini';
               return 'vendor';
             }
           }

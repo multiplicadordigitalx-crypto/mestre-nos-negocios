@@ -12,32 +12,32 @@ import { StudentHeader } from '../../components/StudentHeader';
 import RenewalCheckoutModal from '../../components/RenewalCheckoutModal';
 import { StudentSidebar } from '../../components/layout/StudentSidebar';
 
-// Page Imports
-import MestreIAPage from '../MestreIAPage';
-import MarketingPage from '../MarketingPage';
-import IntegrationsPage from '../IntegrationsPage';
-import FunnelsPage from '../FunnelsPage';
-import EmailPage from '../EmailPage';
-import CoachPage from '../CoachPage';
-import ChatPage from '../ChatPage';
-import CommunityPage from '../community/CommunityPage';
-import ProfilePage from '../ProfilePage';
-import SupportPage from '../SupportPage';
-import FinancialPage from '../FinancialPage';
-import NexusAdsPage from '../NexusAdsPage'; // Import
-import HealthMindDiaryPage from '../HealthMindDiaryPage';
-import KnowledgePracticePage from '../KnowledgePracticePage';
+// Lazy Load Sub-Pages
+const MestreIAPage = React.lazy(() => import('../MestreIAPage'));
+const MarketingPage = React.lazy(() => import('../MarketingPage'));
+const IntegrationsPage = React.lazy(() => import('../IntegrationsPage'));
+const FunnelsPage = React.lazy(() => import('../FunnelsPage'));
+const EmailPage = React.lazy(() => import('../EmailPage'));
+const CoachPage = React.lazy(() => import('../CoachPage'));
+const ChatPage = React.lazy(() => import('../ChatPage'));
+const CommunityPage = React.lazy(() => import('../community/CommunityPage'));
+const ProfilePage = React.lazy(() => import('../ProfilePage'));
+const SupportPage = React.lazy(() => import('../SupportPage'));
+const FinancialPage = React.lazy(() => import('../FinancialPage'));
+const NexusAdsPage = React.lazy(() => import('../NexusAdsPage'));
+const HealthMindDiaryPage = React.lazy(() => import('../HealthMindDiaryPage'));
+const KnowledgePracticePage = React.lazy(() => import('../KnowledgePracticePage'));
+const StudentCourseCreatorView = React.lazy(() => import('./views/StudentCourseCreatorView'));
+const RechargeView = React.lazy(() => import('./views/RechargeView'));
+const StudentPlayerView = React.lazy(() => import('./views/StudentPlayerView').then(m => ({ default: m.StudentPlayerView })));
 
 // Local Sections
 import { InicioSection } from './sections/InicioSection';
 import { TreinamentosSection } from './sections/TreinamentosSection';
 import { ProdutosSection } from './sections/ProdutosSection';
 import { MeusResultados } from './sections/MeusResultados';
-import StudentCourseCreatorView from './views/StudentCourseCreatorView';
 import { WalletSection } from './sections/WalletSection';
-import RechargeView from './views/RechargeView';
-import { NexusAdsSection } from './sections/NexusAdsSection'; // Import Wrapper
-import { StudentPlayerView } from './views/StudentPlayerView'; // Add Import Correctly
+import { NexusAdsSection } from './sections/NexusAdsSection';
 
 interface PainelDoAlunoProps {
     activePage: StudentPage;
@@ -262,7 +262,9 @@ export const PainelDoAluno: React.FC<PainelDoAlunoProps> = ({ activePage, naviga
                     </button>
                 </div>
 
-                {renderContent()}
+                <React.Suspense fallback={<div className="flex items-center justify-center p-12"><LoadingSpinner size="lg" /></div>}>
+                    {renderContent()}
+                </React.Suspense>
                 <RenewalCheckoutModal
                     isOpen={isRenewalModalOpen}
                     onClose={() => setIsRenewalModalOpen(false)}
