@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { ArrowLeft, LockClosed, CheckCircle } from '../components/Icons';
-import { sendPasswordResetEmail } from '../services/mockFirebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import toast from 'react-hot-toast';
 
 interface ForgotPasswordPageProps {
@@ -19,14 +19,21 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBack }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!email) return toast.error("Digite seu e-mail.");
-        
+
         setIsLoading(true);
         try {
-            await sendPasswordResetEmail(email);
+            await sendPasswordResetEmail(auth, email, {
+                url: `${window.location.origin}/reset-password`,
+                handleCodeInApp: true,
+            });
             setIsSuccess(true);
             toast.success("E-mail de recuperação enviado!");
         } catch (err: any) {
-            toast.error(err.message || "Erro ao enviar e-mail.");
+            if (err.code === 'auth/user-not-found') {
+                toast.error("E-mail não encontrado.");
+            } else {
+                toast.error(err.message || " ao enviar e-mail.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -37,9 +44,9 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBack }) => {
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
             <div className="absolute -top-40 -left-40 w-80 h-80 bg-brand-primary/10 rounded-full blur-3xl"></div>
 
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }} 
-                animate={{ opacity: 1, scale: 1 }} 
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
                 className="w-full max-w-md bg-gray-800/80 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl p-8 relative z-10"
             >
                 {isSuccess ? (
@@ -64,18 +71,18 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBack }) => {
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            <Input 
-                                label="E-mail Cadastrado" 
-                                type="email" 
-                                value={email} 
-                                onChange={e => setEmail(e.target.value)} 
-                                placeholder="seu@email.com" 
+                            <Input
+                                label="E-mail Cadastrado"
+                                type="email"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                placeholder="seu@email.com"
                                 required
                             />
-                            
-                            <Button 
-                                type="submit" 
-                                className="w-full !py-3 text-lg font-bold" 
+
+                            <Button
+                                type="submit"
+                                className="w-full !py-3 text-lg font-bold"
                                 isLoading={isLoading}
                             >
                                 ENVIAR LINK
@@ -84,7 +91,7 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBack }) => {
 
                         <div className="mt-6 text-center">
                             <button onClick={onBack} className="text-gray-500 text-sm hover:text-white flex items-center justify-center gap-2 mx-auto transition-colors">
-                                <ArrowLeft className="w-4 h-4"/> Voltar
+                                <ArrowLeft className="w-4 h-4" /> Voltar
                             </button>
                         </div>
                     </>
