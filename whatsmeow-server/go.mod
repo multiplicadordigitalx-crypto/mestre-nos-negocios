@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/mattn/go-sqlite3 v1.14.19
-	go.mau.fi/whatsmeow v0.0.0-20231230174338-87c39599e7fe
+	go.mau.fi/whatsmeow v0.0.0-20240226105205-5f85c66e01f7
 	google.golang.org/protobuf v1.32.0
 )
 
@@ -24,7 +24,7 @@ require (
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	go.mau.fi/libsignal v0.1.0 // indirect
 	go.mau.fi/util v0.2.1 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 )
