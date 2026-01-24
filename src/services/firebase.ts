@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut as firebaseSignOut, sendPasswordResetEmail as firebaseSendPasswordResetEmail } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut as firebaseSignOut, sendPasswordResetEmail as firebaseSendPasswordResetEmail, confirmPasswordReset as firebaseConfirmPasswordReset } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
@@ -137,6 +137,17 @@ export const resetPassword = async (email: string) => {
 
 export const sendPasswordReset = resetPassword;
 export const sendPasswordResetEmail = resetPassword;
+
+export const confirmPasswordReset = async (oobCode: string, newPassword: string) => {
+    if (hasFirebaseCredentials && auth) {
+        await firebaseConfirmPasswordReset(auth, oobCode, newPassword);
+        return;
+    }
+    // Mock confirm
+    console.log("Mock password reset confirmed");
+    await new Promise(resolve => setTimeout(resolve, 800));
+};
+
 
 
 // Data Fetching Mocks
