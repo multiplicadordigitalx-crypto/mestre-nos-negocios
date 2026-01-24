@@ -62,7 +62,7 @@ export default async function handler(
 
         // Criar sessão de checkout
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
+            payment_method_types: ['card', 'pix', 'boleto'],
             line_items: [
                 {
                     price_data: {
