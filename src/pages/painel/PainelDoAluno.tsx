@@ -11,6 +11,7 @@ import Button from '../../components/Button';
 import { StudentHeader } from '../../components/StudentHeader';
 import RenewalCheckoutModal from '../../components/RenewalCheckoutModal';
 import { StudentSidebar } from '../../components/layout/StudentSidebar';
+import { LoadingSpinner } from '../../components/LoadingSpinner';
 
 // Lazy Load Sub-Pages
 const MestreIAPage = React.lazy(() => import('../MestreIAPage'));

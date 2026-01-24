@@ -160,7 +160,7 @@ const InfluencerDashboardPage: React.FC<InfluencerDashboardPageProps> = ({ influ
             case 'mestre_ia_partner': return <MestreIASection user={user} credits={user.creditBalance || 0} setCredits={() => { }} />;
             case 'videos': return <VideosEducativosSection />;
             case 'support': return <SupportSection influencer={user} />;
-            case 'recharge': return <RechargeSection navigateTo={(page: any) => toast.info('Navegação: ' + page)} />;
+            case 'recharge': return <RechargeSection navigateTo={(page: any) => toast('Navegação: ' + page, { icon: 'ℹ️' })} />;
             default: return <VisaoGeralSection influencer={user} setActiveTab={setActiveTab} />;
         }
     };

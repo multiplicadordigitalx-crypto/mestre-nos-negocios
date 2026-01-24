@@ -1,5 +1,5 @@
 
-import { Message } from '@/types'; // Assuming Message type exists or defining simplified interaction type
+// import { Message } from '@/types'; 
 
 export type NexusToolId = 'mentor_juridico' | 'nexus_poliglota' | 'vendas_hoje' | 'sude_mente' | 'nexus_studio';
 
