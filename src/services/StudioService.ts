@@ -2,7 +2,13 @@
 import { GoogleGenAI } from "@google/genai";
 import { ElevenLabsService } from "./ElevenLabsService";
 
-const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_KEY || '' });
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+let ai: GoogleGenAI | null = null;
+
+if (API_KEY) {
+    ai = new GoogleGenAI({ apiKey: API_KEY });
+}
+
 
 export class StudioService {
     // BASE ACTORS LIBRARY (Simulator)
@@ -64,6 +70,7 @@ export class StudioService {
         `;
 
         let scriptText = "";
+        if (!ai) throw new Error("IA não configurada.");
         try {
             const scriptRes = await ai.models.generateContent({
                 model: 'gemini-2.0-flash-exp',

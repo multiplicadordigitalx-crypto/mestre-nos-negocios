@@ -2,7 +2,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { GeminiMessage } from "../types";
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // Inicialização segura
 let ai: GoogleGenAI | null = null;
@@ -28,36 +28,36 @@ export async function* getBusinessAdviceStream(
     yield "Por favor, digite uma pergunta válida para o Coach.";
     return;
   }
-  
-  try {
-      const chat = ai.chats.create({
-        model: model,
-        config: { 
-            systemInstruction,
-            temperature: 0.7,
-            topP: 0.95,
-        },
-        history,
-      });
 
-      const result = await chat.sendMessageStream({ message: prompt });
-      
-      for await (const chunk of result) {
-        // Validação Defensiva 3: Verificar integridade do chunk
-        if (chunk && chunk.text) {
-            yield chunk.text;
-        }
+  try {
+    const chat = ai.chats.create({
+      model: model,
+      config: {
+        systemInstruction,
+        temperature: 0.7,
+        topP: 0.95,
+      },
+      history,
+    });
+
+    const result = await chat.sendMessageStream({ message: prompt });
+
+    for await (const chunk of result) {
+      // Validação Defensiva 3: Verificar integridade do chunk
+      if (chunk && chunk.text) {
+        yield chunk.text;
       }
+    }
   } catch (error: any) {
-      console.error("Gemini API Error Detail:", error);
-      
-      // Tratamento de erros específicos para feedback amigável
-      if (error.status === 429) {
-          yield "⚠️ Limite de requisições atingido. Por favor, aguarde alguns segundos.";
-      } else if (error.message?.includes('SAFETY')) {
-          yield "⚠️ O conteúdo solicitado foi bloqueado pelos filtros de segurança da IA.";
-      } else {
-          yield "Desculpe, ocorreu um erro na comunicação com a inteligência artificial. Tente reformular sua pergunta.";
-      }
+    console.error("Gemini API Error Detail:", error);
+
+    // Tratamento de erros específicos para feedback amigável
+    if (error.status === 429) {
+      yield "⚠️ Limite de requisições atingido. Por favor, aguarde alguns segundos.";
+    } else if (error.message?.includes('SAFETY')) {
+      yield "⚠️ O conteúdo solicitado foi bloqueado pelos filtros de segurança da IA.";
+    } else {
+      yield "Desculpe, ocorreu um erro na comunicação com a inteligência artificial. Tente reformular sua pergunta.";
+    }
   }
 }

@@ -3,8 +3,17 @@ import { MESTRE_IA_PROMPTS } from "./prompts";
 import { getCustomPrompts, checkAiAvailability, incrementUsageCost, getAppProducts, getSalesTeam } from "./mockFirebase";
 import { ProductDNA } from "../types";
 
-// Sempre use process.env.API_KEY
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Sempre use import.meta.env.VITE_GEMINI_API_KEY
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+let ai: any = null;
+
+if (API_KEY) {
+    try {
+        ai = new GoogleGenAI({ apiKey: API_KEY });
+    } catch (e) {
+        console.error("Failed to initialize GoogleGenAI", e);
+    }
+}
 
 export interface FlowInput {
     [key: string]: string | number | boolean;
@@ -48,6 +57,8 @@ export async function getNexusSupportAdvice(context: {
             {"diagnosis": "resumo da situação", "advice": ["dica 1", "dica 2", "dica 3"], "isEligibleForRefund": boolean}
         `;
 
+        if (!ai) return { diagnosis: "Erro: Gemini não configurado.", advice: ["Adicione VITE_GEMINI_API_KEY ao .env"], isEligibleForRefund: false };
+
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: prompt,
@@ -74,6 +85,8 @@ export async function getSalesCoachTips(salesPersonName: string, performanceData
             Retorne em Português, formato JSON: 
             {"tips": ["dica 1", "dica 2", "dica 3"], "top1_insight": "insight sobre o lider"}
         `;
+
+        if (!ai) return { tips: ["Erro: Gemini não configurado."], top1_insight: "Verifique as chaves de API." };
 
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
@@ -158,6 +171,8 @@ export async function callMestreIA(flowId: string, inputs: FlowInput, attachment
             contents.push({ text: finalPrompt });
         }
 
+        if (!ai) throw new Error("IA não configurada. VITE_GEMINI_API_KEY faltando.");
+
         const response = await ai.models.generateContent({
             model: modelName,
             contents: contents,
@@ -193,6 +208,8 @@ export async function generateCourseCoverImage(inputs: { title: string, niche: s
     };
 
     const descriptionPrompt = interpolatePrompt(MESTRE_IA_PROMPTS.course_cover_designer, promptInputs);
+
+    if (!ai) throw new Error("IA não configurada.");
 
     const descriptionRes = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -237,6 +254,8 @@ export async function generateSchoolLogo(inputs: { title: string, description: s
     });
 
     const optimizedPrompt = descriptionRes.text;
+
+    if (!ai) throw new Error("IA não configurada.");
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
@@ -288,6 +307,8 @@ export async function generateQuizFromContent(transcript: string) {
             }
         ]
     `;
+
+    if (!ai) return [];
 
     try {
         const response = await ai.models.generateContent({

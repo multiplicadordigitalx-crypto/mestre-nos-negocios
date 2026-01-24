@@ -12,8 +12,13 @@ export interface InputMestre {
   history?: string;
 }
 
-// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Always use const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_GEMINI_API_KEY});
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+let ai: any = null;
+
+if (API_KEY) {
+  ai = new GoogleGenAI({ apiKey: API_KEY });
+}
 
 export async function gerarConteudoCompleto(input: InputMestre) {
   const prompt = `
@@ -43,17 +48,19 @@ Retorne exatamente neste formato JSON:
 
   try {
     // Updated model to gemini-3-flash-preview for consistency
+    if (!ai) throw new Error("IA não configurada. VITE_GEMINI_API_KEY faltando.");
+
     const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json"
-        }
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json"
+      }
     });
 
     const text = response.text;
     if (!text) {
-        throw new Error("Empty response from AI");
+      throw new Error("Empty response from AI");
     }
 
     const texto = JSON.parse(text);
@@ -61,13 +68,13 @@ Retorne exatamente neste formato JSON:
     // Simulation of image/video generation delay (Mocking Flux/Veo for now as per constraints)
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const img = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop"; 
-    const vid = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"; 
+    const img = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop";
+    const vid = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4";
 
     return { texto, imagem: img, video: vid };
 
   } catch (error) {
-      console.error("AI Generation Error:", error);
-      throw new Error("Falha ao gerar conteúdo. Tente novamente.");
+    console.error("AI Generation Error:", error);
+    throw new Error("Falha ao gerar conteúdo. Tente novamente.");
   }
 }
