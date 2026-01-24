@@ -5,20 +5,18 @@ import Button from '@/components/Button';
 import { Wallet, CheckCircle, Clock, Ban, DollarSign, BarChart3, Filter, X as XIcon, Server, AlertTriangle, Shield, Brain } from '@/components/Icons';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { transactionService } from '@/services/transactionMockService';
+import { transactionService } from '@/services/transactionService';
 import { Transaction, TransactionStats } from '@/types/finance';
 import { TransactionTable } from '@/components/finance/TransactionTable';
 import { TransactionDetailModal, RefundModal } from '../../finance/modals/TransactionModals';
 
-const AdminWithdrawalModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ isOpen, onClose }) => {
+const AdminWithdrawalModal: React.FC<{ isOpen: boolean, onClose: () => void, balances: any }> = ({ isOpen, onClose, balances }) => {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
-    const available = 15420.00;
+    const available = balances?.available || 0;
     const platformBalances = [
-        { id: 'hotmart', name: 'Hotmart', value: 8500.00, icon: '🔥' },
-        { id: 'kiwify', name: 'Kiwify', value: 4200.00, icon: '🥝' },
-        { id: 'eduzz', name: 'Eduzz', value: 2720.00, icon: '🎓' }
+        { id: 'stripe', name: 'Stripe (Direct)', value: available, icon: '💳' },
     ];
 
     const handleConfirm = () => {
@@ -26,7 +24,7 @@ const AdminWithdrawalModal: React.FC<{ isOpen: boolean, onClose: () => void }> =
         setTimeout(() => {
             setLoading(false);
             setStep(2);
-            toast.success("Saques processados com sucesso via API!");
+            toast.success("Solicitação de saque enviada para o Stripe!");
         }, 2000);
     }
 
@@ -75,12 +73,12 @@ const AdminWithdrawalModal: React.FC<{ isOpen: boolean, onClose: () => void }> =
                             <div className="bg-blue-900/20 p-3 rounded-lg border border-blue-500/30 mb-6 flex gap-3">
                                 <Server className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                                 <p className="text-xs text-blue-200">
-                                    Ao confirmar, o sistema enviará requisições de saque via API para todas as plataformas conectadas.
+                                    Ao confirmar, o sistema enviará uma requisição de transferência para sua conta Stripe vinculada.
                                 </p>
                             </div>
 
                             <Button onClick={handleConfirm} isLoading={loading} className="w-full !py-3 font-bold !bg-green-600 hover:!bg-green-500 text-lg shadow-lg shadow-green-900/30">
-                                CONFIRMAR SAQUE TOTAL
+                                CONFIRMAR SAQUE STRIPE
                             </Button>
                         </>
                     ) : (
@@ -90,7 +88,7 @@ const AdminWithdrawalModal: React.FC<{ isOpen: boolean, onClose: () => void }> =
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-2">Saque Solicitado!</h3>
                             <p className="text-gray-300 text-sm mb-6">
-                                As ordens de pagamento foram enviadas com sucesso para Hotmart, Kiwify e Eduzz.
+                                A ordem de transferência foi enviada com sucesso para o Stripe.
                             </p>
                             <Button onClick={handleClose} className="w-full">Voltar ao Painel</Button>
                         </div>
@@ -110,6 +108,7 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
     // Transaction Manager State
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [stats, setStats] = useState<TransactionStats>({ totalGross: 0, totalNet: 0, totalRefunds: 0, refundRate: 0, avgTicket: 0, count: 0 });
+    const [balances, setBalances] = useState({ available: 0, pending: 0, canceled: 0 });
     const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isRefundOpen, setIsRefundOpen] = useState(false);
@@ -122,21 +121,24 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
         return () => clearInterval(interval);
     }, [period, platform, searchTerm]);
 
-    const loadData = () => {
+    const loadData = async () => {
         setLoading(true);
-        // Simulate network delay slightly for realism in mock
-        setTimeout(() => {
-            const currentStats = transactionService.getStats(period);
-            const currentTxs = transactionService.search({
-                search: searchTerm,
-                platform: platform,
-                // Date filters would go here based on period
-            });
+        try {
+            const [currentStats, currentTxs, currentBalances] = await Promise.all([
+                transactionService.getStats(period),
+                transactionService.getTransactions({ search: searchTerm, platform, period }),
+                transactionService.getBalances()
+            ]);
 
             setStats(currentStats);
-            setTransactions(currentTxs.slice(0, 50)); // Limit display
+            setTransactions(currentTxs);
+            setBalances(currentBalances);
+        } catch (error) {
+            console.error("Failed to load live financial data:", error);
+            toast.error("Erro ao sincronizar com o Stripe.");
+        } finally {
             setLoading(false);
-        }, 300);
+        }
     };
 
     const handleRefundRequest = (tx: Transaction) => {
@@ -145,21 +147,20 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
         setIsRefundOpen(true);
     };
 
-    const handleConfirmRefund = (reason: string) => {
+    const handleConfirmRefund = async (reason: string) => {
         if (selectedTx) {
-            transactionService.refund(selectedTx.id, reason, user?.uid || 'admin', user?.displayName || 'Admin');
-            toast.success("Reembolso processado com sucesso!");
-            setIsRefundOpen(false);
-            loadData(); // Refresh list
+            const success = await transactionService.refund(selectedTx.id, reason);
+            if (success) {
+                toast.success("Reembolso processado com sucesso via Stripe!");
+                setIsRefundOpen(false);
+                loadData(); // Refresh list
+            } else {
+                toast.error("Erro ao processar reembolso no Stripe.");
+            }
         }
     };
 
-    const PLATFORMS = ['Todos', 'Hotmart', 'Kirvano', 'Kiwify', 'Braip', 'Eduzz', 'Keoto', 'Stripe', 'Vindi'];
-
-    // Mock balances for the cards (could request from service too in future)
-    const mockAvailable = 15420.00;
-    const mockPending = 8250.00;
-    const mockCanceled = 1120.00;
+    const PLATFORMS = ['Todos', 'Stripe', 'Hotmart', 'Kiwify', 'Eduzz'];
 
     return (
         <div className="space-y-6 animate-fade-in pb-20">
@@ -174,7 +175,6 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         {/* AVAILABLE CARD */}
                         <Card className="p-6 border-l-4 border-l-green-500 bg-gray-800 flex flex-col justify-between shadow-lg relative overflow-hidden group">
-                            {/* ... (Same as before) ... */}
                             <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full blur-xl -mr-10 -mt-10 group-hover:bg-green-500/20 transition-all"></div>
                             <div>
                                 <div className="flex justify-between items-start mb-2">
@@ -183,7 +183,7 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
                                         <CheckCircle className="w-5 h-5" />
                                     </div>
                                 </div>
-                                <h3 className="text-3xl font-black text-white mb-1">R$ {mockAvailable.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                                <h3 className="text-3xl font-black text-white mb-1">R$ {balances.available.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                                 <p className="text-[10px] text-gray-500 flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Liberado nas plataformas</p>
                             </div>
                             <Button
@@ -202,7 +202,7 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
                                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Saldo Pendente</p>
                                     <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500 border border-yellow-500/20"><Clock className="w-5 h-5" /></div>
                                 </div>
-                                <h3 className="text-3xl font-black text-yellow-400 mb-1">R$ {mockPending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                                <h3 className="text-3xl font-black text-yellow-400 mb-1">R$ {balances.pending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                                 <p className="text-[10px] text-gray-500">Aguardando garantia (7-30 dias)</p>
                             </div>
                         </Card>
@@ -215,7 +215,7 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
                                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Reembolsado (30d)</p>
                                     <div className="p-2 bg-red-500/10 rounded-lg text-red-500 border border-red-500/20"><Ban className="w-5 h-5" /></div>
                                 </div>
-                                <h3 className="text-3xl font-black text-red-400 mb-1">R$ {mockCanceled.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                                <h3 className="text-3xl font-black text-red-400 mb-1">R$ {balances.canceled.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                                 <p className="text-[10px] text-gray-500">Chargebacks e devoluções</p>
                             </div>
                         </Card>
@@ -348,7 +348,7 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
             </Card>
 
             {/* Modals */}
-            <AdminWithdrawalModal isOpen={isWithdrawModalOpen} onClose={() => setIsWithdrawModalOpen(false)} />
+            <AdminWithdrawalModal isOpen={isWithdrawModalOpen} onClose={() => setIsWithdrawModalOpen(false)} balances={balances} />
 
             <TransactionDetailModal
                 isOpen={isDetailOpen}

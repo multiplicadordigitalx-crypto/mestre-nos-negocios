@@ -10,7 +10,8 @@ import {
     UserSubscription,
     Student
 } from '../types/legacy';
-import { consumeCredits, getStudents, updateStudent, getSystemStatus, updateSystemStatus, getToolCosts, saveToolCost } from './mockFirebase';
+import { getStudents, updateStudent, getSystemStatus, updateSystemStatus, getToolCosts, saveToolCost } from './mockFirebase';
+import { creditService } from './creditService';
 import { callMestreIA } from './mestreIaService';
 
 // ... rest of imports ...
@@ -181,7 +182,7 @@ class NexusCoreService {
 
             if (cost > 0) {
                 logger.info(`[Nexus Billing] Tentando debitar ${cost} créditos de ${task.payload.userId} para ${task.type}`);
-                const billing = await consumeCredits(task.payload.userId, toolId, cost, `Nexus Auto: ${task.type}`);
+                const billing = await creditService.consumeCredits(task.payload.userId, cost, `Nexus Auto: ${task.type}`);
 
                 if (!billing.success) {
                     task.status = 'failed';
@@ -226,7 +227,7 @@ class NexusCoreService {
             const scriptCost = await this.calculateServiceCost(scriptToolId);
 
             // Debit Script
-            const billing1 = await consumeCredits(userId, scriptToolId, scriptCost.cost, `Nexus Dark Post: Script`);
+            const billing1 = await creditService.consumeCredits(userId, scriptCost.cost, `Nexus Dark Post: Script`);
             if (!billing1.success) throw new Error(`Sem saldo para Roteiro: ${billing1.message}`);
 
             // Execute Script Generation
@@ -241,7 +242,7 @@ class NexusCoreService {
             const studioCost = await this.calculateServiceCost(studioToolId);
 
             // Debit Studio
-            const billing2 = await consumeCredits(userId, studioToolId, studioCost.cost, `Nexus Dark Post: Studio Render`);
+            const billing2 = await creditService.consumeCredits(userId, studioCost.cost, `Nexus Dark Post: Studio Render`);
             if (!billing2.success) throw new Error(`Sem saldo para Studio (${studioCost.cost} cr): ${billing2.message}`);
 
             // Execute Render (Mock time)
@@ -254,7 +255,7 @@ class NexusCoreService {
             const distCost = await this.calculateServiceCost(distToolId);
 
             // Debit Dist
-            const billing3 = await consumeCredits(userId, distToolId, distCost.cost, `Nexus Dark Post: Distribution`);
+            const billing3 = await creditService.consumeCredits(userId, distCost.cost, `Nexus Dark Post: Distribution`);
             if (!billing3.success) throw new Error(`Sem saldo para Distribuição: ${billing3.message}`);
 
             // Execute Dist
@@ -412,7 +413,7 @@ class NexusCoreService {
         // Use definition cost for monthly (USD -> Credits)
         // Note: calculateServiceCost includes margin.
 
-        const billing = await consumeCredits(user.uid, sub.toolId, sub.cost, `Renovação Automática: ${sub.planName}`); // Use stored cost or current? Using stored for lock-in or update? Let's use stored for now to match UI agreement
+        const billing = await creditService.consumeCredits(user.uid, sub.cost, `Renovação Automática: ${sub.planName}`);
 
         if (billing.success) {
             // Extend for 30 days
@@ -452,7 +453,7 @@ class NexusCoreService {
         const costConfig = await this.calculateServiceCost(toolId);
 
         // 3. Billing
-        const billing = await consumeCredits(userId, toolId, costConfig.cost, `Nova Assinatura: ${toolId}`);
+        const billing = await creditService.consumeCredits(userId, costConfig.cost, `Nova Assinatura: ${toolId}`);
         if (!billing.success) return { success: false, message: billing.message };
 
         // 4. Add Subscription

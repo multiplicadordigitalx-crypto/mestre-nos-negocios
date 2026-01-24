@@ -53,6 +53,72 @@ export const createStripeProduct = async (productData: any) => {
 };
 
 /**
+ * Creates a checkout session for credit recharge.
+ */
+export const createCreditRechargeSession = async (amount: number, credits: number) => {
+    try {
+        const { functions } = await import('./firebase');
+        const { httpsCallable } = await import('firebase/functions');
+
+        const sessionFn = httpsCallable(functions, 'createStripeCheckoutSession');
+        const result: any = await sessionFn({
+            amount,
+            credits,
+            currency: 'brl',
+            productId: 'credits'
+        });
+
+        if (!result.data.success) {
+            throw new Error(result.data.message || "Erro ao criar sessão de recarga");
+        }
+
+        return result.data.paymentUrl;
+    } catch (error) {
+        console.error("Recharge Session Error:", error);
+        throw error;
+    }
+};
+
+/**
+ * Creates a checkout session for a product with operational cost deduction and commission splits.
+ */
+export const createProductCheckoutSession = async (
+    amount: number,
+    productId: string,
+    operationalCostBRL: number = 0,
+    affiliateUid?: string,
+    affiliatePercent?: number,
+    coProducerUid?: string,
+    coProducerPercent?: number
+) => {
+    try {
+        const { functions } = await import('./firebase');
+        const { httpsCallable } = await import('firebase/functions');
+
+        const sessionFn = httpsCallable(functions, 'createStripeCheckoutSession');
+        const result: any = await sessionFn({
+            amount,
+            currency: 'brl',
+            productId,
+            operationalCostBRL,
+            affiliateUid,
+            affiliatePercent,
+            coProducerUid,
+            coProducerPercent
+        });
+
+        if (!result.data.success) {
+            throw new Error(result.data.message || "Erro ao criar sessão de checkout");
+        }
+
+        return result.data.paymentUrl;
+    } catch (error) {
+        console.error("Product Checkout Error:", error);
+        throw error;
+    }
+};
+
+/**
  * Syncs a user to Stripe (LucPay Ecosystem)
  * Creates a Customer or Connect Account.
  */

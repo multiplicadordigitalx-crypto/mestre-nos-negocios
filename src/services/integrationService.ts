@@ -118,10 +118,34 @@ const TRAFFIC_COLLECTION = 'traffic_accounts';
 const SOCIAL_COLLECTION = 'social_apis';
 const CONFIGS_COLLECTION = 'lucpay_configs';
 
-export const getPaymentGateways = async (): Promise<PaymentGateway[]> => {
-    const querySnapshot = await getDocs(collection(db, GATEWAYS_COLLECTION));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaymentGateway));
+// Helper to check if current user should have silent fallback (no error UI)
+const isSuperAdmin = () => {
+    try {
+        const stored = localStorage.getItem('user');
+        if (!stored) return false;
+        const u = JSON.parse(stored);
+        return u.role === 'super_admin' || (u.permissions && u.permissions.all);
+    } catch {
+        return false;
+    }
 };
+
+
+
+export const getPaymentGateways = async (): Promise<PaymentGateway[]> => {
+    try {
+        const querySnapshot = await getDocs(collection(db, GATEWAYS_COLLECTION));
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaymentGateway));
+    } catch (error: any) {
+        if (isSuperAdmin() && error.code === 'permission-denied') {
+            console.info("Firestore: Acesso silenciado para admin (Gateways)");
+            return [];
+        }
+        throw error;
+    }
+};
+
+
 
 export const savePaymentGateway = async (gateway: PaymentGateway) => {
     const docRef = doc(db, GATEWAYS_COLLECTION, gateway.id);
@@ -136,11 +160,19 @@ export const deletePaymentGateway = async (id: string) => {
 };
 
 export const getRoutingRules = async (): Promise<RoutingRules> => {
-    const docRef = doc(db, CONFIGS_COLLECTION, 'routing_rules');
-    const docSnap = await getDoc(docRef);
+    try {
+        const docRef = doc(db, CONFIGS_COLLECTION, 'routing_rules');
+        const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-        return docSnap.data() as RoutingRules;
+        if (docSnap.exists()) {
+            return docSnap.data() as RoutingRules;
+        }
+    } catch (error: any) {
+        if (isSuperAdmin() && error.code === 'permission-denied') {
+            console.info("Firestore: Acesso silenciado para admin (Routing Rules)");
+        } else {
+            throw error;
+        }
     }
 
     // Default fallback
@@ -152,6 +184,9 @@ export const getRoutingRules = async (): Promise<RoutingRules> => {
     };
 };
 
+
+
+
 export const saveRoutingRules = async (rules: RoutingRules) => {
     const docRef = doc(db, CONFIGS_COLLECTION, 'routing_rules');
     await setDoc(docRef, {
@@ -161,13 +196,23 @@ export const saveRoutingRules = async (rules: RoutingRules) => {
 };
 
 export const getWhatsAppInstances = async (engine?: 'whatsmeow' | 'evolution'): Promise<WhatsAppInstance[]> => {
-    let q = query(collection(db, WHATSAPP_COLLECTION));
-    if (engine) {
-        q = query(collection(db, WHATSAPP_COLLECTION), where('engine', '==', engine));
+    try {
+        let q = query(collection(db, WHATSAPP_COLLECTION));
+        if (engine) {
+            q = query(collection(db, WHATSAPP_COLLECTION), where('engine', '==', engine));
+        }
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WhatsAppInstance));
+    } catch (error: any) {
+        if (isSuperAdmin() && error.code === 'permission-denied') {
+            console.info("Firestore: Acesso silenciado para admin (WhatsApp)");
+            return [];
+        }
+        throw error;
     }
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WhatsAppInstance));
 };
+
+
 
 export const saveWhatsAppInstance = async (instance: WhatsAppInstance) => {
     const docRef = doc(db, WHATSAPP_COLLECTION, instance.id);
@@ -182,9 +227,19 @@ export const deleteWhatsAppInstance = async (id: string) => {
 };
 
 export const getDomainProviders = async (): Promise<DomainProvider[]> => {
-    const querySnapshot = await getDocs(collection(db, DOMAINS_COLLECTION));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DomainProvider));
+    try {
+        const querySnapshot = await getDocs(collection(db, DOMAINS_COLLECTION));
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DomainProvider));
+    } catch (error: any) {
+        if (isSuperAdmin() && error.code === 'permission-denied') {
+            console.info("Firestore: Acesso silenciado para admin (Domains)");
+            return [];
+        }
+        throw error;
+    }
 };
+
+
 
 export const saveDomainProvider = async (provider: DomainProvider) => {
     const docRef = doc(db, DOMAINS_COLLECTION, provider.id);
@@ -200,9 +255,19 @@ export const deleteDomainProvider = async (id: string) => {
 
 // Webhooks
 export const getWebhooks = async (): Promise<WebhookIntegration[]> => {
-    const querySnapshot = await getDocs(collection(db, WEBHOOKS_COLLECTION));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WebhookIntegration));
+    try {
+        const querySnapshot = await getDocs(collection(db, WEBHOOKS_COLLECTION));
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WebhookIntegration));
+    } catch (error: any) {
+        if (isSuperAdmin() && error.code === 'permission-denied') {
+            console.info("Firestore: Acesso silenciado para admin (Webhooks)");
+            return [];
+        }
+        throw error;
+    }
 };
+
+
 
 export const saveWebhook = async (webhook: WebhookIntegration) => {
     const docRef = doc(db, WEBHOOKS_COLLECTION, webhook.id);
@@ -215,9 +280,19 @@ export const deleteWebhook = async (id: string) => {
 
 // SMTP
 export const getSmtpConfigs = async (): Promise<SmtpConfig[]> => {
-    const querySnapshot = await getDocs(collection(db, SMTP_COLLECTION));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SmtpConfig));
+    try {
+        const querySnapshot = await getDocs(collection(db, SMTP_COLLECTION));
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SmtpConfig));
+    } catch (error: any) {
+        if (isSuperAdmin() && error.code === 'permission-denied') {
+            console.info("Firestore: Acesso silenciado para admin (SMTP)");
+            return [];
+        }
+        throw error;
+    }
 };
+
+
 
 export const saveSmtpConfig = async (config: SmtpConfig) => {
     const docRef = doc(db, SMTP_COLLECTION, config.id);
@@ -230,9 +305,19 @@ export const deleteSmtpConfig = async (id: string) => {
 
 // AI Brains
 export const getAIConfigs = async (): Promise<AIConfig[]> => {
-    const querySnapshot = await getDocs(collection(db, AI_COLLECTION));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AIConfig));
+    try {
+        const querySnapshot = await getDocs(collection(db, AI_COLLECTION));
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AIConfig));
+    } catch (error: any) {
+        if (isSuperAdmin() && error.code === 'permission-denied') {
+            console.info("Firestore: Acesso silenciado para admin (AI)");
+            return [];
+        }
+        throw error;
+    }
 };
+
+
 
 export const saveAIConfig = async (config: AIConfig) => {
     const docRef = doc(db, AI_COLLECTION, config.id);
@@ -245,9 +330,19 @@ export const deleteAIConfig = async (id: string) => {
 
 // Traffic Accounts
 export const getTrafficAccounts = async (): Promise<TrafficAccount[]> => {
-    const querySnapshot = await getDocs(collection(db, TRAFFIC_COLLECTION));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TrafficAccount));
+    try {
+        const querySnapshot = await getDocs(collection(db, TRAFFIC_COLLECTION));
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TrafficAccount));
+    } catch (error: any) {
+        if (isSuperAdmin() && error.code === 'permission-denied') {
+            console.info("Firestore: Acesso silenciado para admin (Traffic)");
+            return [];
+        }
+        throw error;
+    }
 };
+
+
 
 export const saveTrafficAccount = async (account: TrafficAccount) => {
     const docRef = doc(db, TRAFFIC_COLLECTION, account.id);
@@ -260,9 +355,19 @@ export const deleteTrafficAccount = async (id: string) => {
 
 // Social APIs
 export const getSocialApis = async (): Promise<SocialApiIntegration[]> => {
-    const querySnapshot = await getDocs(collection(db, SOCIAL_COLLECTION));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SocialApiIntegration));
+    try {
+        const querySnapshot = await getDocs(collection(db, SOCIAL_COLLECTION));
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SocialApiIntegration));
+    } catch (error: any) {
+        if (isSuperAdmin() && error.code === 'permission-denied') {
+            console.info("Firestore: Acesso silenciado para admin (Social)");
+            return [];
+        }
+        throw error;
+    }
 };
+
+
 
 export const saveSocialApi = async (integration: SocialApiIntegration) => {
     const docRef = doc(db, SOCIAL_COLLECTION, integration.id);

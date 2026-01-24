@@ -121,23 +121,37 @@ const initialUsers: any[] = []; // Define as empty or combined list for compatib
 
 const initialTeamUsers: TeamUser[] = [
     {
+        id: 'admin-paulo',
+        name: 'Paulo',
+        email: 'paulo@mestrenosnegocios.com',
+        role: 'super_admin',
+        status: 'active',
+        lastLogin: Date.now(),
+        permissions: { all: true },
+        photoURL: '',
+        password: 'inFInit2018&$@'
+    },
+    {
+        id: 'admin-thales',
+        name: 'Thales',
+        email: 'thales@mestrenosnegocios.com',
+        role: 'super_admin',
+        status: 'active',
+        lastLogin: Date.now(),
+        permissions: { all: true },
+        photoURL: '',
+        password: 'inFInit2018&$@'
+    },
+    {
         id: 'admin-ana',
         name: 'Ana Clara',
         email: 'ana@mestredosnegocios.com',
         role: 'super_admin',
         status: 'active',
         lastLogin: Date.now(),
-        permissions: {
-            approveLinks: true,
-            chatSupport: true,
-            viewFinance: true,
-            sendNotifications: true,
-            blockStudents: true,
-            manageTeam: true,
-            viewSensitiveData: true,
-            recoverAccess: true
-        },
-        photoURL: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+        permissions: { all: true },
+        photoURL: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+        password: 'inFInit2018&$@'
     },
     {
         id: 'finance-demo',
@@ -3344,6 +3358,7 @@ export const getProducerSlots = async (producerId: string): Promise<InstanceSlot
         }
     ];
 };
+
 
 
 

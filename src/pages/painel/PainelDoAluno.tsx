@@ -35,7 +35,7 @@ import { ProdutosSection } from './sections/ProdutosSection';
 import { MeusResultados } from './sections/MeusResultados';
 import StudentCourseCreatorView from './views/StudentCourseCreatorView';
 import { WalletSection } from './sections/WalletSection';
-import { RechargeSection } from './sections/RechargeSection';
+import RechargeView from './views/RechargeView';
 import { NexusAdsSection } from './sections/NexusAdsSection'; // Import Wrapper
 import { StudentPlayerView } from './views/StudentPlayerView'; // Add Import Correctly
 
@@ -159,7 +159,7 @@ export const PainelDoAluno: React.FC<PainelDoAlunoProps> = ({ activePage, naviga
             case 'profile': return <ProfilePage onOpenRefund={() => setShowRefundModal(true)} onOpenRenewal={handleOpenRenewal} />;
             case 'create_course': return <StudentCourseCreatorView navigateTo={navigateTo} />;
             case 'wallet': return <WalletSection navigateTo={navigateTo} />;
-            case 'recharge': return <RechargeSection navigateTo={navigateTo} />;
+            case 'recharge': return <RechargeView />;
             case 'health_diary': return <HealthMindDiaryPage navigateTo={navigateTo} />;
             case 'diario_alimentar': return <HealthMindDiaryPage navigateTo={navigateTo} />;
             case 'knowledge_practice': return <KnowledgePracticePage navigateTo={navigateTo} />;

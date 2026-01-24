@@ -8,7 +8,7 @@ import {
     db,
     auth,
     createAccountAfterPurchase as realCreateAccount,
-    sendPasswordReset as firebaseSendPasswordReset
+    resetPassword as firebaseResetPassword
 } from '../services/firebase';
 import {
     submitDailyProductStats,
@@ -21,7 +21,7 @@ import {
     getAllUsersFlat,
     updateSupportAgent
 } from '../services/mockFirebase';
-import { getDoc, doc, setDoc } from 'firebase/firestore';
+import { getDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
 // Fix: Add missing delay helper
@@ -55,8 +55,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const LANDING_PAGE_URL = "https://mestredosnegocios.com.br/oferta";
-const ADMIN_EMAILS = ['mestrodonegocio01@gmail.com', 'ana@mestredosnegocios.com'];
+const LANDING_PAGE_URL = "https://mestrenosnegocios.com/oferta";
+export const ADMIN_EMAILS = [
+    'mestrodonegocio01@gmail.com',
+    'ana@mestredosnegocios.com',
+    'paulo@mestrenosnegocios.com',
+    'thales@mestrenosnegocios.com'
+];
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -69,6 +74,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (ADMIN_EMAILS.includes(email) || u.role === 'super_admin' || u.role === 'admin') {
             return {
                 ...u,
+                role: 'super_admin',
+                permissions: { all: true },
                 hasMestreIA: true,
                 dailyMestreIALimit: 9999
             };
@@ -99,20 +106,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const refreshUser = async () => {
         if (!user) return;
         try {
-            const allStudents = await getStudents();
-            const updatedStudent = allStudents.find(s => s.uid === user.uid);
-            if (updatedStudent) {
-                // Sanitização: Garante que objetos aninhados existam
-                const sanitizedStudent = {
-                    ...updatedStudent,
-                    producerData: updatedStudent.producerData || {
-                        fullName: '', cpfCnpj: '', email: '', phone: '', address: { zipCode: '', street: '' }, isVerified: false
-                    }
-                };
-                const updatedUser = { ...user, ...sanitizedStudent };
+            // Fetch from Firestore
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+                const userData = userDoc.data() as User;
+                const updatedUser = { ...user, ...userData };
                 const finalUser = enforceAdminPermissions(updatedUser);
                 setUser(finalUser);
                 localStorage.setItem('user', JSON.stringify(finalUser));
+            } else {
+                // Fallback to mock for now if not in Firestore
+                const allStudents = await getStudents();
+                const updatedStudent = allStudents.find(s => s.uid === user.uid);
+                if (updatedStudent) {
+                    const sanitizedStudent = {
+                        ...updatedStudent,
+                        producerData: updatedStudent.producerData || {
+                            fullName: '', cpfCnpj: '', email: '', phone: '', address: { zipCode: '', street: '' }, isVerified: false
+                        }
+                    };
+                    const updatedUser = { ...user, ...sanitizedStudent };
+                    const finalUser = enforceAdminPermissions(updatedUser);
+                    setUser(finalUser);
+                    localStorage.setItem('user', JSON.stringify(finalUser));
+                }
             }
         } catch (e) {
             console.error("Refresh user error", e);
@@ -153,6 +170,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast.success('Você saiu da sua conta.');
     };
 
+    const resetPassword = async (email: string) => {
+        if (!email) {
+            toast.error("Por favor, insira seu e-mail.");
+            return;
+        }
+        const toastId = toast.loading("Enviando e-mail de recuperação...");
+        try {
+            await firebaseResetPassword(email);
+            toast.success("E-mail de recuperação enviado!", { id: toastId });
+        } catch (error: any) {
+            console.error("Reset password error", error);
+            toast.error("Erro ao enviar e-mail: " + (error.message || "Erro desconhecido"), { id: toastId });
+        }
+    };
+
     const signIn = async (email: string, password: string) => {
         setLoading(true);
         try {
@@ -168,6 +200,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
                     if (userDoc.exists()) {
                         const userData = userDoc.data() as User;
+
+                        // Log activity in Firestore
+                        await updateDoc(doc(db, 'users', firebaseUser.uid), {
+                            lastLogin: new Date().toISOString(),
+                            lastLoginIp: 'Client-side sync' // IP could be handled better via Cloud Functions or external API
+                        }).catch(e => console.warn("Failed to log activity", e));
+
                         const finalUser = enforceAdminPermissions({
                             ...userData,
                             uid: firebaseUser.uid,
@@ -202,56 +241,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 }
             } catch (firebaseError: any) {
                 console.warn("Firebase Auth Error (falling back to mock):", firebaseError.message);
-                // If it's a real auth error like "wrong password", we might want to throw it
-                if (firebaseError.code?.includes('auth/')) {
-                    if (firebaseError.code === 'auth/wrong-password' || firebaseError.code === 'auth/invalid-credential') {
-                        throw new Error("Credenciais inválidas no Firebase.");
+                // We'll let it fallback to mock unless it's a critical error that we want to specifically block
+            }
+
+            // FALLBACK logic: Only for Students or when Firestore is literally empty during migration
+            // In Professional Mode, we should eventually remove this entirely.
+            if (!ADMIN_EMAILS.includes(normalizedEmail)) {
+                await delay(500);
+                const staffMember = [...mockTeamUsers, ...mockSalesTeam, ...mockSupportAgents].find(u => u.email?.toLowerCase() === normalizedEmail);
+                if (staffMember) {
+                    if ((staffMember as any).password && (staffMember as any).password !== password) {
+                        throw new Error("Senha incorreta.");
                     }
+                    let normalizedUser: User;
+                    if ('id' in staffMember && !('uid' in staffMember)) {
+                        const teamUser = staffMember as TeamUser;
+                        if (teamUser.status !== 'active') throw new Error("Acesso bloqueado ou inativo.");
+                        normalizedUser = { uid: teamUser.id, email: teamUser.email, displayName: teamUser.name, photoURL: teamUser.photoURL, role: teamUser.role, permissions: teamUser.permissions };
+                    } else {
+                        const agent = staffMember as any;
+                        normalizedUser = { uid: agent.uid, email: agent.email, displayName: agent.displayName, photoURL: agent.photoURL, role: agent.role, permissions: agent.permissions };
+                    }
+                    const finalUser = enforceAdminPermissions(normalizedUser);
+                    setUser(finalUser);
+                    localStorage.setItem('user', JSON.stringify(finalUser));
+                    setFailedAttempts(0);
+                    toast.success(`Bem-vindo(a), ${finalUser.displayName}!`);
+                    return;
+                }
+
+                const students = await getStudents();
+                const student = students.find(s => s.email?.toLowerCase() === normalizedEmail);
+
+                if (student) {
+                    if ((student as any).password && (student as any).password !== password) {
+                        throw new Error("Senha incorreta.");
+                    }
+                    const finalUser = enforceAdminPermissions(student);
+                    setUser(finalUser);
+                    localStorage.setItem('user', JSON.stringify(finalUser));
+                    setFailedAttempts(0);
+                    toast.success(`Bem-vindo(a) de volta, ${student.displayName}!`);
+                    return;
                 }
             }
 
-            // FALLBACK to MOCK behavior if real auth fails or user doesn't exist in Firestore
-            await delay(500);
-
-            const staffMember = [...mockTeamUsers, ...mockSalesTeam, ...mockSupportAgents].find(u => u.email?.toLowerCase() === normalizedEmail);
-            if (staffMember) {
-                // ... rest of mock logic ...
-                if ((staffMember as any).password && (staffMember as any).password !== password) {
-                    throw new Error("Senha incorreta.");
-                }
-                let normalizedUser: User;
-                if ('id' in staffMember && !('uid' in staffMember)) {
-                    const teamUser = staffMember as TeamUser;
-                    if (teamUser.status !== 'active') throw new Error("Acesso bloqueado ou inativo.");
-                    normalizedUser = { uid: teamUser.id, email: teamUser.email, displayName: teamUser.name, photoURL: teamUser.photoURL, role: teamUser.role, permissions: teamUser.permissions };
-                } else {
-                    const agent = staffMember as any;
-                    normalizedUser = { uid: agent.uid, email: agent.email, displayName: agent.displayName, photoURL: agent.photoURL, role: agent.role, permissions: agent.permissions };
-                }
-                const finalUser = enforceAdminPermissions(normalizedUser);
-                setUser(finalUser);
-                localStorage.setItem('user', JSON.stringify(finalUser));
-                setFailedAttempts(0);
-                toast.success(`Bem-vindo(a), ${finalUser.displayName}!`);
-                return;
-            }
-
-            const students = await getStudents();
-            const student = students.find(s => s.email?.toLowerCase() === normalizedEmail);
-
-            if (student) {
-                if ((student as any).password && (student as any).password !== password) {
-                    throw new Error("Senha incorreta.");
-                }
-                const finalUser = enforceAdminPermissions(student);
-                setUser(finalUser);
-                localStorage.setItem('user', JSON.stringify(finalUser));
-                setFailedAttempts(0);
-                toast.success(`Bem-vindo(a) de volta, ${student.displayName}!`);
-                return;
-            }
-
-            throw new Error('Conta não encontrada. Por favor, adquira o curso primeiro.');
+            throw new Error('Conta não encontrada no Firebase. Use as credenciais criadas no console.');
         } catch (error: any) {
             handleLoginError(error.message);
         } finally {
@@ -423,18 +458,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser(originalUser);
             setOriginalUser(null);
             toast.success("Modo de personificação encerrado.");
-            setLoading(false);
-        }
-    };
-
-    const resetPassword = async (email: string) => {
-        setLoading(true);
-        try {
-            await firebaseSendPasswordReset(email);
-            toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
-        } catch (error: any) {
-            toast.error("Erro ao enviar e-mail de recuperação: " + error.message);
-        } finally {
             setLoading(false);
         }
     };

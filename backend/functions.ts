@@ -1,6 +1,7 @@
-import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, CallableRequest, onRequest } from 'firebase-functions/v2/https';
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
+import Stripe from 'stripe';
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -252,13 +253,22 @@ export const createStripeCheckoutSession = onCall(async (request: CallableReques
         const sessionDetails = new URLSearchParams({
             'line_items[0][price_data][unit_amount]': (amount * 100).toString(),
             'line_items[0][price_data][currency]': currency.toLowerCase(),
-            'line_items[0][price_data][product_data][name]': `Compra Mestre IA - ${productId || 'Créditos'}`,
+            'line_items[0][price_data][product_data][name]': productId === 'credits' ? `Recarga de ${request.data.credits} Créditos` : `Compra Mestre IA - ${productId}`,
             'line_items[0][quantity]': '1',
             mode: 'payment',
             success_url: 'https://mestre-nos-negocios.web.app/dashboard?payment=success',
             cancel_url: 'https://mestre-nos-negocios.web.app/dashboard?payment=cancel',
+            'payment_method_types[0]': 'card',
+            'payment_method_types[1]': 'pix',
+            'payment_method_types[2]': 'boleto',
             'payment_intent_data[metadata][user_uid]': request.auth.uid,
-            'payment_intent_data[metadata][product_id]': productId || 'credits'
+            'payment_intent_data[metadata][product_id]': productId || 'credits',
+            'payment_intent_data[metadata][credits_to_add]': productId === 'credits' ? request.data.credits.toString() : '0',
+            'payment_intent_data[metadata][operational_cost_brl]': (request.data.operationalCostBRL || 0).toString(),
+            'payment_intent_data[metadata][affiliate_uid]': request.data.affiliateUid || '',
+            'payment_intent_data[metadata][co_producer_uid]': request.data.coProducerUid || '',
+            'payment_intent_data[metadata][affiliate_percent]': (request.data.affiliatePercent || 0).toString(),
+            'payment_intent_data[metadata][co_producer_percent]': (request.data.coProducerPercent || 0).toString()
         });
 
         const sessionRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
@@ -355,3 +365,255 @@ export const verifyLessonCompletion = onCall(async (request: CallableRequest) =>
     console.log(`User ${request.auth?.uid} watched ${durationWatched}s of ${lessonId}`);
     return { verified: true };
 });
+// --- SECURE STRIPE WEBHOOK ---
+
+export const stripeWebhook = onRequest(async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const stripeSecret = process.env.STRIPE_SECRET_KEY;
+
+    if (!stripeSecret || !endpointSecret || !sig) {
+        res.status(400).send('Webhook Error: Missing configuration or signature');
+        return;
+    }
+
+    const stripe = new Stripe(stripeSecret, { apiVersion: '2023-10-16' });
+
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+    } catch (err: any) {
+        console.error(`Webhook Signature Verification Failed: ${err.message}`);
+        res.status(400).send(`Webhook Error: ${err.message}`);
+        return;
+    }
+
+    // Handle the event
+    try {
+        switch (event.type) {
+            case 'checkout.session.completed': {
+                const session = event.data.object as Stripe.Checkout.Session;
+                await handleSuccessfulCheckout(session);
+                break;
+            }
+            case 'charge.refunded': {
+                const charge = event.data.object as Stripe.Charge;
+                await handleRefund(charge);
+                break;
+            }
+            default:
+                console.log(`Unhandled event type ${event.type}`);
+        }
+        res.json({ received: true });
+    } catch (err: any) {
+        console.error(`Error processing webhook event ${event.type}:`, err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+async function handleSuccessfulCheckout(session: Stripe.Checkout.Session) {
+    const metadata = session.metadata;
+    const customerEmail = session.customer_details?.email;
+    const userUid = metadata?.user_uid;
+    const productId = metadata?.product_id;
+    const creditsToAdd = parseInt(metadata?.credits_to_add || '0');
+    const operationalCostBRL = parseFloat(metadata?.operational_cost_brl || '0');
+
+    // Split Metadata
+    const affiliateUid = metadata?.affiliate_uid;
+    const coProducerUid = metadata?.co_producer_uid;
+    const affiliatePercent = parseFloat(metadata?.affiliate_percent || '0');
+    const coProducerPercent = parseFloat(metadata?.co_producer_percent || '0');
+
+    if (!userUid || !customerEmail) {
+        console.error('Missing user details in session metadata');
+        return;
+    }
+
+    const amount = (session.amount_total || 0) / 100;
+    const platformFee = (amount * 0.059) + 1.0; // LucPay 5.9% + 1.00
+
+    // Split Calculation Logic
+    const netAfterFees = amount - platformFee - operationalCostBRL;
+    const affiliateAmount = affiliateUid ? (netAfterFees * (affiliatePercent / 100)) : 0;
+    const coProducerAmount = coProducerUid ? ((netAfterFees - affiliateAmount) * (coProducerPercent / 100)) : 0;
+    const producerNet = netAfterFees - affiliateAmount - coProducerAmount;
+
+    const txRef = db.collection('transactions').doc(session.id);
+    await txRef.set({
+        id: session.id,
+        amount: amount,
+        currency: session.currency || 'brl',
+        status: 'approved',
+        type: creditsToAdd > 0 ? 'recharge' : 'sale',
+        userUid,
+        customerEmail,
+        productId,
+        creditsAdded: creditsToAdd,
+        operationalCost: operationalCostBRL,
+        platformFee: platformFee,
+        splits: {
+            affiliate: { uid: affiliateUid, amount: affiliateAmount, percent: affiliatePercent },
+            coProducer: { uid: coProducerUid, amount: coProducerAmount, percent: coProducerPercent },
+            producer: { amount: producerNet > 0 ? producerNet : 0 }
+        },
+        netAmount: producerNet > 0 ? producerNet : 0,
+        productName: metadata?.product_name || (creditsToAdd > 0 ? 'Recarga de Créditos' : 'Mestre IA Product'),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        paymentMethod: 'stripe_checkout',
+        details: {
+            sessionId: session.id,
+            paymentIntentId: session.payment_intent
+        }
+    });
+
+    // --- REAL-TIME STRIPE CONNECT TRANSFERS ---
+    if (creditsToAdd === 0 && productId !== 'credits') {
+        const productOwnerId = await getProductOwner(productId);
+        await distributeSplits(session.id, {
+            amount,
+            currency: session.currency || 'brl',
+            splits: {
+                affiliate: affiliateUid ? { uid: affiliateUid, amount: affiliateAmount } : null,
+                coProducer: coProducerUid ? { uid: coProducerUid, amount: coProducerAmount } : null,
+                producer: { uid: productOwnerId, amount: producerNet }
+            }
+        }, stripeSecret);
+    }
+
+    // Update student access and Credits
+    const studentRef = db.collection('students').doc(userUid);
+    const updates: any = {
+        lastPaymentDate: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'active'
+    };
+
+    if (creditsToAdd > 0) {
+        updates.creditBalance = admin.firestore.FieldValue.increment(creditsToAdd);
+    } else {
+        updates.hasMestreIA = true;
+    }
+
+    await studentRef.set(updates, { merge: true });
+
+    console.log(`Fulfillment complete for user ${userUid}. Credits added: ${creditsToAdd}`);
+}
+
+async function handleRefund(charge: Stripe.Charge) {
+    const paymentIntentId = charge.payment_intent as string;
+
+    // Find the original transaction
+    const txQuery = await db.collection('transactions')
+        .where('details.paymentIntentId', '==', paymentIntentId)
+        .limit(1)
+        .get();
+
+    if (txQuery.empty) {
+        console.error(`Original transaction not found for refund: ${paymentIntentId}`);
+        return;
+    }
+
+    const txDoc = txQuery.docs[0];
+    const txData = txDoc.data();
+
+    // Update transaction status
+    await txDoc.ref.update({
+        status: 'refunded',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Revoke student access if applicable
+    const userUid = txData.userUid;
+    if (userUid) {
+        await db.collection('students').doc(userUid).update({
+            hasMestreIA: false,
+            status: 'refunded'
+        });
+    }
+
+    console.log(`Refund processed for transaction ${txDoc.id}`);
+}
+
+// --- SPLIT DISTRIBUTION ENGINE ---
+
+async function getProductOwner(productId: string): Promise<string> {
+    const prodDoc = await db.collection('products').doc(productId).get();
+    return prodDoc.data()?.ownerId || '';
+}
+
+async function distributeSplits(sessionId: string, data: any, stripeSecret: string) {
+    const stripe = new Stripe(stripeSecret, { apiVersion: '2023-10-16' });
+    const { splits, currency } = data;
+    const transferResults: any = {};
+
+    try {
+        // 1. Affiliate Transfer
+        if (splits.affiliate && splits.affiliate.amount > 0) {
+            const accId = await getStripeAccountId(splits.affiliate.uid);
+            if (accId) {
+                const transfer = await stripe.transfers.create({
+                    amount: Math.round(splits.affiliate.amount * 100),
+                    currency,
+                    destination: accId,
+                    transfer_group: sessionId,
+                    metadata: { type: 'affiliate_commission', original_session: sessionId }
+                });
+                transferResults.affiliateTransferId = transfer.id;
+            }
+        }
+
+        // 2. Co-Producer Transfer
+        if (splits.coProducer && splits.coProducer.amount > 0) {
+            const accId = await getStripeAccountId(splits.coProducer.uid);
+            if (accId) {
+                const transfer = await stripe.transfers.create({
+                    amount: Math.round(splits.coProducer.amount * 100),
+                    currency,
+                    destination: accId,
+                    transfer_group: sessionId,
+                    metadata: { type: 'co_producer_commission', original_session: sessionId }
+                });
+                transferResults.coProducerTransferId = transfer.id;
+            }
+        }
+
+        // 3. Producer (Owner) Transfer
+        if (splits.producer && splits.producer.amount > 0) {
+            const accId = await getStripeAccountId(splits.producer.uid);
+            if (accId) {
+                const transfer = await stripe.transfers.create({
+                    amount: Math.round(splits.producer.amount * 100),
+                    currency,
+                    destination: accId,
+                    transfer_group: sessionId,
+                    metadata: { type: 'producer_net', original_session: sessionId }
+                });
+                transferResults.producerTransferId = transfer.id;
+            }
+        }
+
+        // Update transaction with transfer results
+        await db.collection('transactions').doc(sessionId).update({
+            'details.transfers': transferResults,
+            'details.splitDistributed': true,
+            'details.distributedAt': admin.firestore.FieldValue.serverTimestamp()
+        });
+
+    } catch (error) {
+        console.error("Error distributing splits:", error);
+        await db.collection('transactions').doc(sessionId).update({
+            'details.splitError': (error as any).message,
+            'details.splitDistributed': false
+        });
+    }
+}
+
+async function getStripeAccountId(userUid: string): Promise<string | null> {
+    const connDoc = await db.collection('connected_accounts').doc(userUid).get();
+    if (connDoc.exists) return connDoc.data()?.stripeAccountId;
+
+    // Fallback to users collection
+    const userDoc = await db.collection('users').doc(userUid).get();
+    return userDoc.data()?.stripeAccountId || null;
+}

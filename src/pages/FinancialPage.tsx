@@ -32,11 +32,13 @@ interface SaleTransaction {
     id: string;
     product: string;
     date: string;
-    value: number;
+    value: number; // Gross
+    platformFee: number;
+    operationalCost: number;
+    netAmount: number;
     platform: string;
     status: 'Aprovado' | 'Pendente' | 'Reembolsado';
     role: 'Produtor' | 'Afiliado';
-    cost?: number;
     availableDate: string;
 }
 
@@ -202,11 +204,11 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ navigateTo }) => {
 
     const financialData = useMemo(() => {
         const transactions: SaleTransaction[] = [
-            { id: 'LP-98214', product: 'Mestre do Tráfego', date: 'Hoje, 14:30', value: 197.00, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Produtor', cost: 45.00, availableDate: '25/01/2026' },
-            { id: 'LP-98213', product: 'Ebook Viral 3.0', date: 'Hoje, 11:15', value: 47.00, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Produtor', cost: 5.00, availableDate: '25/01/2026' },
-            { id: 'LP-98212', product: 'Mentoria Elite', date: 'Ontem, 22:10', value: 250.00, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Afiliado', cost: 80.00, availableDate: '24/01/2026' },
-            { id: 'LP-98211', product: 'Mestre do Tráfego', date: 'Há 3 dias', value: 197.00, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Produtor', cost: 52.00, availableDate: '21/01/2026' },
-            { id: 'LP-98210', product: 'Curso Copywriting', date: 'Há 15 dias', value: 97.00, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Afiliado', cost: 30.00, availableDate: '10/01/2026' },
+            { id: 'LP-98214', product: 'Mestre do Tráfego', date: 'Hoje, 14:30', value: 197.00, platformFee: 12.62, operationalCost: 35.00, netAmount: 149.38, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Produtor', availableDate: '25/01/2026' },
+            { id: 'LP-98213', product: 'Ebook Viral 3.0', date: 'Hoje, 11:15', value: 47.00, platformFee: 3.77, operationalCost: 5.00, netAmount: 38.23, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Produtor', availableDate: '25/01/2026' },
+            { id: 'LP-98212', product: 'Mentoria Elite', date: 'Ontem, 22:10', value: 250.00, platformFee: 15.75, operationalCost: 0.00, netAmount: 234.25, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Afiliado', availableDate: '24/01/2026' },
+            { id: 'LP-98211', product: 'Mestre do Tráfego', date: 'Há 3 dias', value: 197.00, platformFee: 12.62, operationalCost: 35.00, netAmount: 149.38, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Produtor', availableDate: '21/01/2026' },
+            { id: 'LP-98210', product: 'Curso Copywriting', date: 'Há 15 dias', value: 97.00, platformFee: 6.72, operationalCost: 0.00, netAmount: 90.28, platform: 'LucPay Nativo', status: 'Aprovado', role: 'Afiliado', availableDate: '10/01/2026' },
         ];
 
         const productPerformance: Record<string, { revenue: number, cost: number, count: number }> = {};
@@ -335,9 +337,10 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ navigateTo }) => {
                                 <th className="p-4">ID Transação</th>
                                 <th className="p-4">Produto</th>
                                 <th className="p-4">Data</th>
-                                <th className="p-4">Liberação (D+7)</th>
-                                <th className="p-4 text-center">Status</th>
-                                <th className="p-4 text-right">Valor</th>
+                                <th className="p-4 text-right">Bruto</th>
+                                <th className="p-4 text-right bg-red-950/20">Taxas</th>
+                                <th className="p-4 text-right bg-orange-950/20">Custo IA</th>
+                                <th className="p-4 text-right border-l border-gray-700 font-black text-white">Líquido</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-700">
@@ -349,13 +352,10 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ navigateTo }) => {
                                         <p className="text-[10px] text-gray-500 uppercase">{sale.role}</p>
                                     </td>
                                     <td className="p-4 text-gray-400 text-xs">{sale.date}</td>
-                                    <td className="p-4 text-gray-300 text-xs font-mono">{sale.availableDate}</td>
-                                    <td className="p-4 text-center">
-                                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${sale.status === 'Aprovado' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                                            {sale.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right font-bold text-green-400">+ R$ {sale.value.toFixed(2)}</td>
+                                    <td className="p-4 text-right font-bold text-gray-300">R$ {sale.value.toFixed(2)}</td>
+                                    <td className="p-4 text-right text-red-400/80 text-xs">- R$ {sale.platformFee.toFixed(2)}</td>
+                                    <td className="p-4 text-right text-orange-400/80 text-xs">- R$ {sale.operationalCost.toFixed(2)}</td>
+                                    <td className="p-4 text-right font-black text-green-400 border-l border-gray-700 bg-gray-900/50">R$ {sale.netAmount.toFixed(2)}</td>
                                 </tr>
                             ))}
                         </tbody>

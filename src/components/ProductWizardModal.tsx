@@ -21,6 +21,7 @@ import { useAuth } from '../hooks/useAuth';
 import { callMestreIA, generateCourseCoverImage } from '../services/mestreIaService';
 import { SchoolSetupModal } from './SchoolSetupModal';
 import { securityService } from '../services/securityService';
+import { aiCostEstimator } from '../services/aiCostEstimator';
 
 const MotionDiv = motion.div as any;
 
@@ -816,7 +817,23 @@ const Step5Publish: React.FC<{
                     <div className="space-y-2">
                         <div className="flex justify-between text-purple-400 font-bold"><span>Comissão Sócio:</span><span>{productData.hasCoProducer ? `${productData.coProducer?.commissionPercent}%` : '0%'}</span></div>
                         <div className="flex justify-between text-blue-400 font-bold"><span>Comissão Afiliados:</span><span>{productData.commission}%</span></div>
-                        <div className="flex justify-between border-t border-gray-700 pt-2 text-red-400 font-bold"><span>Taxa LucPay:</span><span>5.9% + R$ 1,00</span></div>
+                        <div className="flex justify-between border-t border-gray-700 pt-2 text-red-100 font-bold"><span>Taxa LucPay:</span><span>5.9% + R$ 1,00</span></div>
+
+                        {/* COGS BREAKDOWN */}
+                        {(() => {
+                            const estimation = aiCostEstimator.estimateCourseCost([], 45, 50); // Default placeholder estimation
+                            return (
+                                <div className="mt-2 pt-2 border-t border-dashed border-gray-700">
+                                    <div className="flex justify-between text-orange-400 font-black">
+                                        <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Custo Op. Aluno (IA):</span>
+                                        <span>- R$ {estimation.totalCostBRL.toFixed(2)}</span>
+                                    </div>
+                                    <p className="text-[9px] text-gray-500 mt-1 italic leading-tight">
+                                        * Este valor (Voucher 45 dias + Franquia) será descontado de cada venda. O produtor recebe o líquido.
+                                    </p>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>
