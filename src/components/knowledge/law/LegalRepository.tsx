@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, FileText, Download, Briefcase, ChevronRight, Star, Folder, AlertCircle, Eye, Lock, CheckCircle, X } from '../../Icons';
 import Button from '../../Button';
 import { useAuth } from '../../../hooks/useAuth';
-import { consumeCredits } from '../../../services/mockFirebase';
+import { useCreditGuard } from '../../../hooks/useCreditGuard'; // Use standardized hook
 import toast from 'react-hot-toast';
 import { InsufficientFundsAlert } from '../language/InsufficientFundsAlert';
 import { StudentPage } from '../../../types';
@@ -59,6 +59,7 @@ const CATEGORIES = ['Todos', 'Empresarial', 'Família', 'Cível', 'Penal', 'Trab
 
 export const LegalRepository: React.FC<{ onBack: () => void, navigateTo?: (page: StudentPage) => void }> = ({ onBack, navigateTo }) => {
     const { user } = useAuth();
+    const { checkAndConsume } = useCreditGuard();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Todos');
 
@@ -85,7 +86,7 @@ export const LegalRepository: React.FC<{ onBack: () => void, navigateTo?: (page:
             return;
         }
 
-        const success = await consumeCredits(user?.uid, selectedDoc.price);
+        const success = await checkAndConsume('legal_download', `Download: ${selectedDoc.title}`, selectedDoc.price);
         if (success) {
             toast.success(
                 <div className='flex flex-col gap-1'>

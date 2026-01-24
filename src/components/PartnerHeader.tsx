@@ -83,7 +83,7 @@ export const PartnerHeader: React.FC<PartnerHeaderProps> = ({
         if (onNavigateToFinancial) {
             onNavigateToFinancial();
         } else {
-            toast.info('Acesse o menu Financeiro para realizar saques');
+            toast('Acesse o menu Financeiro para realizar saques', { icon: 'ℹ️' });
         }
     };
 
@@ -92,7 +92,7 @@ export const PartnerHeader: React.FC<PartnerHeaderProps> = ({
         if (onRecharge) {
             onRecharge();
         } else {
-            toast.info('Funcionalidade de recarga indisponível');
+            toast('Funcionalidade de recarga indisponível', { icon: 'ℹ️' });
         }
     };
 

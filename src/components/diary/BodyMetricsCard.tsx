@@ -28,11 +28,7 @@ export const BodyMetricsCard: React.FC<BodyMetricsCardProps> = ({ hasPhysicalKit
     const handleAnalyzePhoto = async () => {
         // HYBRID CREDIT LOGIC: 3 Scans/Day (Hardcoded for now, ideal: get from course config)
         // We use contextId = 'global_health' so it shares a bucket if we want, or user unique bucket.
-        const proceed = await checkAndConsume('health_metric_scan', 'Scan Métricas Corporais', {
-            cost: 5, // Higher cost for OCR
-            dailyLimit: 50, // 10 scans (Default Platform Limit for Health tools)
-            contextId: 'health_suite'
-        });
+        const proceed = await checkAndConsume('health_metric_scan', 'Scan Métricas Corporais', 5);
 
         if (proceed) {
             toast.promise(

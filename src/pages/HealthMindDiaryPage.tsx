@@ -42,7 +42,7 @@ const HealthMindDiaryPage: React.FC<HealthMindDiaryPageProps> = ({ navigateTo })
     // Niche Detection Logic (Dynamic)
     // In production, this would come from schoolConfig.
     // We'll use 'diet', 'therapy', or 'fitness' based on mock course data.
-    const courseNiche: 'diet' | 'therapy' | 'fitness' = 'diet';
+    const courseNiche = 'diet' as 'diet' | 'therapy' | 'fitness';
     const isTherapyNiche = courseNiche === 'therapy';
     const hasPhysicalKit = courseNiche === 'fitness';
 
@@ -58,12 +58,14 @@ const HealthMindDiaryPage: React.FC<HealthMindDiaryPageProps> = ({ navigateTo })
         // If they did 3 scans (15 cost), they have 35 left. Can do 3 reports (30).
 
         console.log("Generating report with unified credit logic...");
-        const proceed = await checkAndConsume('health_evolution_report', 'Relatório de Evolução IA', {
-            cost: 10,
-            dailyLimit: 50, // Global Health Suite Limit
-            contextId: 'health_suite', // Shared Bucket!
-            onInsufficientFunds: () => setShowInsufficientModal(true)
-        });
+        // TODO: Pass contextId and dailyLimit when hook supports it
+        const proceed = await checkAndConsume('health_evolution_report', 'Relatório de Evolução IA', 10);
+
+        if (!proceed) {
+            // Basic fallback since we removed the object with callback
+            setShowInsufficientModal(true);
+            return;
+        }
 
         if (proceed) {
             setIsGeneratingReport(true);

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, TrendingUp, ArrowRight, X } from 'lucide-react';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
+import Card from './Card';
+import Button from './Button';
 
 interface UpsellModalProps {
     isOpen: boolean;

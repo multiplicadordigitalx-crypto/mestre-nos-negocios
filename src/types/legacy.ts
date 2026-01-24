@@ -477,6 +477,7 @@ export interface SystemSettings {
     mestreIAMaintenance?: boolean;
     producerCommissionPercentage?: number;
     globalProtectionThreshold?: number;
+    creditValueBRL?: number;
 }
 
 export interface ToolCost {
@@ -531,6 +532,7 @@ export interface WhatsAppInstance {
     phoneNumber: string;
     qrCode?: string;
     healthScore: number;
+    creditValueBRL?: number;
     activeChats: number;
     capabilities: ('sales' | 'notifications' | 'mass_sending')[];
 }
@@ -1503,4 +1505,5 @@ export interface GratitudeEntry {
     content: string;
     mood?: 'happy' | 'neutral' | 'sad' | 'grateful';
     tags?: string[];
+    practice?: string;
 }

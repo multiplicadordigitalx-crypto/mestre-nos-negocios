@@ -76,7 +76,6 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                 instanceName: name,
                 status: 'disconnected',
                 port,
-                uptime: '0s',
                 ram: '0MB',
                 goroutines: 0,
                 engine: 'whatsmeow',
@@ -219,7 +218,7 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                                             {inst.status === 'connected' ? 'ONLINE' : 'OFFLINE'}
                                         </span>
                                     </div>
-                                    <p className="text-[10px] text-gray-500 font-mono mt-0.5">Port: {inst.port} | RAM: {inst.ram || '0MB'}</p>
+                                    <p className="text-xs text-gray-500">Conectado | Port: {inst.port} | RAM: {inst.ram || '0MB'}</p>
                                 </div>
                             </div>
 

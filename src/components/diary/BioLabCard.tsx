@@ -107,39 +107,6 @@ export const BioLabCard: React.FC<BioLabCardProps> = ({ hasPhysicalKit }) => {
         .animate-scan { animation: scan 2s linear infinite; }
     `;
 
-    const MetricCard = ({ metric, onManual, onOCR }: { metric: Biomarker, onManual: (m: any) => void, onOCR: (id: string) => void }) => {
-        const Icon = metric.icon;
-        return (
-            <div className="bg-gray-800 border-2 border-transparent hover:border-blue-500/30 p-5 md:p-6 rounded-[2rem] md:rounded-[2.5rem] relative overflow-hidden group transition-all duration-500 shadow-xl w-full">
-                <div className="relative z-10">
-                    <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <p className="text-[9px] md:text-[10px] text-gray-500 font-black uppercase tracking-widest">{metric.name}</p>
-                            <h3 className="text-2xl md:text-3xl font-black text-white mt-1">
-                                {metric.value} <span className="text-xs md:text-sm text-gray-600 font-medium">{metric.unit}</span>
-                            </h3>
-                            <p className={`text-[9px] md:text-[10px] ${metric.statusColor} font-black mt-2 uppercase flex items-center gap-1`}>
-                                <CheckCircle className="w-3 h-3" /> {metric.status}
-                            </p>
-                        </div>
-                        <div className={`p-3 md:p-4 rounded-2xl md:rounded-3xl bg-gray-950 border border-gray-800 ${metric.color}`}>
-                            <Icon className="w-6 h-6 md:w-8 md:h-8" />
-                        </div>
-                    </div>
-
-                    <div className="flex gap-2 mt-6 pt-6 border-t border-gray-700/50">
-                        <button onClick={() => onManual(metric)} className="flex-1 bg-gray-900/80 hover:bg-gray-700 text-gray-300 py-3 rounded-xl md:rounded-2xl text-[8px] md:text-[9px] font-black uppercase flex items-center justify-center gap-2 transition-all border border-gray-700/50">
-                            <Edit2 className="w-3 h-3" /> Manual
-                        </button>
-                        <button onClick={() => onOCR(metric.id)} className="flex-1 bg-green-500/10 hover:bg-green-500 text-green-400 hover:text-white py-3 rounded-xl md:rounded-2xl text-[8px] md:text-[9px] font-black uppercase flex items-center justify-center gap-2 transition-all border border-green-500/20">
-                            <Scan className="w-3 h-3" /> OCR SCAN
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 pb-20 px-1 md:px-0">
             <style>{scanStyles}</style>
@@ -398,6 +365,39 @@ export const BioLabCard: React.FC<BioLabCardProps> = ({ hasPhysicalKit }) => {
                     </div>
                 )}
             </AnimatePresence>
+        </div>
+    );
+};
+
+const MetricCard: React.FC<{ metric: Biomarker, onManual: (m: any) => void, onOCR: (id: string) => void }> = ({ metric, onManual, onOCR }) => {
+    const Icon = metric.icon;
+    return (
+        <div className="bg-gray-800 border-2 border-transparent hover:border-blue-500/30 p-5 md:p-6 rounded-[2rem] md:rounded-[2.5rem] relative overflow-hidden group transition-all duration-500 shadow-xl w-full">
+            <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <p className="text-[9px] md:text-[10px] text-gray-500 font-black uppercase tracking-widest">{metric.name}</p>
+                        <h3 className="text-2xl md:text-3xl font-black text-white mt-1">
+                            {metric.value} <span className="text-xs md:text-sm text-gray-600 font-medium">{metric.unit}</span>
+                        </h3>
+                        <p className={`text-[9px] md:text-[10px] ${metric.statusColor} font-black mt-2 uppercase flex items-center gap-1`}>
+                            <CheckCircle className="w-3 h-3" /> {metric.status}
+                        </p>
+                    </div>
+                    <div className={`p-3 md:p-4 rounded-2xl md:rounded-3xl bg-gray-950 border border-gray-800 ${metric.color}`}>
+                        <Icon className="w-6 h-6 md:w-8 md:h-8" />
+                    </div>
+                </div>
+
+                <div className="flex gap-2 mt-6 pt-6 border-t border-gray-700/50">
+                    <button onClick={() => onManual(metric)} className="flex-1 bg-gray-900/80 hover:bg-gray-700 text-gray-300 py-3 rounded-xl md:rounded-2xl text-[8px] md:text-[9px] font-black uppercase flex items-center justify-center gap-2 transition-all border border-gray-700/50">
+                        <Edit2 className="w-3 h-3" /> Manual
+                    </button>
+                    <button onClick={() => onOCR(metric.id)} className="flex-1 bg-green-500/10 hover:bg-green-500 text-green-400 hover:text-white py-3 rounded-xl md:rounded-2xl text-[8px] md:text-[9px] font-black uppercase flex items-center justify-center gap-2 transition-all border border-green-500/20">
+                        <Scan className="w-3 h-3" /> OCR SCAN
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };

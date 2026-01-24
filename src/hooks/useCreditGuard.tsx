@@ -1,6 +1,8 @@
 import { getToolCosts } from '../services/mockFirebase';
 import { creditService } from '../services/creditService';
 import toast from 'react-hot-toast';
+import { useState } from 'react';
+import { useAuth } from './useAuth';
 
 export const useCreditGuard = () => {
     const { user, refreshUser } = useAuth();

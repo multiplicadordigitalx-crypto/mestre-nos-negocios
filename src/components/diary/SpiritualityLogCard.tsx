@@ -21,7 +21,7 @@ export const SpiritualityLogCard: React.FC = () => {
         try {
             await saveGratitudeEntry({
                 studentId: user.uid,
-                text: gratitudeText,
+                content: gratitudeText,
                 practice: selectedPractice
             });
             toast.success("Gratidão salva com sucesso! 🙏");

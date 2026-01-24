@@ -48,11 +48,11 @@ let analytics: any = null;
 if (hasFirebaseCredentials) {
     try {
         app = initializeApp(firebaseConfig);
+        analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
         auth = getAuth(app);
         db = getFirestore(app);
         storage = getStorage(app);
         functions = getFunctions(app);
-        analytics = getAnalytics(app);
     } catch (error) {
         console.error("Erro ao inicializar Firebase:", error);
     }
