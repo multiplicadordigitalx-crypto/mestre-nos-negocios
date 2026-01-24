@@ -144,11 +144,7 @@ export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>
         // 2. Check Credits (Wallet Consumption with Daily Limit fallback)
         // If onBeforeSendMessage is not used (or returned generic), we use the internal prop
         if (!skipWallet) {
-            const proceed = await checkAndConsume('student_ai_chat', 'Chat Mentor IA', {
-                cost: 1, // Default message cost
-                dailyLimit: props.dailyLimit,
-                contextId: props.contextId
-            });
+            const proceed = await checkAndConsume('student_ai_chat', 'Chat Mentor IA', 1);
             if (!proceed) return;
         }
 
