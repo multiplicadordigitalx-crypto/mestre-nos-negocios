@@ -317,7 +317,7 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
                         </div>
 
                         <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
-                            {Object.entries(
+                            {(Object.entries(
                                 accounts.reduce((grid, acc) => {
                                     const p = acc.product || 'Sem Produto';
                                     if (!grid[p]) grid[p] = [];
@@ -325,113 +325,113 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
                                     return grid;
                                 }, {} as Record<string, SharedAccount[]>)
                             ) as [string, SharedAccount[]][]).filter(([productName]) =>
-                            productName.toLowerCase().includes(productSearchTerm.toLowerCase())
+                                productName.toLowerCase().includes(productSearchTerm.toLowerCase())
                             ).map(([productName, productAccounts]) => {
                                 const postedCount = productAccounts.filter(a => a.postingStatus === 'success').length;
-                            const totalCount = productAccounts.length;
-                            const progressPercent = Math.round((postedCount / totalCount) * 100);
+                                const totalCount = productAccounts.length;
+                                const progressPercent = Math.round((postedCount / totalCount) * 100);
 
-                            return (
-                            <div key={productName} className="space-y-2">
-                                <button
-                                    onClick={() => {
-                                        setExpandedProduct(expandedProduct === productName ? null : productName);
-                                        setAccountSearchTerm(''); // Clear search on toggle
-                                    }}
-                                    className={`w-full p-3 rounded-lg border transition-all ${expandedProduct === productName ? 'bg-brand-primary/10 border-brand-primary/50' : 'bg-gray-900 border-gray-700 hover:border-gray-500'}`}
-                                >
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-1.5 bg-gray-800 rounded">
-                                                <Box className={`w-4 h-4 ${expandedProduct === productName ? 'text-brand-primary' : 'text-gray-500'}`} />
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="text-sm font-bold text-white">{productName}</p>
-                                                <p className="text-[10px] text-gray-500">{totalCount} conta{totalCount !== 1 ? 's' : ''} vinculada{totalCount !== 1 ? 's' : ''}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-right hidden sm:block">
-                                                <p className="text-[10px] font-bold text-white">{progressPercent}%</p>
-                                                <p className="text-[8px] text-gray-500 uppercase">{postedCount}/{totalCount} Postados</p>
-                                            </div>
-                                            <div className={`transition-transform duration-200 ${expandedProduct === productName ? 'rotate-180' : ''}`}>
-                                                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* Product Progress Bar */}
-                                    <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-brand-primary transition-all duration-500 ease-out"
-                                            style={{ width: `${progressPercent}%` }}
-                                        ></div>
-                                    </div>
-                                </button>
-
-                                {expandedProduct === productName && (
-                                    <div className="ml-2 space-y-3 animate-slide-down bg-gray-900/40 p-3 rounded-lg border border-gray-800/50">
-                                        {/* Internal Search */}
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                placeholder="Buscar conta..."
-                                                value={accountSearchTerm}
-                                                onChange={(e) => setAccountSearchTerm(e.target.value)}
-                                                className="w-full bg-black/40 border border-gray-800 rounded-md py-1.5 pl-8 pr-3 text-[10px] text-white focus:ring-1 focus:ring-brand-primary outline-none"
-                                            />
-                                            <svg className="w-3 h-3 text-gray-600 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                            </svg>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            {productAccounts
-                                                .filter(acc => acc.username.toLowerCase().includes(accountSearchTerm.toLowerCase()))
-                                                .map(acc => (
-                                                    <div key={acc.id} className="bg-gray-900/80 p-2.5 rounded-lg border border-gray-800 flex justify-between items-center hover:border-gray-700 transition-colors">
-                                                        <div className="flex items-center gap-2 max-w-[70%]">
-                                                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white ${acc.platform === 'TikTok' ? 'bg-black border border-gray-600' :
-                                                                acc.platform === 'Instagram' ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600' :
-                                                                    acc.platform === 'Kwai' ? 'bg-orange-500' : 'bg-red-600'
-                                                                }`}>
-                                                                {acc.platform[0]}
-                                                            </div>
-                                                            <div className="truncate">
-                                                                <p className="font-bold text-white text-[10px] truncate">{acc.username}</p>
-                                                                <p className="text-[8px] text-gray-500 flex items-center gap-1 uppercase">
-                                                                    {acc.platform}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-right flex-shrink-0">
-                                                            {acc.postingStatus === 'idle' && (
-                                                                <span className="text-[8px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20 font-bold">AGUARDANDO</span>
-                                                            )}
-                                                            {acc.postingStatus === 'posting' && (
-                                                                <div className="flex items-center gap-1.5 text-[8px] text-blue-400 font-bold">
-                                                                    <div className="w-2 h-2 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                                                                    <span>ENVIANDO</span>
-                                                                </div>
-                                                            )}
-                                                            {acc.postingStatus === 'success' && (
-                                                                <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30 font-bold flex items-center gap-1">
-                                                                    <CheckCircle className="w-2.5 h-2.5" /> OK
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                return (
+                                    <div key={productName} className="space-y-2">
+                                        <button
+                                            onClick={() => {
+                                                setExpandedProduct(expandedProduct === productName ? null : productName);
+                                                setAccountSearchTerm(''); // Clear search on toggle
+                                            }}
+                                            className={`w-full p-3 rounded-lg border transition-all ${expandedProduct === productName ? 'bg-brand-primary/10 border-brand-primary/50' : 'bg-gray-900 border-gray-700 hover:border-gray-500'}`}
+                                        >
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-1.5 bg-gray-800 rounded">
+                                                        <Box className={`w-4 h-4 ${expandedProduct === productName ? 'text-brand-primary' : 'text-gray-500'}`} />
                                                     </div>
-                                                ))}
-                                        </div>
-                                        {productAccounts.filter(acc => acc.username.toLowerCase().includes(accountSearchTerm.toLowerCase())).length === 0 && (
-                                            <p className="text-center text-[9px] text-gray-600 font-mono py-2">Nenhuma conta encontrada para "{accountSearchTerm}"</p>
+                                                    <div className="text-left">
+                                                        <p className="text-sm font-bold text-white">{productName}</p>
+                                                        <p className="text-[10px] text-gray-500">{totalCount} conta{totalCount !== 1 ? 's' : ''} vinculada{totalCount !== 1 ? 's' : ''}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-right hidden sm:block">
+                                                        <p className="text-[10px] font-bold text-white">{progressPercent}%</p>
+                                                        <p className="text-[8px] text-gray-500 uppercase">{postedCount}/{totalCount} Postados</p>
+                                                    </div>
+                                                    <div className={`transition-transform duration-200 ${expandedProduct === productName ? 'rotate-180' : ''}`}>
+                                                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {/* Product Progress Bar */}
+                                            <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-brand-primary transition-all duration-500 ease-out"
+                                                    style={{ width: `${progressPercent}%` }}
+                                                ></div>
+                                            </div>
+                                        </button>
+
+                                        {expandedProduct === productName && (
+                                            <div className="ml-2 space-y-3 animate-slide-down bg-gray-900/40 p-3 rounded-lg border border-gray-800/50">
+                                                {/* Internal Search */}
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Buscar conta..."
+                                                        value={accountSearchTerm}
+                                                        onChange={(e) => setAccountSearchTerm(e.target.value)}
+                                                        className="w-full bg-black/40 border border-gray-800 rounded-md py-1.5 pl-8 pr-3 text-[10px] text-white focus:ring-1 focus:ring-brand-primary outline-none"
+                                                    />
+                                                    <svg className="w-3 h-3 text-gray-600 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                    </svg>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    {productAccounts
+                                                        .filter(acc => acc.username.toLowerCase().includes(accountSearchTerm.toLowerCase()))
+                                                        .map(acc => (
+                                                            <div key={acc.id} className="bg-gray-900/80 p-2.5 rounded-lg border border-gray-800 flex justify-between items-center hover:border-gray-700 transition-colors">
+                                                                <div className="flex items-center gap-2 max-w-[70%]">
+                                                                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white ${acc.platform === 'TikTok' ? 'bg-black border border-gray-600' :
+                                                                        acc.platform === 'Instagram' ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600' :
+                                                                            acc.platform === 'Kwai' ? 'bg-orange-500' : 'bg-red-600'
+                                                                        }`}>
+                                                                        {acc.platform[0]}
+                                                                    </div>
+                                                                    <div className="truncate">
+                                                                        <p className="font-bold text-white text-[10px] truncate">{acc.username}</p>
+                                                                        <p className="text-[8px] text-gray-500 flex items-center gap-1 uppercase">
+                                                                            {acc.platform}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-right flex-shrink-0">
+                                                                    {acc.postingStatus === 'idle' && (
+                                                                        <span className="text-[8px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20 font-bold">AGUARDANDO</span>
+                                                                    )}
+                                                                    {acc.postingStatus === 'posting' && (
+                                                                        <div className="flex items-center gap-1.5 text-[8px] text-blue-400 font-bold">
+                                                                            <div className="w-2 h-2 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                                                            <span>ENVIANDO</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {acc.postingStatus === 'success' && (
+                                                                        <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30 font-bold flex items-center gap-1">
+                                                                            <CheckCircle className="w-2.5 h-2.5" /> OK
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                                {productAccounts.filter(acc => acc.username.toLowerCase().includes(accountSearchTerm.toLowerCase())).length === 0 && (
+                                                    <p className="text-center text-[9px] text-gray-600 font-mono py-2">Nenhuma conta encontrada para "{accountSearchTerm}"</p>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
-                                )}
-                            </div>
-                            );
+                                );
                             })}
                         </div>
 
