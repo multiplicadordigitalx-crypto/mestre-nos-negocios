@@ -370,15 +370,30 @@ const initialTickets: SupportTicket[] = [
 
 // Refund Reversal Logic
 export const sendRefundReversalLink = async (studentId: string) => {
-    await delay(1000);
-    const students = loadJSON<Student[]>('mockStudents', []);
+    const students = loadJSON<Student[]>('mockStudents', initialStudents);
     const idx = students.findIndex(s => s.uid === studentId);
     if (idx !== -1) {
-        // Mock sending to WhatsApp/Email
-        console.log(`[Nexus] Link de desistência enviado para ${students[idx].email}`);
-        await createAuditLog('system', 'REFUND_REVERSAL_LINK', 'medium', `Link de desistência enviado para ${students[idx].email}`, { studentId, email: students[idx].email });
-        toast.success("Link de desistência enviado via WhatsApp e E-mail!", { icon: '🔗' });
-        return true;
+        // Send reversal email
+        const { sendEmail } = await import('./emailService');
+        const { refundReversedTemplate } = await import('./emailTemplates/financial');
+
+        const student = students[idx];
+        const emailSent = await sendEmail({
+            to: student.email,
+            subject: '🔄 Seu Acesso Foi Restaurado!',
+            html: refundReversedTemplate(
+                student.displayName,
+                'Você decidiu continuar conosco',
+                'Curso Principal',
+                'https://mestrenosnegocios.com/painel'
+            )
+        });
+
+        if (emailSent.success) {
+            await createAuditLog('system', 'REFUND_REVERSAL_LINK', 'medium', `Link de desistência enviado para ${student.email}`, { studentId, email: student.email });
+            toast.success(`Email de reversão enviado para ${student.email}`);
+            return true;
+        }
     }
     return false;
 };

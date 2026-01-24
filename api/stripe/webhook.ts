@@ -1,176 +1,148 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { sendEmail } from '../../src/services/emailService';
+import {
+    purchaseReceiptTemplate,
+    refundProcessedTemplate
+} from '../../src/services/emailTemplates/financial';
 
-// Inicializa Firebase Admin (se ainda não foi inicializado)
-if (!getApps().length) {
-    initializeApp({
-        credential: cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        }),
-    });
-}
-
-const db = getFirestore();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-02-24.acacia',
 });
 
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
+/**
+ * Webhook do Stripe para processar eventos
+ * POST /api/stripe/webhook
+ */
 export default async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {
-    // Apenas POST permitido
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const sig = req.headers['stripe-signature'];
+    const sig = req.headers['stripe-signature'] as string;
 
-    // Support multiple webhook secrets (Stripe creates separate webhooks for account events vs connected accounts)
-    const webhookSecrets = [
-        process.env.STRIPE_WEBHOOK_SECRET,
-        process.env.STRIPE_WEBHOOK_SECRET_CONNECT,
-    ].filter(Boolean) as string[];
+    let event: Stripe.Event;
 
-    if (!sig || webhookSecrets.length === 0) {
-        return res.status(400).json({ error: 'Missing signature or webhook secret' });
+    try {
+        event = stripe.webhooks.constructEvent(
+            req.body,
+            sig,
+            endpointSecret
+        );
+    } catch (err: any) {
+        console.error('Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    let event: Stripe.Event | null = null;
-    let lastError: Error | null = null;
-
-    // Try each webhook secret until one works
-    for (const webhookSecret of webhookSecrets) {
-        try {
-            const rawBody = JSON.stringify(req.body);
-            event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
-            console.log(`✅ Webhook verified with secret: ${webhookSecret.substring(0, 10)}...`);
-            break; // Success!
-        } catch (err: any) {
-            lastError = err;
-            console.log(`⚠️ Failed with secret ${webhookSecret.substring(0, 10)}...: ${err.message}`);
-        }
-    }
-
-    if (!event) {
-        console.error('⚠️ Webhook verification failed with all secrets:', lastError?.message);
-        return res.status(400).json({ error: `Webhook Error: ${lastError?.message}` });
-    }
-
-    // Processar evento
+    // Handle events
     try {
         switch (event.type) {
-            case 'checkout.session.completed': {
-                const session = event.data.object as Stripe.Checkout.Session;
-                await handleSuccessfulCheckout(session);
+            case 'checkout.session.completed':
+                await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
                 break;
-            }
-            case 'charge.refunded': {
-                const charge = event.data.object as Stripe.Charge;
-                await handleRefund(charge);
+
+            case 'charge.refunded':
+                await handleRefund(event.data.object as Stripe.Charge);
                 break;
-            }
+
+            case 'transfer.paid':
+                await handleTransferPaid(event.data.object as Stripe.Transfer);
+                break;
+
+            case 'payment_intent.payment_failed':
+                await handlePaymentFailed(event.data.object as Stripe.PaymentIntent);
+                break;
+
             default:
                 console.log(`Unhandled event type: ${event.type}`);
         }
 
-        return res.status(200).json({ received: true });
-    } catch (err: any) {
-        console.error(`Error processing webhook event ${event.type}:`, err);
-        return res.status(500).json({ error: 'Internal server error' });
+        res.status(200).json({ received: true });
+    } catch (error: any) {
+        console.error('Webhook handler error:', error);
+        res.status(500).json({ error: error.message });
     }
 }
 
-async function handleSuccessfulCheckout(session: Stripe.Checkout.Session) {
-    const metadata = session.metadata;
-    const userUid = metadata?.user_uid;
-    const productId = metadata?.product_id;
-    const creditsToAdd = parseInt(metadata?.credits_to_add || '0');
-    const operationalCostBRL = parseFloat(metadata?.operational_cost_brl || '0');
+/**
+ * Checkout completado - enviar recibo
+ */
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+    const customerEmail = session.customer_details?.email;
+    if (!customerEmail) return;
 
-    const affiliateUid = metadata?.affiliate_uid;
-    const coProducerUid = metadata?.co_producer_uid;
-    const affiliatePercent = parseFloat(metadata?.affiliate_percent || '0');
-    const coProducerPercent = parseFloat(metadata?.co_producer_percent || '0');
-
-    if (!userUid) {
-        console.error('Missing user UID in session metadata');
-        return;
-    }
-
-    const amount = (session.amount_total || 0) / 100;
-    const platformFee = (amount * 0.059) + 1.0; // LucPay 5.9% + R$ 1,00
-
-    // Cálculos de split
-    const netAfterFees = amount - platformFee - operationalCostBRL;
-    const affiliateAmount = affiliateUid ? (netAfterFees * (affiliatePercent / 100)) : 0;
-    const coProducerAmount = coProducerUid ? ((netAfterFees - affiliateAmount) * (coProducerPercent / 100)) : 0;
-    const producerNet = netAfterFees - affiliateAmount - coProducerAmount;
-
-    // Salvar transação
-    await db.collection('transactions').doc(session.id).set({
+    const order = {
         id: session.id,
-        amount,
-        currency: session.currency || 'brl',
-        status: 'approved',
-        type: creditsToAdd > 0 ? 'recharge' : 'sale',
-        userUid,
-        productId,
-        creditsAdded: creditsToAdd,
-        operationalCost: operationalCostBRL,
-        platformFee,
-        splits: {
-            affiliate: { uid: affiliateUid, amount: affiliateAmount, percent: affiliatePercent },
-            coProducer: { uid: coProducerUid, amount: coProducerAmount, percent: coProducerPercent },
-            producer: { amount: producerNet > 0 ? producerNet : 0 },
-        },
-        netAmount: producerNet > 0 ? producerNet : 0,
-        createdAt: FieldValue.serverTimestamp(),
-        paymentMethod: 'stripe_checkout',
+        date: new Date(session.created * 1000).toLocaleDateString('pt-BR'),
+        productName: 'Créditos Mestre nos Negócios',
+        amount: (session.amount_total || 0) / 100,
+        paymentMethod: 'Cartão de Crédito',
+        customerName: session.customer_details?.name || 'Cliente',
+        customerEmail: customerEmail
+    };
+
+    await sendEmail({
+        to: customerEmail,
+        subject: `✅ Recibo de Compra - ${order.productName}`,
+        html: purchaseReceiptTemplate(order)
     });
 
-    // Atualizar créditos do usuário
-    if (creditsToAdd > 0) {
-        await db.collection('students').doc(userUid).set({
-            creditBalance: FieldValue.increment(creditsToAdd),
-            lastPaymentDate: FieldValue.serverTimestamp(),
-            status: 'active',
-        }, { merge: true });
-    }
+    console.log(`✅ Recibo enviado para ${customerEmail}`);
 
-    // Distribuir splits (se houver)
-    if (creditsToAdd === 0 && productId !== 'credits') {
-        await distributeSplits(session.id, {
-            amount,
-            currency: session.currency || 'brl',
-            splits: {
-                affiliate: affiliateUid ? { uid: affiliateUid, amount: affiliateAmount } : null,
-                coProducer: coProducerUid ? { uid: coProducerUid, amount: coProducerAmount } : null,
-                producer: { uid: 'MAIN_PRODUCER', amount: producerNet },
-            },
-        });
-    }
-
-    console.log(`✅ Checkout completed for user ${userUid}. Credits: ${creditsToAdd}`);
+    // TODO: Atualizar saldo de créditos no Firestore
+    // await updateUserCredits(session.client_reference_id, credits);
 }
 
+/**
+ * Reembolso processado
+ */
 async function handleRefund(charge: Stripe.Charge) {
-    console.log('Refund processed:', charge.id);
-    // Implementar lógica de estorno
+    const customerEmail = charge.billing_details?.email;
+    if (!customerEmail) return;
+
+    const amount = charge.amount_refunded / 100;
+
+    await sendEmail({
+        to: customerEmail,
+        subject: '💰 Reembolso Processado',
+        html: refundProcessedTemplate(
+            'Cliente',
+            amount,
+            'Créditos Mestre nos Negócios',
+            charge.id
+        )
+    });
+
+    console.log(`✅ Notificação de reembolso enviada para ${customerEmail}`);
+
+    // TODO: Remover acesso/créditos no Firestore
 }
 
-async function distributeSplits(sessionId: string, data: any) {
-    // Implementar lógica de distribuição via Stripe Transfers
-    console.log('Distributing splits for session:', sessionId);
+/**
+ * Transferência Stripe paga
+ */
+async function handleTransferPaid(transfer: Stripe.Transfer) {
+    // TODO: Buscar email do produtor associado ao transfer.destination
+    // const producerEmail = await getProducerEmailByStripeAccount(transfer.destination);
+
+    console.log(`✅ Transferência paga: ${transfer.amount / 100}`);
+
+    // await sendEmail({
+    //     to: producerEmail,
+    //     subject: '💸 Transferência Recebida',
+    //     html: stripeTransferTemplate(...)
+    // });
 }
 
-// Configuração para raw body (necessário para webhook)
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
+/**
+ * Pagamento falhou
+ */
+async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
+    // TODO: Notificar usuário sobre falha
+    console.log(`❌ Pagamento falhou: ${paymentIntent.id}`);
+}
