@@ -5,7 +5,6 @@ services:
     region: oregon
     plan: starter
     dockerfilePath: ./whatsmeow-server/Dockerfile
-    dockerContext: ./whatsmeow-server
     envVars:
       - key: WHATSMEOW_API_KEY
         generateValue: true

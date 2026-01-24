@@ -5,11 +5,11 @@ WORKDIR /app
 # Install dependencies
 RUN apk add --no-cache gcc musl-dev sqlite-dev
 
-# Copy go mod files from whatsmeow-server directory
+# Copy whatsmeow-server directory
 COPY whatsmeow-server/go.mod ./
 RUN go mod download
 
-# Copy source from whatsmeow-server directory
+# Copy source
 COPY whatsmeow-server/ ./
 
 # Build
