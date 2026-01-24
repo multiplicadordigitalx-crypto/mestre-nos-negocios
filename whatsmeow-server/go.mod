@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/mattn/go-sqlite3 v1.14.19
-	go.mau.fi/whatsmeow v0.0.0-20240226105205-5f85c66e01f7
+	go.mau.fi/whatsmeow v0.0.0
 	google.golang.org/protobuf v1.32.0
 )
 

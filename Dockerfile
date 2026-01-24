@@ -8,9 +8,12 @@ RUN apk add --no-cache gcc musl-dev sqlite-dev git
 # Copy entire whatsmeow-server directory
 COPY whatsmeow-server/ ./
 
-# Generate go.sum and download dependencies
-# (Now it has main.go to analyze which packages are needed)
-RUN go mod tidy && go mod download && go mod verify
+# Fetch latest whatsmeow and generate dependencies
+# Let Go automatically resolve to the latest working version
+RUN go get -u go.mau.fi/whatsmeow@latest && \
+    go mod tidy && \
+    go mod download && \
+    go mod verify
 
 # Build
 RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o whatsmeow-server .
