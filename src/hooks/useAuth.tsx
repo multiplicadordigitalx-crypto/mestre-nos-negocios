@@ -227,21 +227,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                         try {
                             const initAdminFn = httpsCallable(functions, 'initializeAdminUser');
-                            await initAdminFn();
-                            console.info("Server-side Admin initialization successful.");
+                            const result: any = await initAdminFn();
+                            console.info("Server-side Admin initialization response:", result.data);
 
-                            // A re-discovery of claims might be needed on next token refresh, 
-                            // but usually initial login token or a refresh token will have it.
-                            // For immediate Firestore access after claim set, a force refresh is ideal:
+                            // Essential: Wait a bit for claims to propagate in Google's cloud
+                            await delay(2000);
+
                             const { getAuth } = require('firebase/auth');
                             const authInst = getAuth();
                             if (authInst.currentUser) {
+                                // Force token refresh to include NEW admin claim
                                 await authInst.currentUser.getIdToken(true);
+                                console.info("Token refreshed with new claims.");
                             }
                         } catch (provisionError: any) {
                             console.error("Professional Provisioning failed:", provisionError);
-                            // If it fails, we fall back to the existing user data if it exists,
-                            // but we don't 'mask' the error with a fake write.
                         }
 
                         // Re-fetch from Firestore to get the finalized profile

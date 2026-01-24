@@ -6,8 +6,21 @@ import Stripe from 'stripe';
 admin.initializeApp();
 const db = admin.firestore();
 
+// GLOBAL CONFIG FOR V2 FUNCTIONS
+const FUNCTION_OPTS = {
+    cors: [
+        'https://mestre-nos-negocios.web.app',
+        'https://mestre-nos-negocios.firebaseapp.com',
+        'https://mestrenosnegocios.com',
+        'http://localhost:3000',
+        'http://localhost:5173'
+    ],
+    region: 'us-central1',
+    maxInstances: 10
+};
+
 // STRIPE AUTOMATION FOR LUCPAY
-export const syncProductToStripe = onCall(async (request: CallableRequest) => {
+export const syncProductToStripe = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be logged in');
     }
@@ -98,7 +111,7 @@ export const syncProductToStripe = onCall(async (request: CallableRequest) => {
     }
 });
 
-export const completeStripeConnect = onCall(async (request: CallableRequest) => {
+export const completeStripeConnect = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be logged in');
     }
@@ -161,7 +174,7 @@ const mapBillingToInterval = (type: string) => {
 
 
 // 1. Recalculate Slots (Gamification Logic on Server)
-export const recalculateSlots = onCall(async (request: CallableRequest) => {
+export const recalculateSlots = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be logged in');
     }
@@ -208,7 +221,7 @@ const ADMIN_EMAILS = [
     'thales@mestrenosnegocios.com'
 ];
 
-export const initializeAdminUser = onCall(async (request: CallableRequest) => {
+export const initializeAdminUser = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be logged in');
     }
@@ -259,7 +272,7 @@ export const initializeAdminUser = onCall(async (request: CallableRequest) => {
 
 // --- GATEWAY MANAGEMENT ---
 
-export const getStripeConfigs = onCall(async (request: CallableRequest) => {
+export const getStripeConfigs = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
 
     // Check for admin/producer role (simplified for now)
@@ -267,7 +280,7 @@ export const getStripeConfigs = onCall(async (request: CallableRequest) => {
     return configsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 });
 
-export const updateStripeConfig = onCall(async (request: CallableRequest) => {
+export const updateStripeConfig = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
 
     const { profile } = request.data;
@@ -281,7 +294,7 @@ export const updateStripeConfig = onCall(async (request: CallableRequest) => {
     return { success: true };
 });
 
-export const deleteStripeConfig = onCall(async (request: CallableRequest) => {
+export const deleteStripeConfig = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
 
     const { profileId } = request.data;
@@ -292,7 +305,7 @@ export const deleteStripeConfig = onCall(async (request: CallableRequest) => {
 
 // --- REAL PAYMENT PROCESSING ---
 
-export const createStripeCheckoutSession = onCall(async (request: CallableRequest) => {
+export const createStripeCheckoutSession = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
 
     const { amount, currency, configId, productId } = request.data;
@@ -347,7 +360,7 @@ export const createStripeCheckoutSession = onCall(async (request: CallableReques
     }
 });
 
-export const setActiveStripeConfig = onCall(async (request: CallableRequest) => {
+export const setActiveStripeConfig = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
 
     const { profileId } = request.data;
@@ -362,7 +375,7 @@ export const setActiveStripeConfig = onCall(async (request: CallableRequest) => 
     return { success: true };
 });
 
-export const testStripeConnection = onCall(async (request: CallableRequest) => {
+export const testStripeConnection = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
 
     const { config } = request.data;
@@ -370,7 +383,7 @@ export const testStripeConnection = onCall(async (request: CallableRequest) => {
     return { success: true, message: 'Conexão validada com sucesso via Cloud Functions!' };
 });
 
-export const getStripeConnectedAccounts = onCall(async (request: CallableRequest) => {
+export const getStripeConnectedAccounts = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
 
     // In production, fetch from Firestore 'connected_accounts'
@@ -378,14 +391,14 @@ export const getStripeConnectedAccounts = onCall(async (request: CallableRequest
     return snapshot.docs.map(doc => doc.data());
 });
 
-export const getStripeTransactions = onCall(async (request: CallableRequest) => {
+export const getStripeTransactions = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
 
     const snapshot = await db.collection('transactions').orderBy('created', 'desc').limit(50).get();
     return snapshot.docs.map(doc => doc.data());
 });
 
-export const generateStripeOnboarding = onCall(async (request: CallableRequest) => {
+export const generateStripeOnboarding = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be logged in');
 
     const { accountId } = request.data;
@@ -416,7 +429,7 @@ export const processRefund = onDocumentUpdated('refund_requests/{requestId}', as
 
 // 3. Anti-Seek / Watch Verification
 // This function would be called by the frontend with a signed token or validation
-export const verifyLessonCompletion = onCall(async (request: CallableRequest) => {
+export const verifyLessonCompletion = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     // Here we would validate if the time spent on the lesson matches the duration
     // For now, we just log secure access
     const { lessonId, durationWatched } = request.data;
@@ -471,6 +484,7 @@ export const stripeWebhook = onRequest(async (req, res) => {
 });
 
 async function handleSuccessfulCheckout(session: Stripe.Checkout.Session) {
+    const stripeSecret = process.env.STRIPE_SECRET_KEY;
     const metadata = session.metadata;
     const customerEmail = session.customer_details?.email;
     const userUid = metadata?.user_uid;
