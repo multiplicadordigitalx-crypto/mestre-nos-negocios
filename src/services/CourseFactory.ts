@@ -4,10 +4,14 @@ import { NEXUS_TOOLS, NexusToolId } from "./ToolRegistry";
 
 // Initialize Gemini with the API key from environment variables
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-let ai: GoogleGenAI | null = null;
+let ai: any = null;
 
 if (API_KEY) {
-    ai = new GoogleGenAI({ apiKey: API_KEY });
+    try {
+        ai = new GoogleGenAI({ apiKey: API_KEY });
+    } catch (e) {
+        console.error("CourseFactory AI Init Error:", e);
+    }
 }
 
 

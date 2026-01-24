@@ -3,9 +3,13 @@ import { GeminiMessage } from "../types";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
-let ai: GoogleGenAI | null = null;
+let ai: any = null;
 if (API_KEY) {
-    ai = new GoogleGenAI({ apiKey: API_KEY });
+    try {
+        ai = new GoogleGenAI({ apiKey: API_KEY });
+    } catch (e) {
+        console.error("Failed to initialize GoogleGenAI", e);
+    }
 }
 
 export interface LanguageAssessment {
@@ -26,8 +30,6 @@ export const LanguageAnalysisService = {
             return "Erro: IA não configurada. Verifique as chaves de API.";
         }
 
-        const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-
         const systemPrompt = `Você é um Instrutor de Inglês Executivo e Mentor de Negócios.
         O aluno está em uma missão de simulação em ${context.region} com o objetivo: "${context.mission}".
         Nível de Dificuldade: ${context.difficulty}.
@@ -45,8 +47,11 @@ export const LanguageAnalysisService = {
         Mantenha um tom profissional e encorajador.`;
 
         try {
-            const result = await model.generateContent([systemPrompt, transcript]);
-            return result.response.text();
+            const response = await ai.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: [{ text: systemPrompt + "\n\nTRANSCRIPT: " + transcript }]
+            });
+            return response.text || "Sem resposta da IA.";
         } catch (error) {
             console.error("Language Analysis Error:", error);
             return "Desculpe, tive um problema ao analisar seu áudio. Pode repetir?";

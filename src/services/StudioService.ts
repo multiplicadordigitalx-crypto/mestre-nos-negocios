@@ -3,10 +3,32 @@ import { GoogleGenAI } from "@google/genai";
 import { ElevenLabsService } from "./ElevenLabsService";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-let ai: GoogleGenAI | null = null;
+let ai: any = null;
 
 if (API_KEY) {
-    ai = new GoogleGenAI({ apiKey: API_KEY });
+    try {
+        ai = new GoogleGenAI({ apiKey: API_KEY });
+    } catch (e) {
+        console.error("Failed to initialize Studio AI", e);
+    }
+}
+
+export interface VideoRequest {
+    productName: string;
+    targetAudience: string;
+    actorType: string;
+    durationContext: 'short_reel' | 'long_testimonial';
+    format: '9:16' | '16:9';
+    scriptTopic?: string;
+}
+
+export interface VideoResult {
+    id: string;
+    url: string;
+    thumbnail: string;
+    script: string;
+    duration: number;
+    status: 'completed' | 'processing' | 'failed';
 }
 
 
