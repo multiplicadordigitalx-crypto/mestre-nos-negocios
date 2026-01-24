@@ -3,11 +3,13 @@ FROM golang:1.21-alpine AS builder
 WORKDIR /app
 
 # Install dependencies
-RUN apk add --no-cache gcc musl-dev sqlite-dev
+RUN apk add --no-cache gcc musl-dev sqlite-dev git
 
 # Copy whatsmeow-server directory
 COPY whatsmeow-server/go.mod ./
-RUN go mod download
+
+# Generate go.sum and download dependencies
+RUN go mod tidy && go mod download
 
 # Copy source
 COPY whatsmeow-server/ ./
