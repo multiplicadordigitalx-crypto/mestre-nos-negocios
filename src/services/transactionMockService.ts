@@ -20,7 +20,7 @@ class TransactionMockService {
 
     private init() {
         if (this.initialized) return;
-        this.generateMockData(800);
+        this.generateMockData(0);
         this.initialized = true;
     }
 

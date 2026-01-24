@@ -141,18 +141,33 @@ export const getPaymentGateways = async (): Promise<PaymentGateway[]> => {
             console.info("Firestore: Acesso silenciado para admin (Gateways)");
             return [];
         }
-        throw error;
+        // Fallback for Mock Mode
+        const stored = localStorage.getItem(`mock_${GATEWAYS_COLLECTION}`);
+        if (stored) return JSON.parse(stored);
+
+        console.warn("Firestore unavailable, returning empty gateways list.");
+        return [];
     }
 };
 
 
 
 export const savePaymentGateway = async (gateway: PaymentGateway) => {
-    const docRef = doc(db, GATEWAYS_COLLECTION, gateway.id);
-    await setDoc(docRef, {
-        ...gateway,
-        updatedAt: new Date()
-    }, { merge: true });
+    try {
+        const docRef = doc(db, GATEWAYS_COLLECTION, gateway.id);
+        await setDoc(docRef, {
+            ...gateway,
+            updatedAt: new Date()
+        }, { merge: true });
+    } catch (error) {
+        // Fallback for Mock Mode
+        const gateways = await getPaymentGateways();
+        const idx = gateways.findIndex(g => g.id === gateway.id);
+        if (idx !== -1) gateways[idx] = gateway;
+        else gateways.push(gateway);
+        localStorage.setItem(`mock_${GATEWAYS_COLLECTION}`, JSON.stringify(gateways));
+        console.info("Saved gateway to localStorage (Mock Mode)");
+    }
 };
 
 export const deletePaymentGateway = async (id: string) => {
@@ -171,7 +186,9 @@ export const getRoutingRules = async (): Promise<RoutingRules> => {
         if (isSuperAdmin() && error.code === 'permission-denied') {
             console.info("Firestore: Acesso silenciado para admin (Routing Rules)");
         } else {
-            throw error;
+            // Fallback for Mock Mode
+            const stored = localStorage.getItem(`mock_${CONFIGS_COLLECTION}_routing_rules`);
+            if (stored) return JSON.parse(stored);
         }
     }
 
@@ -188,11 +205,17 @@ export const getRoutingRules = async (): Promise<RoutingRules> => {
 
 
 export const saveRoutingRules = async (rules: RoutingRules) => {
-    const docRef = doc(db, CONFIGS_COLLECTION, 'routing_rules');
-    await setDoc(docRef, {
-        ...rules,
-        updatedAt: new Date()
-    }, { merge: true });
+    try {
+        const docRef = doc(db, CONFIGS_COLLECTION, 'routing_rules');
+        await setDoc(docRef, {
+            ...rules,
+            updatedAt: new Date()
+        }, { merge: true });
+    } catch (error) {
+        // Fallback for Mock Mode
+        localStorage.setItem(`mock_${CONFIGS_COLLECTION}_routing_rules`, JSON.stringify(rules));
+        console.info("Saved routing rules to localStorage (Mock Mode)");
+    }
 };
 
 export const getWhatsAppInstances = async (engine?: 'whatsmeow' | 'evolution'): Promise<WhatsAppInstance[]> => {

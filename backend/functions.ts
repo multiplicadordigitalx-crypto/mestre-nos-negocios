@@ -199,6 +199,64 @@ export const recalculateSlots = onCall(async (request: CallableRequest) => {
     return { success: true, slots };
 });
 
+// --- SECURE USER INITIALIZATION ---
+
+const ADMIN_EMAILS = [
+    'mestrodonegocio01@gmail.com',
+    'ana@mestredosnegocios.com',
+    'paulo@mestrenosnegocios.com',
+    'thales@mestrenosnegocios.com'
+];
+
+export const initializeAdminUser = onCall(async (request: CallableRequest) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'User must be logged in');
+    }
+
+    const uid = request.auth.uid;
+    const email = request.auth.token.email?.toLowerCase();
+
+    if (!email || !ADMIN_EMAILS.includes(email)) {
+        throw new HttpsError('permission-denied', 'This email is not authorized for administrative access.');
+    }
+
+    try {
+        // 1. Set Custom Claims (Security Master)
+        await admin.auth().setCustomUserClaims(uid, { admin: true });
+        console.log(`Custom claims (admin:true) set for user ${uid}`);
+
+        // 2. Provision User Profile in Firestore
+        const userRef = db.collection('users').doc(uid);
+        const userDoc = await userRef.get();
+
+        const adminData = {
+            uid,
+            email,
+            displayName: request.auth.token.name || 'Admin',
+            photoURL: request.auth.token.picture || '',
+            role: 'super_admin',
+            permissions: { all: true },
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (!userDoc.exists) {
+            await userRef.set({
+                ...adminData,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            console.log(`Firestore profile provisioned for admin ${email}`);
+        } else {
+            await userRef.update(adminData);
+            console.log(`Firestore profile updated for admin ${email}`);
+        }
+
+        return { success: true, message: 'Admin authenticated and provisioned successfully.' };
+    } catch (error: any) {
+        console.error("Error in initializeAdminUser:", error);
+        throw new HttpsError('internal', error.message);
+    }
+});
+
 // --- GATEWAY MANAGEMENT ---
 
 export const getStripeConfigs = onCall(async (request: CallableRequest) => {

@@ -18,7 +18,8 @@ const LucPayDashboard: React.FC = () => {
     const [selectedProfileId, setSelectedProfileId] = useState<string>(profiles[0]?.id || '');
     const [accounts, setAccounts] = useState<LucPayAccount[]>([]);
     const [transactions, setTransactions] = useState<LucPayTransaction[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
     // Derived state for the currently selected profile config
@@ -29,30 +30,52 @@ const LucPayDashboard: React.FC = () => {
     }, []);
 
     const loadData = async () => {
-        setLoading(true);
-        const [loadedProfiles, accs, txs] = await Promise.all([
-            LucPayService.getConfigs(),
-            LucPayService.getConnectedAccounts(),
-            LucPayService.getTransactions()
-        ]);
-        setProfiles(loadedProfiles);
-        if (!selectedProfileId && loadedProfiles.length > 0) {
-            setSelectedProfileId(loadedProfiles[0].id);
+        setIsInitialLoading(true);
+        try {
+            const [loadedProfiles, accs, txs] = await Promise.all([
+                LucPayService.getConfigs(),
+                LucPayService.getConnectedAccounts(),
+                LucPayService.getTransactions()
+            ]);
+            setProfiles(loadedProfiles);
+            if (!selectedProfileId && loadedProfiles.length > 0) {
+                setSelectedProfileId(loadedProfiles[0].id);
+            }
+            setAccounts(accs);
+            setTransactions(txs);
+        } catch (e) {
+            console.error("LucPay Load Error:", e);
+        } finally {
+            setIsInitialLoading(false);
         }
-        setAccounts(accs);
-        setTransactions(txs);
-        setLoading(false);
     };
 
     const handleSaveProfile = async () => {
         if (!selectedProfile) return;
-        setLoading(true);
-        await LucPayService.saveConfig(selectedProfile);
-        // Reload to ensure sync
-        const updated = await LucPayService.getConfigs();
-        setProfiles(updated);
-        toast.success("Perfil de Gateway salvo com sucesso!");
-        setLoading(false);
+        setSaving(true);
+
+        // Safety Fallback: Force clear saving state after 5 seconds if logic hangs
+        const safetyTimeout = setTimeout(() => {
+            if (saving) {
+                setSaving(false);
+                toast.error("Tempo limite de salvamento atingido. Tente novamente.");
+            }
+        }, 5000);
+
+        try {
+            await LucPayService.saveConfig(selectedProfile);
+            // Reload to ensure sync
+            const updated = await LucPayService.getConfigs();
+            setProfiles(updated);
+            toast.success("Perfil de Gateway salvo com sucesso!");
+        } catch (error: any) {
+            console.error("LucPay Save Error:", error);
+            const errorMsg = error.message || "Erro desconhecido ao salvar.";
+            toast.error(`Falha ao salvar: ${errorMsg}`);
+        } finally {
+            clearTimeout(safetyTimeout);
+            setSaving(false);
+        }
     };
 
     const handleCreateProfile = async () => {
@@ -88,12 +111,15 @@ const LucPayDashboard: React.FC = () => {
     };
 
     const handleToggleActive = async (profileId: string) => {
-        setLoading(true);
-        await LucPayService.setActiveConfig(profileId);
-        const updated = await LucPayService.getConfigs();
-        setProfiles(updated);
-        toast.success("Perfil Ativo alterado com sucesso!");
-        setLoading(false);
+        setIsInitialLoading(true);
+        try {
+            await LucPayService.setActiveConfig(profileId);
+            const updated = await LucPayService.getConfigs();
+            setProfiles(updated);
+            toast.success("Perfil Ativo alterado com sucesso!");
+        } finally {
+            setIsInitialLoading(false);
+        }
     };
 
     const handleUpdateSelected = (field: keyof LucPayGatewayProfile, value: any) => {
@@ -205,8 +231,8 @@ const LucPayDashboard: React.FC = () => {
                     {/* RIGHT SIDE: EDITOR */}
                     <div className="md:col-span-2">
                         {selectedProfile ? (
-                            <Card className="p-6 border-l-4 border-l-indigo-500">
-                                <div className="flex justify-between items-center mb-6">
+                            <Card className="p-4 border-l-4 border-l-indigo-500">
+                                <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2"><Settings className="w-5 h-5" /> Editando: {selectedProfile.label}</h3>
                                     <div className="flex items-center gap-2">
                                         <button onClick={handleDeleteProfile} className="text-red-400 hover:text-red-300 text-xs underline mr-4">Remover Gateway</button>
@@ -217,8 +243,8 @@ const LucPayDashboard: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
                                             <label className="block text-xs uppercase text-gray-500 mb-1 font-bold">Nome do Perfil (Interno)</label>
                                             <input
@@ -265,38 +291,35 @@ const LucPayDashboard: React.FC = () => {
 
                                     {/* STRIPE FORM FIELDS */}
                                     {(selectedProfile.provider === 'stripe' || !selectedProfile.provider) && (
-                                        <div className="grid gap-4 pt-2 border-t border-gray-800 mt-4">
+                                        <div className="grid gap-3 pt-2 border-t border-gray-800 mt-2">
                                             <div className="relative group">
-                                                <label className="block text-xs uppercase text-gray-500 mb-1 font-bold flex gap-2 items-center"><Key className="w-3 h-3" /> Chave Pública (Publishable Key)</label>
-                                                <p className="text-[10px] text-gray-400 mb-2">Chave utilizada no frontend para iniciar pagamentos. Segura para exposição pública.</p>
+                                                <label className="block text-[10px] uppercase text-gray-500 mb-1 font-bold flex gap-2 items-center"><Key className="w-3 h-3" /> Chave Pública (Publishable Key)</label>
                                                 <input
                                                     type="text"
                                                     value={selectedProfile.publishableKey || ''}
                                                     onChange={e => handleUpdateSelected('publishableKey', e.target.value)}
                                                     placeholder="pk_test_..."
-                                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm font-mono text-green-400 focus:border-indigo-500 outline-none transition-all group-hover:border-gray-600"
+                                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs font-mono text-green-400 focus:border-indigo-500 outline-none transition-all group-hover:border-gray-600"
                                                 />
                                             </div>
                                             <div className="relative group">
-                                                <label className="block text-xs uppercase text-gray-500 mb-1 font-bold flex gap-2 items-center"><LockClosed className="w-3 h-3" /> Chave Secreta (Secret Key)</label>
-                                                <p className="text-[10px] text-gray-400 mb-2">Chave crítica para operações no servidor (Reembolsos, Connect). <strong className="text-red-400">Nunca compartilhe.</strong></p>
+                                                <label className="block text-[10px] uppercase text-gray-500 mb-1 font-bold flex gap-2 items-center"><LockClosed className="w-3 h-3" /> Chave Secreta (Secret Key)</label>
                                                 <input
                                                     type="password"
                                                     value={selectedProfile.secretKey || ''}
                                                     onChange={e => handleUpdateSelected('secretKey', e.target.value)}
                                                     placeholder="sk_test_..."
-                                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm font-mono text-yellow-400 focus:border-indigo-500 outline-none transition-all group-hover:border-gray-600"
+                                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs font-mono text-yellow-400 focus:border-indigo-500 outline-none transition-all group-hover:border-gray-600"
                                                 />
                                             </div>
                                             <div className="relative group">
-                                                <label className="block text-xs uppercase text-gray-500 mb-1 font-bold flex gap-2 items-center"><Globe className="w-3 h-3" /> Segredo do Webhook (Webhook Secret)</label>
-                                                <p className="text-[10px] text-gray-400 mb-2">Usado para assinar e verificar notificações do Stripe, garantindo que vieram da fonte real.</p>
+                                                <label className="block text-[10px] uppercase text-gray-500 mb-1 font-bold flex gap-2 items-center"><Globe className="w-3 h-3" /> Segredo do Webhook (Webhook Secret)</label>
                                                 <input
                                                     type="password"
                                                     value={selectedProfile.webhookSecret || ''}
                                                     onChange={e => handleUpdateSelected('webhookSecret', e.target.value)}
                                                     placeholder="whsec_..."
-                                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm font-mono text-purple-400 focus:border-indigo-500 outline-none transition-all group-hover:border-gray-600"
+                                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs font-mono text-purple-400 focus:border-indigo-500 outline-none transition-all group-hover:border-gray-600"
                                                 />
                                             </div>
                                         </div>
@@ -354,7 +377,7 @@ const LucPayDashboard: React.FC = () => {
                                     )}
 
                                     <div className="pt-4 flex gap-3">
-                                        <Button onClick={handleSaveProfile} isLoading={loading} className="flex-1 bg-indigo-600 hover:bg-indigo-500">
+                                        <Button onClick={handleSaveProfile} isLoading={saving} className="flex-1 bg-indigo-600 hover:bg-indigo-500">
                                             <CheckCircle className="w-4 h-4 mr-2" /> Salvar Alterações
                                         </Button>
                                         <Button onClick={handleTestConnection} variant="secondary" className=" border-gray-600">
@@ -502,11 +525,13 @@ const LucPayDashboard: React.FC = () => {
                                 <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Vigente v2.4</span>
                             </div>
 
-                            <div className="mt-4 p-4 bg-yellow-900/10 border border-yellow-900/30 rounded-lg">
-                                <h4 className="text-yellow-400 font-bold text-sm flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" /> Alerta de Compliance</h4>
-                                <p className="text-xs text-gray-400">2 Contas conectadas possuem pendências de envio de documento de identidade. Isso pode bloquear os saques (payouts) dessas contas em 7 dias.</p>
-                                <Button variant="secondary" className="mt-3 !py-1 !text-xs !bg-yellow-600/20 !text-yellow-400 border-yellow-600/30">Notificar Parceiros</Button>
-                            </div>
+                            {accounts.some(acc => acc.requirements.currently_due.length > 0) && (
+                                <div className="mt-4 p-4 bg-yellow-900/10 border border-yellow-900/30 rounded-lg">
+                                    <h4 className="text-yellow-400 font-bold text-sm flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" /> Alerta de Compliance</h4>
+                                    <p className="text-xs text-gray-400">Existem contas conectadas com pendências de KYC. Notifique os parceiros para regularizar.</p>
+                                    <Button variant="secondary" className="mt-3 !py-1 !text-xs !bg-yellow-600/20 !text-yellow-400 border-yellow-600/30">Notificar Parceiros</Button>
+                                </div>
+                            )}
                         </div>
                     </Card>
 
@@ -514,15 +539,7 @@ const LucPayDashboard: React.FC = () => {
                         <Card className="p-6">
                             <h3 className="font-bold text-white mb-2">Logs Recentes (Webhook)</h3>
                             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                {[1, 2, 3, 4, 5].map(i => (
-                                    <div key={i} className="text-xs font-mono p-2 bg-black/40 rounded border border-gray-800">
-                                        <div className="flex justify-between text-gray-500 mb-1">
-                                            <span>2023-11-20 14:3{i}:21</span>
-                                            <span className="text-green-500">200 OK</span>
-                                        </div>
-                                        <p className="text-indigo-300">account.updated</p>
-                                    </div>
-                                ))}
+                                <p className="text-gray-500 text-xs text-center py-8">Nenhum log encontrado para o gateway atual.</p>
                             </div>
                         </Card>
                     </div>

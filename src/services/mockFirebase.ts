@@ -1250,22 +1250,36 @@ export const saveToolCost = async (t: ToolCost) => {
 };
 
 const INITIAL_CREDIT_COMBOS: CreditCombo[] = [
-    // Main Combos
-    { id: 'combo_maquina', name: 'Máquina de Vendas (600 Créditos)', credits: 600, price: 97.00, active: true, salesCount: 124 },
-    { id: 'combo_fabrica', name: 'Fábrica de Vídeos (300 Créditos)', credits: 300, price: 57.00, active: true, salesCount: 85 },
-    { id: 'combo_especialista', name: 'Especialista (1000 Créditos)', credits: 1000, price: 147.00, active: true, salesCount: 42 },
-
-    // Standalone (Avulsos)
-    { id: 'credit_50', name: 'Recarga Rápida (50 Créditos)', credits: 50, price: 19.90, active: true, salesCount: 15 },
-    { id: 'credit_200', name: 'Pack Básico (200 Créditos)', credits: 200, price: 39.90, active: true, salesCount: 30 }
+    { id: 'starter_50', name: 'Mestre IA - Starter Pack', credits: 50, price: 24.90, active: true, salesCount: 0, stripePriceId: '', stripePaymentLink: '' },
+    { id: 'basic_100', name: 'Mestre IA - Basic Pack', credits: 100, price: 44.90, active: true, salesCount: 0, stripePriceId: '', stripePaymentLink: '' },
+    { id: 'popular_200', name: 'Mestre IA - Popular Pack 🔥', credits: 200, price: 79.90, active: true, salesCount: 0, stripePriceId: '', stripePaymentLink: '' },
+    { id: 'pro_300', name: 'Mestre IA - Pro Pack', credits: 300, price: 109.90, active: true, salesCount: 0, stripePriceId: '', stripePaymentLink: '' },
+    { id: 'business_400', name: 'Mestre IA - Business Pack', credits: 400, price: 139.90, active: true, salesCount: 0, stripePriceId: '', stripePaymentLink: '' },
+    { id: 'elite_500', name: 'Mestre IA - Elite Pack ⭐', credits: 500, price: 164.90, active: true, salesCount: 0, stripePriceId: '', stripePaymentLink: '' },
+    { id: 'enterprise_1000', name: 'Mestre IA - Enterprise Pack 👑', credits: 1000, price: 297.90, active: true, salesCount: 0, stripePriceId: '', stripePaymentLink: '' }
 ];
 
 export const getCreditCombos = async () => loadJSON<CreditCombo[]>('mockCreditCombos_v2', INITIAL_CREDIT_COMBOS);
 export const saveCreditCombo = async (c: CreditCombo) => {
     const list = await getCreditCombos();
-    const idx = list.findIndex(x => x.id === c.id);
-    if (idx !== -1) list[idx] = c;
-    else list.push(c);
+    // Try to find by ID, then by stripePriceId, then by name
+    let idx = list.findIndex(x => x.id === c.id);
+
+    if (idx === -1 && (c as any).stripePriceId) {
+        idx = list.findIndex(x => (x as any).stripePriceId === (c as any).stripePriceId);
+    }
+
+    if (idx === -1) {
+        idx = list.findIndex(x => x.name.toLowerCase() === c.name.toLowerCase());
+    }
+
+    if (idx !== -1) {
+        // preserve sales count if updating
+        const existing = list[idx];
+        list[idx] = { ...existing, ...c, id: existing.id };
+    } else {
+        list.push(c);
+    }
     saveJSON('mockCreditCombos_v2', list);
 };
 export const deleteCreditCombo = async (id: string) => {

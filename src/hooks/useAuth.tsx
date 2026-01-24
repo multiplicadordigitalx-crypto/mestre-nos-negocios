@@ -63,6 +63,9 @@ export const ADMIN_EMAILS = [
     'thales@mestrenosnegocios.com'
 ];
 
+import { httpsCallable } from "firebase/functions";
+import { functions } from '../services/firebase';
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [originalUser, setOriginalUser] = useState<User | null>(null);
@@ -218,30 +221,69 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         return;
                     }
 
-                    // AUTO-PROVISIONING logic for ADMINS
+                    // AUTO-PROVISIONING logic for ADMINS (Professional Mode)
                     if (ADMIN_EMAILS.includes(normalizedEmail)) {
-                        console.log("Auto-provisioning admin user in Firestore...");
-                        const adminData: User = {
+                        console.log("Requesting Professional Provisioning for Admin...");
+
+                        try {
+                            const initAdminFn = httpsCallable(functions, 'initializeAdminUser');
+                            await initAdminFn();
+                            console.info("Server-side Admin initialization successful.");
+
+                            // A re-discovery of claims might be needed on next token refresh, 
+                            // but usually initial login token or a refresh token will have it.
+                            // For immediate Firestore access after claim set, a force refresh is ideal:
+                            const { getAuth } = require('firebase/auth');
+                            const authInst = getAuth();
+                            if (authInst.currentUser) {
+                                await authInst.currentUser.getIdToken(true);
+                            }
+                        } catch (provisionError: any) {
+                            console.error("Professional Provisioning failed:", provisionError);
+                            // If it fails, we fall back to the existing user data if it exists,
+                            // but we don't 'mask' the error with a fake write.
+                        }
+
+                        // Re-fetch from Firestore to get the finalized profile
+                        const finalDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                        const finalData = finalDoc.exists() ? finalDoc.data() as User : {
                             uid: firebaseUser.uid,
                             email: normalizedEmail,
                             displayName: firebaseUser.displayName || 'Admin',
                             photoURL: firebaseUser.photoURL || '',
-                            role: 'super_admin',
-                            permissions: ['all']
+                            role: 'super_admin'
                         };
 
-                        await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
-
-                        const finalUser = enforceAdminPermissions(adminData);
+                        const finalUser = enforceAdminPermissions(finalData as User);
                         setUser(finalUser);
                         localStorage.setItem('user', JSON.stringify(finalUser));
-                        toast.success(`Conta Administradora provisionada para ${finalUser.email}!`);
+                        toast.success(`Logado como Administrador: ${finalUser.email}`);
                         return;
                     }
                 }
             } catch (firebaseError: any) {
-                console.warn("Firebase Auth Error (falling back to mock):", firebaseError.message);
-                // We'll let it fallback to mock unless it's a critical error that we want to specifically block
+                console.error("Firebase Auth Error:", firebaseError.code, firebaseError.message);
+
+                const errorCode = firebaseError.code;
+
+                // Tratar erros de permissão (Firestore) durante o provisionamento
+                if (errorCode === 'permission-denied' || firebaseError.message?.includes('permissions')) {
+                    throw new Error("Erro de Permissão: A conta foi autenticada, mas o banco de dados bloqueou a criação do seu perfil. Verifique as 'Firestore Rules'.");
+                }
+
+                // Tratar erros comuns do Firebase Auth
+                if (errorCode === 'auth/wrong-password' ||
+                    errorCode === 'auth/user-not-found' ||
+                    errorCode === 'auth/invalid-credential') {
+                    throw new Error("E-mail ou senha incorretos. Verifique suas credenciais no Console do Firebase.");
+                }
+
+                if (errorCode === 'auth/user-disabled') throw new Error("Esta conta foi desativada.");
+
+                // If it's an admin email, we want to know exactly what's happening
+                if (ADMIN_EMAILS.includes(normalizedEmail)) {
+                    throw new Error(`Erro na conexão com Firebase (${errorCode || 'unk'}): ${firebaseError.message}`);
+                }
             }
 
             // FALLBACK logic: Only for Students or when Firestore is literally empty during migration

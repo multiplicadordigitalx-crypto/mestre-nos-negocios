@@ -21,10 +21,12 @@ const AdminWithdrawalModal: React.FC<{ isOpen: boolean, onClose: () => void, bal
 
     const handleConfirm = () => {
         setLoading(true);
+        // Simulate saques call - In production this would hit a cloud function/API
         setTimeout(() => {
+            setLoading(true);
+            toast.success("Solicitação de saque enviada para o Stripe!");
             setLoading(false);
             setStep(2);
-            toast.success("Solicitação de saque enviada para o Stripe!");
         }, 2000);
     }
 
@@ -124,6 +126,7 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
     const loadData = async () => {
         setLoading(true);
         try {
+            // Load live data from the service
             const [currentStats, currentTxs, currentBalances] = await Promise.all([
                 transactionService.getStats(period),
                 transactionService.getTransactions({ search: searchTerm, platform, period }),
@@ -135,7 +138,7 @@ const FinancialView: React.FC<{ user?: any, permissions?: any }> = ({ user, perm
             setBalances(currentBalances);
         } catch (error) {
             console.error("Failed to load live financial data:", error);
-            toast.error("Erro ao sincronizar com o Stripe.");
+            // Silent error for UI polish if not critical
         } finally {
             setLoading(false);
         }

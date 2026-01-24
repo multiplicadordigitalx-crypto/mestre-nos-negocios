@@ -101,119 +101,71 @@ const DEFAULT_PROFILE: LucPayGatewayProfile = {
 };
 
 // Mock Data
-const MOCK_ACCOUNTS: LucPayAccount[] = [
-    {
-        id: 'acct_1Mny4E2eZvKYlo2C',
-        email: 'parceiro.top@example.com',
-        businessName: 'Parceiro Top Ltda',
-        type: 'express',
-        country: 'BR',
-        currency: 'brl',
-        status: 'enabled',
-        payoutsEnabled: true,
-        chargesEnabled: true,
-        requirements: { currently_due: [], past_due: [], eventually_due: [] },
-        created: 1678900000
-    },
-    {
-        id: 'acct_1Mny8G2eZvKYlo9X',
-        email: 'novo.aluno@example.com',
-        businessName: 'João Silva MEI',
-        type: 'standard',
-        country: 'BR',
-        currency: 'brl',
-        status: 'restricted',
-        payoutsEnabled: false,
-        chargesEnabled: true,
-        requirements: { currently_due: ['identity_document'], past_due: [], eventually_due: [] },
-        created: 1689900000
-    },
-    {
-        id: 'acct_1Mny9I2eZvKYlo1Z',
-        email: 'aluno.iniciante@example.com',
-        businessName: 'Maria Souza',
-        type: 'express',
-        country: 'BR',
-        currency: 'brl',
-        status: 'pending',
-        payoutsEnabled: false,
-        chargesEnabled: false,
-        requirements: { currently_due: ['tos_acceptance', 'external_account'], past_due: [], eventually_due: [] },
-        created: 1699900000
-    }
-];
+const MOCK_ACCOUNTS: LucPayAccount[] = [];
 
-const MOCK_TRANSACTIONS: LucPayTransaction[] = Array.from({ length: 15 }).map((_, i) => ({
-    id: i % 3 === 0 ? `tr_${i}x89sfd98` : `pi_${i}z76sfd12`,
-    amount: (Math.random() * 500) + 50,
-    currency: 'brl',
-    status: i % 5 === 0 ? 'failed' : (i % 7 === 0 ? 'refunded' : 'succeeded'),
-    type: i % 3 === 0 ? 'transfer' : 'charge',
-    created: Date.now() - (i * 86400000), // Days ago
-    customerEmail: `cliente${i}@gmail.com`,
-    description: i % 3 === 0 ? 'Transferência de Comissão' : 'Compra de Curso - Mestre nos Negócios',
-    fee: 2.99 + ((Math.random() * 500) + 50) * 0.0399,
-    net: ((Math.random() * 500) + 50) * 0.9601 - 2.99,
-    metadata: {
-        gateway_ref: `pi_live_${Math.random().toString(36).substring(7)}`,
-        product_id: `prod_${i}`
-    },
-    configId: 'default_profile'
-}));
+const MOCK_TRANSACTIONS: LucPayTransaction[] = [];
 
 
 const MockLucPayProvider: ILucPayProvider = {
     getConfigs: async (): Promise<LucPayGatewayProfile[]> => {
-        // Try to get from Admin Integrations first (Single Source of Truth)
-        try {
-            const adminIntegrations = await import('./mockFirebase').then(m => m.getAdminIntegrations('payment_gateways'));
-            if (adminIntegrations && adminIntegrations.length > 0) {
-                return adminIntegrations.map((gw: any) => ({
-                    id: gw.id,
-                    label: gw.name,
-                    isActive: true, // Assuming active if in list
-                    provider: gw.provider === 'stripe' ? 'stripe' : 'pix_external',
-                    mode: gw.apiKey?.startsWith('sk_live') ? 'live' : 'test',
-                    // Map generic fields to Stripe specific
-                    publishableKey: gw.apiKey, // Assuming this is PK
-                    secretKey: gw.secretKey,
-                    webhookSecret: gw.webhookSecret,
-                    createdAt: Date.now()
-                }));
-            }
-        } catch (e) {
-            console.warn("LucPayService: Failed to sync with AdminIntegrations", e);
+        // Fallback for Mock/Simulação Mode - Using same keys as integrationService
+        const stored = localStorage.getItem(`mock_payment_gateways`);
+        if (stored) {
+            const gateways = JSON.parse(stored);
+            return gateways.map((gw: any) => ({
+                id: gw.id,
+                label: gw.name || gw.label || 'Stripe Account',
+                isActive: gw.status === 'active' || gateways.length === 1,
+                provider: gw.provider === 'stripe' ? 'stripe' : 'pix_external',
+                // Prioritize explicit saved mode, fallback to key detection
+                mode: gw.mode || (gw.apiKey?.startsWith('sk_live') ? 'live' : 'test'),
+                publishableKey: gw.apiKey,
+                secretKey: gw.secretKey,
+                webhookSecret: gw.webhookSecret,
+                createdAt: gw.updatedAt ? new Date(gw.updatedAt).getTime() : Date.now()
+            }));
         }
 
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) return JSON.parse(stored);
+        const legacy = localStorage.getItem(STORAGE_KEY);
+        if (legacy) return JSON.parse(legacy);
 
-        // Ensure default exists and save it
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([DEFAULT_PROFILE]));
         return [DEFAULT_PROFILE];
     },
 
     saveConfig: async (profile: LucPayGatewayProfile): Promise<void> => {
-        await delay(800);
-        let stored: LucPayGatewayProfile[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        await delay(500);
+        // Sync with integrationService's storage format
+        const storedGateways = JSON.parse(localStorage.getItem(`mock_payment_gateways`) || '[]');
 
-        // Update or Insert
-        const index = stored.findIndex(p => p.id === profile.id);
+        const gatewayData = {
+            id: profile.id,
+            name: profile.label,
+            provider: profile.provider,
+            mode: profile.mode, // Persist explicit mode
+            apiKey: profile.publishableKey,
+            secretKey: profile.secretKey,
+            webhookSecret: profile.webhookSecret,
+            status: profile.isActive ? 'active' : 'inactive',
+            volumeProcessed: 0,
+            updatedAt: new Date().toISOString()
+        };
+
+        const index = storedGateways.findIndex((g: any) => g.id === profile.id);
         if (index >= 0) {
-            stored[index] = profile;
+            storedGateways[index] = gatewayData;
         } else {
-            stored.push(profile);
+            storedGateways.push(gatewayData);
         }
 
         // Handle Active Toggle Logic
         if (profile.isActive) {
-            stored = stored.map(p => p.id === profile.id ? p : { ...p, isActive: false });
-        } else if (stored.length === 1) {
-            // If it's the only one, force active
-            stored[0].isActive = true;
+            storedGateways.forEach((g: any) => {
+                if (g.id !== profile.id) g.status = 'inactive';
+            });
         }
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+        localStorage.setItem(`mock_payment_gateways`, JSON.stringify(storedGateways));
+        console.info("LucPay Config saved to shared Integration Storage");
     },
 
     deleteConfig: async (profileId: string): Promise<void> => {
@@ -377,14 +329,36 @@ const FirebaseLucPayProvider: ILucPayProvider = {
 // ==========================================
 // EXPORT SERVICE
 // ==========================================
-// Switch to 'FirebaseLucPayProvider' when deploying to Vercel/Production
-const CURRENT_PROVIDER = FirebaseLucPayProvider;
+// Automatically switch to Firebase provider if possible, but keep LucPayDashboard working
+// Logic: If Firebase environment is not ready, use Mock provider which reads from localStorage
+const canUseFirebase = !!(import.meta.env.VITE_FIREBASE_API_KEY &&
+    import.meta.env.VITE_FIREBASE_API_KEY !== 'undefined' &&
+    import.meta.env.VITE_FIREBASE_PROJECT_ID);
+
+const CURRENT_PROVIDER = canUseFirebase ? FirebaseLucPayProvider : MockLucPayProvider;
+
+console.info(`LucPayService: Using ${canUseFirebase ? 'Firebase' : 'Mock'} Provider`);
 
 export const LucPayService = {
     getConfigs: () => CURRENT_PROVIDER.getConfigs(),
     getConfigsSync: () => { // Legacy Sync for initial state
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) return JSON.parse(stored) as LucPayGatewayProfile[];
+        const stored = localStorage.getItem(`mock_payment_gateways`);
+        if (stored) {
+            const gateways = JSON.parse(stored);
+            return gateways.map((gw: any) => ({
+                id: gw.id,
+                label: gw.name || gw.label || 'Stripe Account',
+                isActive: gw.status === 'active' || gateways.length === 1,
+                provider: gw.provider === 'stripe' ? 'stripe' : 'pix_external',
+                mode: gw.apiKey?.startsWith('sk_live') ? 'live' : 'test',
+                publishableKey: gw.apiKey,
+                secretKey: gw.secretKey,
+                webhookSecret: gw.webhookSecret,
+                createdAt: Date.now()
+            }));
+        }
+        const legacy = localStorage.getItem(STORAGE_KEY);
+        if (legacy) return JSON.parse(legacy) as LucPayGatewayProfile[];
         return [DEFAULT_PROFILE];
     },
     saveConfig: (profile: LucPayGatewayProfile) => CURRENT_PROVIDER.saveConfig(profile),
