@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: whatsmeow-server
+    env: docker
+    region: oregon
+    plan: starter
+    dockerfilePath: ./whatsmeow-server/Dockerfile
+    dockerContext: ./whatsmeow-server
+    envVars:
+      - key: WHATSMEOW_API_KEY
+        generateValue: true
+      - key: PORT
+        value: 3001
+    healthCheckPath: /health

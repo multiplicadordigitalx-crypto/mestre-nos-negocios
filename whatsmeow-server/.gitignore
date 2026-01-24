@@ -1,0 +1,13 @@
+# Sessions directory
+sessions/
+*.db
+*.db-shm
+*.db-wal
+
+# Binaries
+whatsmeow-server
+*.exe
+
+# Go
+vendor/
+go.sum
