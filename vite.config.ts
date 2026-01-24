@@ -18,11 +18,14 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-firebase': ['firebase'],
-            'vendor-ui': ['lucide-react', 'framer-motion', 'react-hot-toast', '@headlessui/react'],
-            'vendor-utils': ['jspdf', 'html2canvas', '@google/genai', 'stripe']
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('firebase')) return 'vendor-firebase';
+              if (id.includes('react')) return 'vendor-react';
+              if (id.includes('lucide') || id.includes('framer-motion') || id.includes('headlessui')) return 'vendor-ui';
+              if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('google/genai')) return 'vendor-utils';
+              return 'vendor';
+            }
           }
         }
       }
