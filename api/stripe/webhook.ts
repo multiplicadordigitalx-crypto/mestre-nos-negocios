@@ -29,21 +29,36 @@ export default async function handler(
     }
 
     const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-    if (!sig || !webhookSecret) {
+    // Support multiple webhook secrets (Stripe creates separate webhooks for account events vs connected accounts)
+    const webhookSecrets = [
+        process.env.STRIPE_WEBHOOK_SECRET,
+        process.env.STRIPE_WEBHOOK_SECRET_CONNECT,
+    ].filter(Boolean) as string[];
+
+    if (!sig || webhookSecrets.length === 0) {
         return res.status(400).json({ error: 'Missing signature or webhook secret' });
     }
 
-    let event: Stripe.Event;
+    let event: Stripe.Event | null = null;
+    let lastError: Error | null = null;
 
-    try {
-        // Verificar assinatura do webhook
-        const rawBody = JSON.stringify(req.body);
-        event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
-    } catch (err: any) {
-        console.error('Webhook signature verification failed:', err.message);
-        return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+    // Try each webhook secret until one works
+    for (const webhookSecret of webhookSecrets) {
+        try {
+            const rawBody = JSON.stringify(req.body);
+            event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+            console.log(`✅ Webhook verified with secret: ${webhookSecret.substring(0, 10)}...`);
+            break; // Success!
+        } catch (err: any) {
+            lastError = err;
+            console.log(`⚠️ Failed with secret ${webhookSecret.substring(0, 10)}...: ${err.message}`);
+        }
+    }
+
+    if (!event) {
+        console.error('⚠️ Webhook verification failed with all secrets:', lastError?.message);
+        return res.status(400).json({ error: `Webhook Error: ${lastError?.message}` });
     }
 
     // Processar evento
