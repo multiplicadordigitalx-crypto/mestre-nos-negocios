@@ -568,6 +568,8 @@ export interface CreditCombo {
     targetRole?: 'all' | 'student' | 'influencer';
     paymentLink?: string;
     paymentMethods?: PaymentMethod[];
+    stripePriceId?: string; // Stripe Price ID for integration
+    stripePaymentLink?: string; // Stripe Payment Link for direct checkout
 }
 
 export interface TreasureItem {

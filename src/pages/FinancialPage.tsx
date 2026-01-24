@@ -216,7 +216,7 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ navigateTo }) => {
             if (t.status === 'Aprovado') {
                 if (!productPerformance[t.product]) productPerformance[t.product] = { revenue: 0, cost: 0, count: 0 };
                 productPerformance[t.product].revenue += t.value;
-                productPerformance[t.product].cost += (t.cost || 0);
+                productPerformance[t.product].cost += (t.operationalCost || 0);
                 productPerformance[t.product].count += 1;
             }
         });
