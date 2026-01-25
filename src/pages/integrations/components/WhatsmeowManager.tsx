@@ -14,7 +14,11 @@ import { CreateInstanceModal } from '../modals/CreateInstanceModal';
 export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) => {
     const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
     const [serverUrl, setServerUrl] = useState('https://whatsapp.mestrenosnegocios.com');
+    const [apiKey, setApiKey] = useState('');
     const [isSavingUrl, setIsSavingUrl] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [qrCode, setQrCode] = useState<string | null>(null);
+    const [connectingId, setConnectingId] = useState<string | null>(null);
 
     useEffect(() => {
         loadData();
@@ -24,6 +28,8 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
         try {
             const data = await getWhatsAppInstances('whatsmeow');
             setInstances(data || []);
+            const savedKey = localStorage.getItem('whatsmeow_api_key');
+            if (savedKey) setApiKey(savedKey);
             // TODO: Load saved URL from Firestore if needed
         } catch (error) {
             console.error("Error loading Whatsmeow data:", error);
@@ -33,10 +39,12 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
     const handleSaveUrl = async () => {
         setIsSavingUrl(true);
         try {
+            localStorage.setItem('whatsmeow_api_key', apiKey);
             // Simulate saving global config for WhatsApp
-            toast.success("URL do proxy Cloudflare salva!");
+            toast.success("Configurações salvas!");
+            setIsEditMode(false);
         } catch (e) {
-            toast.error("Erro ao salvar URL");
+            toast.error("Erro ao salvar configurações");
         } finally {
             setIsSavingUrl(false);
         }
@@ -44,101 +52,145 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
 
     const [isMonitoring, setIsMonitoring] = useState(true);
     const [consoleLogs, setConsoleLogs] = useState<string[]>([
-        '> Fiber v2.50.0 started on port :3001',
-        '> WhatsMeow engine initialized (Golang)',
-        '> SQLite3 session store connected',
-        '> Client authenticated. Ready for messages.',
-        '> [IA GUARD] Monitoring real-time encryption...'
+        '> Aguardando conexão...',
     ]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+    // Logs reais viriam de um WebSocket, por enquanto mantemos um heartbeat visual simples
     useEffect(() => {
-        if (isMonitoring) {
+        if (isMonitoring && instances.some(i => i.status === 'connected')) {
             const interval = setInterval(() => {
-                const logs = [
-                    '> [IA GUARD] Verificando hash do binário WhatsApp...',
-                    '> [HANDSHAKE] Latência estável: 14ms',
-                    '> [SQLITE] Persistindo 12 mensagens recebidas...',
-                    '> [NEXUS] Atribuindo tag de interesse automático via regex...'
-                ];
-                const randomLog = logs[Math.floor(Math.random() * logs.length)];
-                setConsoleLogs(prev => [`> ${randomLog}`, ...prev.slice(0, 10)]);
-            }, 5000);
+                // Apenas heartbeat visual se tiver conectado
+            }, 10000);
             return () => clearInterval(interval);
         }
-    }, [isMonitoring]);
+    }, [isMonitoring, instances]);
 
     const handleCreate = async (name: string) => {
         try {
-            const port = 3000 + instances.length + 1;
             const newInst: WhatsAppInstance = {
                 id: `wm-${Date.now()}`,
                 instanceName: name,
                 status: 'disconnected',
-                port,
-                ram: '0MB',
-                goroutines: 0,
                 engine: 'whatsmeow',
                 lastActivity: new Date()
             };
             await saveWhatsAppInstance(newInst);
             setInstances(prev => [...prev, newInst]);
-            toast.success(`Instância '${name}' criada em Golang/Fiber!`);
+            toast.success(`Instância '${name}' criada!`);
         } catch (error) {
-            toast.error("Erro ao persistir instância no Firestore");
+            toast.error("Erro ao persistir instância");
         }
     };
 
     const handleConnect = async (id: string) => {
-        toast.loading("Gerando QR Code High-Perf...", { duration: 2000 });
+        if (!apiKey) {
+            toast.error("Por favor, configure a API Key primeiro.");
+            setIsEditMode(true);
+            return;
+        }
 
-        setTimeout(async () => {
-            try {
-                const updated = instances.map(i => i.id === id ? {
-                    ...i,
-                    status: 'connected' as const,
-                    phone: '5511988887777',
-                    ram: '18MB',
-                    goroutines: 12,
-                    uptime: '1s',
-                    lastActivity: new Date()
-                } : i);
+        setConnectingId(id);
+        toast.loading("Iniciando sessão WhatsMeow...");
 
-                const connectedItem = updated.find(inst => inst.id === id);
-                if (connectedItem) {
-                    await saveWhatsAppInstance(connectedItem);
-                    setInstances(updated);
-                    toast.dismiss();
-                    toast.success("WhatsMeow Conectado!");
-                }
-            } catch (error) {
-                toast.error("Erro ao salvar conexão");
+        try {
+            const response = await fetch(`${serverUrl}/api/instances/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({ userId: id })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Falha na conexão');
             }
-        }, 3000);
+
+            toast.dismiss();
+
+            if (data.status === 'already_connected' || data.status === 'connected') {
+                updateInstanceStatus(id, 'connected');
+                toast.success("Instância já conectada!");
+            } else if (data.qrCode) {
+                setQrCode(data.qrCode);
+                toast.success("QR Code gerado! Escaneie agora.");
+                // Iniciar polling para verificar status
+                pollStatus(id);
+            }
+
+        } catch (error: any) {
+            toast.dismiss();
+            toast.error(`Erro: ${error.message}`);
+            console.error(error);
+        } finally {
+            setConnectingId(null);
+        }
+    };
+
+    const pollStatus = async (id: string) => {
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch(`${serverUrl}/api/instances/${id}/status`, {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+                const data = await res.json();
+
+                if (data.status === 'connected') {
+                    clearInterval(interval);
+                    setQrCode(null);
+                    // Agora pegamos o telefone REAL retornado pelo Go
+                    const realPhone = data.phone || undefined;
+                    updateInstanceStatus(id, 'connected', realPhone);
+                    toast.success(`Conectado: ${realPhone || 'WhatsApp Business'}`);
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 2000);
+
+        // Timeout do polling em 60s
+        setTimeout(() => {
+            clearInterval(interval);
+            if (qrCode) setQrCode(null); // Fecha QR se expirar
+        }, 60000);
+    };
+
+    const updateInstanceStatus = async (id: string, status: 'connected' | 'disconnected', phone?: string) => {
+        const updated = instances.map(i => {
+            if (i.id === id) {
+                return { ...i, status, ...(phone ? { phone } : {}) };
+            }
+            return i;
+        });
+        setInstances(updated);
+        const instance = updated.find(i => i.id === id);
+
+        // Remove undefined fields properly before saving (Firestore safety)
+        if (instance) {
+            const safeInstance = { ...instance };
+            if (safeInstance.phone === undefined) delete safeInstance.phone;
+            await saveWhatsAppInstance(safeInstance);
+        }
     };
 
     const handleDisconnect = async (id: string) => {
-        if (confirm("Encerrar sessão WhatsMeow?")) {
-            try {
-                const instance = instances.find(i => i.id === id);
-                if (instance) {
-                    const updated = { ...instance, status: 'disconnected' as const, phone: '', ram: '0MB', goroutines: 0, uptime: '0s' };
-                    await saveWhatsAppInstance(updated);
-                    setInstances(prev => prev.map(i => i.id === id ? updated : i));
-                    toast.success("Desconectado.");
-                }
-            } catch (error) {
-                toast.error("Erro ao desconectar no Firestore");
-            }
+        if (confirm("Desconectar sessão?")) {
+            // Em uma implementação completa, chamaria endpoint de logout
+            // Por enquanto atualizamos localmente
+            updateInstanceStatus(id, 'disconnected');
+            toast.success("Desconectado.");
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm("Excluir instância permanentemente?")) {
+        if (confirm("Excluir instância?")) {
             try {
                 await deleteWhatsAppInstance(id);
                 setInstances(prev => prev.filter(i => i.id !== id));
-                toast.success("Instância removida.");
+                toast.success("Removida.");
             } catch (error) {
                 toast.error("Erro ao remover do Firestore");
             }
@@ -152,56 +204,101 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
                     <div>
                         <h3 className="text-xl font-black text-white flex items-center gap-3">
-                            <Terminal className="w-6 h-6 text-green-500" /> WhatsMeow Engine (Golang)
+                            <Terminal className="w-6 h-6 text-green-500" /> WhatsMeow Engine
                         </h3>
                         <p className="text-gray-400 text-xs mt-1 font-mono uppercase tracking-widest">
-                            API REST de Alta Performance para Escala Comercial
+                            API REST Oficial - Conexão Segura
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-green-400 bg-green-500/10 px-2 py-1 rounded border border-green-500/30 uppercase animate-pulse">Monitoramento Ativo</span>
+                        {apiKey ?
+                            <span className="text-[10px] font-black text-green-400 bg-green-500/10 px-2 py-1 rounded border border-green-500/30 uppercase">API Key Configurada</span>
+                            :
+                            <span className="text-[10px] font-black text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded border border-yellow-500/30 uppercase animate-pulse">API Key Pendente</span>
+                        }
                     </div>
                 </div>
             </div>
 
             <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 relative overflow-hidden mb-6">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
-                <div className="flex flex-col md:flex-row gap-6 relative z-10">
-                    <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4">
-                            <Server className="w-5 h-5 text-blue-500" /> Configuração do Servidor WhatsMeow
-                        </h3>
-                        <div className="flex gap-4 items-end">
-                            <div className="flex-1">
-                                <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">URL do Proxy/Cloudflare</label>
+                <div className="flex flex-col gap-4 relative z-10">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Server className="w-5 h-5 text-blue-500" /> Configuração de Conexão
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">Server URL</label>
+                            <input
+                                className={`w-full bg-gray-800 border ${isEditMode ? 'border-blue-500' : 'border-gray-600'} rounded-lg p-2.5 text-white text-sm font-mono outline-none ${!isEditMode && 'opacity-60'}`}
+                                value={isEditMode ? serverUrl : serverUrl.replace(/(https:\/\/[^/]{8}).*(\.[^/]+)$/, '$1...$2')}
+                                onChange={e => setServerUrl(e.target.value)}
+                                readOnly={!isEditMode}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">API Authentication Key</label>
+                            <div className="relative">
                                 <input
-                                    className="w-full bg-gray-800 border border-gray-600 rounded-lg p-2.5 text-white text-sm font-mono focus:border-blue-500 outline-none"
-                                    value={serverUrl}
-                                    onChange={e => setServerUrl(e.target.value)}
-                                    placeholder="https://sua-url-cloudflare.com"
+                                    type={isEditMode ? "text" : "password"}
+                                    className={`w-full bg-gray-800 border ${isEditMode ? 'border-blue-500' : 'border-gray-600'} rounded-lg p-2.5 text-white text-sm font-mono outline-none ${!isEditMode && 'opacity-60'}`}
+                                    value={apiKey}
+                                    onChange={e => setApiKey(e.target.value)}
+                                    readOnly={!isEditMode}
+                                    placeholder="Cole sua WHATSMEOW_API_KEY aqui"
                                 />
                             </div>
-                            <Button
-                                onClick={handleSaveUrl}
-                                isLoading={isSavingUrl}
-                                className="!bg-blue-600 hover:!bg-blue-500 h-10 px-6 font-bold uppercase text-xs"
-                            >
-                                Salvar URL
-                            </Button>
                         </div>
-                        <p className="text-[10px] text-gray-500 mt-2">Dica: Use sua URL do túnel Cloudflare para máxima performance e segurança.</p>
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-2">
+                        {isEditMode ? (
+                            <>
+                                <Button variant="secondary" onClick={() => setIsEditMode(false)} className="h-8 text-xs">Cancelar</Button>
+                                <Button onClick={handleSaveUrl} isLoading={isSavingUrl} className="h-8 text-xs !bg-green-600">Salvar Configuração</Button>
+                            </>
+                        ) : (
+                            <Button onClick={() => setIsEditMode(true)} className="h-8 text-xs !bg-blue-600">Editar Configurações</Button>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {qrCode && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-full mx-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Escaneie o QR Code</h3>
+                        <p className="text-gray-500 text-sm text-center mb-6">Abra o WhatsApp &gt; Aparelhos Conectados &gt; Conectar Aparelho</p>
+
+                        <div className="p-4 bg-white border-2 border-gray-100 rounded-xl shadow-inner mb-6">
+                            <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCode)}`}
+                                alt="QR Code WhatsApp"
+                                className="w-64 h-64 object-contain"
+                            />
+                        </div>
+
+                        <Button
+                            variant="secondary"
+                            onClick={() => setQrCode(null)}
+                            className="w-full !bg-gray-100 !text-gray-900 hover:!bg-gray-200"
+                        >
+                            Cancelar
+                        </Button>
+                        <p className="text-[10px] text-gray-400 mt-4 text-center">Este código expira em 30 segundos</p>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-4">
                     <div className="flex justify-between items-center">
                         <h4 className="text-white font-bold flex items-center gap-2 text-sm uppercase tracking-tighter">
-                            <Server className="w-4 h-4 text-blue-400" /> Instâncias Ativas
+                            <Server className="w-4 h-4 text-blue-400" /> Instâncias
                         </h4>
                         <Button onClick={() => setIsCreateOpen(true)} className="!py-1.5 !px-3 !text-[10px] font-black uppercase !bg-blue-600 hover:!bg-blue-500">
-                            Nova Instância Go
+                            Nova Instância
                         </Button>
                     </div>
 
@@ -209,7 +306,7 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                         <div key={inst.id} className="bg-gray-800 border border-gray-700 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-4 hover:border-green-500/30 transition-colors shadow-lg">
                             <div className="flex items-center gap-4 w-full md:w-auto">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-xs ${inst.status === 'connected' ? 'bg-green-600' : 'bg-gray-700'}`}>
-                                    GO
+                                    {inst.status === 'connected' ? 'ON' : 'OFF'}
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
@@ -218,7 +315,7 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                                             {inst.status === 'connected' ? 'ONLINE' : 'OFFLINE'}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-gray-500">Conectado | Port: {inst.port} | RAM: {inst.ram || '0MB'}</p>
+                                    <p className="text-xs text-gray-500">ID: {inst.id}</p>
                                 </div>
                             </div>
 
@@ -227,19 +324,27 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                                     <>
                                         <span className="text-green-400 font-mono font-bold text-xs mr-2">{inst.phone}</span>
                                         <Button variant="secondary" onClick={() => handleDisconnect(inst.id)} className="!py-1.5 !px-3 !text-[10px] font-black !bg-red-900/20 text-red-400 border-red-900/50 uppercase">
-                                            Parar
+                                            Desconectar
                                         </Button>
                                     </>
                                 ) : (
-                                    <Button onClick={() => handleConnect(inst.id)} className="!py-1.5 !px-3 !text-[10px] font-black !bg-green-600 hover:!bg-green-500 uppercase">
-                                        Conectar
+                                    <Button
+                                        onClick={() => handleConnect(inst.id)}
+                                        isLoading={connectingId === inst.id}
+                                        className="!py-1.5 !px-3 !text-[10px] font-black !bg-green-600 hover:!bg-green-500 uppercase"
+                                    >
+                                        Conectar Agora
                                     </Button>
                                 )}
                                 <button onClick={() => handleDelete(inst.id)} className="p-2 text-gray-600 hover:text-red-400 transition-colors"><Trash className="w-4 h-4" /></button>
                             </div>
                         </div>
                     ))}
-                    {instances.length === 0 && <div className="text-center py-10 text-gray-500">Nenhuma instância cadastrada.</div>}
+                    {instances.length === 0 && (
+                        <div className="text-center py-10 text-gray-500 border border-dashed border-gray-700 rounded-xl">
+                            Nenhuma instância criada.
+                        </div>
+                    )}
                 </div>
 
                 <div className="bg-[#0c0c0e] rounded-2xl border border-gray-800 p-4 font-mono text-[10px] flex flex-col h-[350px] shadow-2xl shadow-black/50">

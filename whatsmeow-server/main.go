@@ -23,6 +23,7 @@ type Instance struct {
 	UserID    string
 	Status    string
 	QRCode    string
+	Phone     string
 	CreatedAt time.Time
 }
 
@@ -133,6 +134,9 @@ func main() {
 				if evt.Event == "success" {
 					instance.Status = "connected"
 					instance.QRCode = ""
+					if client.Store.ID != nil {
+						instance.Phone = client.Store.ID.User
+					}
 					break
 				}
 			}
@@ -164,6 +168,7 @@ func main() {
 			"status":    status,
 			"qrCode":    instance.QRCode,
 			"createdAt": instance.CreatedAt.Unix(),
+			"phone":     instance.Phone,
 		})
 	})
 

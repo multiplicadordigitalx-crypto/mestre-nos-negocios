@@ -231,18 +231,38 @@ export const getWhatsAppInstances = async (engine?: 'whatsmeow' | 'evolution'): 
             console.info("Firestore: Acesso silenciado para admin (WhatsApp)");
             return [];
         }
-        throw error;
+
+        // Fallback for Mock Mode
+        console.warn("Firestore unavailable (WhatsApp), checking localStorage:", error);
+        const stored = localStorage.getItem(`mock_${WHATSAPP_COLLECTION}`);
+        let data: WhatsAppInstance[] = stored ? JSON.parse(stored) : [];
+        if (engine) {
+            data = data.filter(i => i.engine === engine);
+        }
+        return data;
     }
 };
 
 
 
 export const saveWhatsAppInstance = async (instance: WhatsAppInstance) => {
-    const docRef = doc(db, WHATSAPP_COLLECTION, instance.id);
-    await setDoc(docRef, {
-        ...instance,
-        updatedAt: new Date()
-    }, { merge: true });
+    try {
+        const docRef = doc(db, WHATSAPP_COLLECTION, instance.id);
+        await setDoc(docRef, {
+            ...instance,
+            updatedAt: new Date()
+        }, { merge: true });
+    } catch (error) {
+        console.warn("Firestore write failed, using localStorage fallback:", error);
+        // Fallback for Mock Mode
+        const instances = await getWhatsAppInstances(instance.engine);
+        const idx = instances.findIndex(i => i.id === instance.id);
+        if (idx !== -1) instances[idx] = instance;
+        else instances.push(instance);
+        localStorage.setItem(`mock_${WHATSAPP_COLLECTION}`, JSON.stringify(instances));
+
+        // Also update specific engine mock if needed, but the main getter uses the collection key
+    }
 };
 
 export const deleteWhatsAppInstance = async (id: string) => {
