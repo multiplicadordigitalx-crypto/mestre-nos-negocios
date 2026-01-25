@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
@@ -28,9 +29,22 @@ type Instance struct {
 var instances = make(map[string]*Instance)
 
 func main() {
-	// Initialize SQLite store
+	// Database connection
 	dbLog := waLog.Stdout("Database", "INFO", true)
-	container, err := sqlstore.New(context.Background(), "sqlite3", "file:sessions/whatsmeow.db?_foreign_keys=on", dbLog)
+	var container *sqlstore.Container
+	var err error
+
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL != "" {
+		// PostgreSQL connection
+		fmt.Println("🔌 Connecting to PostgreSQL...")
+		container, err = sqlstore.New(context.Background(), "postgres", dbURL, dbLog)
+	} else {
+		// SQLite fallback
+		fmt.Println("📂 Using SQLite storage...")
+		container, err = sqlstore.New(context.Background(), "sqlite3", "file:sessions/whatsmeow.db?_foreign_keys=on", dbLog)
+	}
+
 	if err != nil {
 		panic(err)
 	}

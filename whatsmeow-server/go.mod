@@ -4,8 +4,9 @@ go 1.24
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.0
-	github.com/mattn/go-sqlite3 v1.14.19
-	google.golang.org/protobuf v1.32.0
+	github.com/lib/pq v1.10.9
+	github.com/mattn/go-sqlite3 v1.14.33
+	google.golang.org/protobuf v1.36.11
 )
 
 require (
