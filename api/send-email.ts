@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { sendEmail, sendBulkEmail } from '../../src/services/emailService';
+import { sendEmail, sendBulkEmail } from '../src/services/emailService';
 
 /**
  * API para envio de emails via SendGrid

@@ -34,7 +34,7 @@ export const sendEmail = async (options: EmailOptions) => {
             to: Array.isArray(to) ? to : [to],
             subject,
             html,
-            reply_to: replyTo,
+            replyTo,
         });
 
         if (error) {
