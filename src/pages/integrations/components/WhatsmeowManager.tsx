@@ -13,7 +13,7 @@ import { CreateInstanceModal } from '../modals/CreateInstanceModal';
 
 export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) => {
     const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
-    const [serverUrl, setServerUrl] = useState('https://wh-proxy.cloudflare.com');
+    const [serverUrl, setServerUrl] = useState('https://whatsapp.mestrenosnegocios.com');
     const [isSavingUrl, setIsSavingUrl] = useState(false);
 
     useEffect(() => {
