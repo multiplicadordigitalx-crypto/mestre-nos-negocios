@@ -342,14 +342,65 @@ const EmailPage: React.FC<EmailPageProps> = ({ navigateTo }) => {
         if (!proceed) return;
 
         setIsSending(true);
-        // Simulate sending via SMTP
-        setTimeout(() => {
+        try {
+            // Using the real emailService
+            const { sendEmail } = await import('../services/emailService');
+            const result = await sendEmail({
+                to: 'admin@mestrenosnegocios.com', // Default to admin for safety, or prompt user
+                subject: generatedEmail.subject,
+                html: generatedEmail.corpo_email
+            });
+
+            if (result.success) {
+                toast.success(`Enviado via Resend com sucesso! ID: ${result.messageId}`);
+                setStats(prev => ({ ...prev, sent: prev.sent + 1 }));
+                setAutoLogs(prev => [`[RESEND] Disparo real realizado (ID: ${result.messageId}).`, ...prev]);
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error: any) {
+            toast.error(`Falha no envio: ${error.message || 'Erro desconhecido'}`);
+        } finally {
             setIsSending(false);
-            toast.success(`Enviado via ${smtpDetails?.host} com sucesso!`);
-            setStats(prev => ({ ...prev, sent: prev.sent + 1 }));
-            setAutoLogs(prev => [`[SMTP] Disparo manual realizado para lista ativa.`, ...prev]);
-        }, 2000);
+        }
     }
+
+    // New Test Email State
+    const [isTestEmailOpen, setIsTestEmailOpen] = useState(false);
+    const [testEmailAddress, setTestEmailAddress] = useState('');
+    const [isSendingTest, setIsSendingTest] = useState(false);
+
+    const handleSendTestEmail = async () => {
+        if (!testEmailAddress) return toast.error("Digite um e-mail.");
+        setIsSendingTest(true);
+        try {
+            const { sendEmail } = await import('../services/emailService');
+            const result = await sendEmail({
+                to: testEmailAddress,
+                subject: "Teste Mestre nos Negócios - Integração Resend",
+                html: `
+                    <h1>Integração de Email Confirmada 🚀</h1>
+                    <p>Este é um e-mail de teste enviado diretamente do painel Mestre nos Negócios via Resend.</p>
+                    <p>Status: <strong>OPERACIONAL</strong></p>
+                    <hr/>
+                    <small>Enviado em: ${new Date().toLocaleString()}</small>
+                 `
+            });
+
+            if (result.success) {
+                toast.success("E-mail de teste enviado!");
+                setIsTestEmailOpen(false);
+                setTestEmailAddress('');
+            } else {
+                toast.error(`Erro: ${result.error}`);
+            }
+        } catch (error) {
+            toast.error("Erro ao enviar teste.");
+            console.error(error);
+        } finally {
+            setIsSendingTest(false);
+        }
+    };
 
     const handleListUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -376,7 +427,13 @@ const EmailPage: React.FC<EmailPageProps> = ({ navigateTo }) => {
 
                 {/* CONTROL SWITCHES + CREDIT WIDGET */}
                 <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
-                    <div className="flex justify-end sm:justify-start">
+                    <div className="flex justify-end sm:justify-start gap-2">
+                        <Button
+                            onClick={() => setIsTestEmailOpen(true)}
+                            className="!py-1.5 !px-3 !text-[10px] !bg-green-600 hover:!bg-green-500 font-bold uppercase flex items-center gap-2 h-8"
+                        >
+                            <Send className="w-3 h-3" /> Teste Rápido
+                        </Button>
                         <CreditBalanceWidget onRecharge={() => navigateTo ? navigateTo('recharge') : null} />
                     </div>
                     <OptimizerStatus isActive={isOptimizer} onToggle={setIsOptimizer} />
@@ -717,20 +774,22 @@ const EmailPage: React.FC<EmailPageProps> = ({ navigateTo }) => {
                                 <Card className="p-6 bg-gray-800 border-gray-700">
                                     <div className="flex justify-between items-center mb-6">
                                         <h3 className="text-xl font-bold text-white">Configurações Avançadas</h3>
-                                        <Button
-                                            onClick={() => setIsServiceConfigOpen(true)}
-                                            className="!py-2 !px-4 !text-xs !bg-blue-600 hover:!bg-blue-500 flex items-center gap-2"
-                                        >
-                                            <Tag className="w-4 h-4" /> Conf. Email de Serviços
-                                        </Button>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                onClick={() => setIsServiceConfigOpen(true)}
+                                                className="!py-2 !px-4 !text-xs !bg-blue-600 hover:!bg-blue-500 flex items-center gap-2"
+                                            >
+                                                <Tag className="w-4 h-4" /> Conf. Email de Serviços
+                                            </Button>
+                                        </div>
                                     </div>
                                     <p className="text-gray-400 text-sm">Integração SMTP e Regras de Disparo estão no Hub de Integrações.</p>
                                     <div className="mt-4 p-4 bg-gray-900 rounded-lg border border-gray-600">
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-white font-bold text-sm">Domínio de Envio</span>
-                                            <span className="text-green-400 text-xs font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> VERIFICADO</span>
+                                            <span className="text-green-400 text-xs font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> VERIFICADO (Resend)</span>
                                         </div>
-                                        <p className="text-gray-500 text-xs">mail.mestre15x.com (IP Dedicado)</p>
+                                        <p className="text-gray-500 text-xs">Aguardando configuração final do DNS...</p>
                                     </div>
 
                                     <div className="mt-4">
@@ -750,12 +809,45 @@ const EmailPage: React.FC<EmailPageProps> = ({ navigateTo }) => {
                 </div>
             </div>
 
+            {/* Test Email Modal - GLOBAL ACCESS */}
+            {
+                isTestEmailOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-2xl animate-fade-in relative">
+                            <button onClick={() => setIsTestEmailOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><XIcon className="w-5 h-5" /></button>
+                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <Mail className="w-5 h-5 text-green-500" /> Testar Envio Real
+                            </h3>
+                            <p className="text-xs text-gray-500 mb-4">Envia um e-mail de prova imediatamento usando a API configurada.</p>
+
+                            <Input
+                                label="Email de Destino"
+                                placeholder="seu@email.com"
+                                value={testEmailAddress}
+                                onChange={e => setTestEmailAddress(e.target.value)}
+                            />
+                            <div className="flex justify-end gap-3 mt-6">
+                                <Button variant='secondary' onClick={() => setIsTestEmailOpen(false)}>Cancelar</Button>
+                                <Button
+                                    onClick={handleSendTestEmail}
+                                    isLoading={isSendingTest}
+                                    className="!bg-green-600 hover:!bg-green-500 font-bold"
+                                >
+                                    <Send className="w-4 h-4 mr-2" />
+                                    Enviar Agora
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
             {/* Service Config Modal */}
             <ServiceEmailConfigModal
                 isOpen={isServiceConfigOpen}
                 onClose={() => setIsServiceConfigOpen(false)}
             />
-        </div>
+        </div >
     );
 };
 

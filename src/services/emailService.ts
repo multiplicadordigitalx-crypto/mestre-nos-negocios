@@ -1,14 +1,3 @@
-import { Resend } from 'resend';
-
-// Inicializar Resend com API Key
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
-
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
-
-if (!RESEND_API_KEY) {
-    console.warn('⚠️ RESEND_API_KEY não configurada');
-}
-
 export interface EmailOptions {
     to: string | string[];
     subject: string;
@@ -17,39 +6,40 @@ export interface EmailOptions {
     replyTo?: string;
 }
 
-/**
- * Envia email via Resend
- */
 export const sendEmail = async (options: EmailOptions) => {
-    const { to, subject, html, from, replyTo } = options;
-
-    if (!resend) {
-        console.error('Resend não configurado');
-        return { success: false, error: 'Resend API key missing' };
-    }
+    const { to, subject, html } = options;
+    const SERVER_URL = 'http://localhost:3001'; // Local Go Backend
 
     try {
-        const { data, error } = await resend.emails.send({
-            from: from || process.env.RESEND_FROM_EMAIL || 'Mestre nos Negócios <noreply@mestrenosnegocios.com>',
-            to: Array.isArray(to) ? to : [to],
-            subject,
-            html,
-            replyTo,
+        console.log('📨 Enviando via Backend Proxy:', { to, subject });
+
+        const response = await fetch(`${SERVER_URL}/api/emails/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                to: Array.isArray(to) ? to[0] : to, // Simple handling for now
+                subject,
+                html
+            })
         });
 
-        if (error) {
-            console.error('❌ Erro Resend:', error);
-            return { success: false, error };
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Resend returns 'message', GoProxy returns 'error'
+            throw new Error(data.message || data.error || 'Falha no Proxy de Email');
         }
 
-        console.log('✅ Email enviado via Resend:', { to, subject, id: data?.id });
+        console.log('✅ Email enviado via Proxy:', data);
 
         return {
             success: true,
-            messageId: data?.id,
+            messageId: data.id,
         };
     } catch (error: any) {
-        console.error('❌ Erro ao enviar email:', error.message);
+        console.error('❌ Erro no envio (Proxy):', error.message);
 
         return {
             success: false,
@@ -59,31 +49,23 @@ export const sendEmail = async (options: EmailOptions) => {
 };
 
 /**
- * Envia email em lote
+ * Envia email em lote (Via Proxy)
  */
 export const sendBulkEmail = async (
     recipients: string[],
     subject: string,
     html: string
 ) => {
-    if (!resend) {
-        return { success: false, error: 'Resend not configured' };
-    }
-
     try {
+        // Envia UM POR UM via proxy (pode ser otimizado no futuro para batch no backend)
         const promises = recipients.map(recipient =>
-            resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL || 'Mestre nos Negócios <noreply@mestrenosnegocios.com>',
-                to: recipient,
-                subject,
-                html,
-            })
+            sendEmail({ to: recipient, subject, html })
         );
 
         const results = await Promise.allSettled(promises);
-        const successful = results.filter(r => r.status === 'fulfilled').length;
+        const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
 
-        console.log(`✅ Emails enviados: ${successful}/${recipients.length}`);
+        console.log(`✅ Emails em lote enviados: ${successful}/${recipients.length}`);
 
         return { success: true, count: successful, total: recipients.length };
     } catch (error: any) {

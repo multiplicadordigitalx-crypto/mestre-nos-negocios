@@ -1,21 +1,25 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	waLog "go.mau.fi/whatsmeow/util/log"
+	_ "modernc.org/sqlite"
 )
 
 type Instance struct {
@@ -30,6 +34,11 @@ type Instance struct {
 var instances = make(map[string]*Instance)
 
 func main() {
+	// Load environment variables from parent directory
+	if err := godotenv.Load("../.env"); err != nil {
+		fmt.Println("⚠️ Note: Could not load ../.env file")
+	}
+
 	// Database connection
 	dbLog := waLog.Stdout("Database", "INFO", true)
 	var container *sqlstore.Container
@@ -43,7 +52,7 @@ func main() {
 	} else {
 		// SQLite fallback
 		fmt.Println("📂 Using SQLite storage...")
-		container, err = sqlstore.New(context.Background(), "sqlite3", "file:sessions/whatsmeow.db?_foreign_keys=on", dbLog)
+		container, err = sqlstore.New(context.Background(), "sqlite", "file:sessions/whatsmeow.db?_pragma=foreign_keys=1", dbLog)
 	}
 
 	if err != nil {
@@ -63,6 +72,10 @@ func main() {
 	}
 
 	app.Use(func(c *fiber.Ctx) error {
+		if c.Path() == "/health" || c.Path() == "/api/emails/send" {
+			return c.Next()
+		}
+
 		auth := c.Get("Authorization")
 		if auth != "Bearer "+apiKey {
 			return c.Status(401).JSON(fiber.Map{"error": "Unauthorized"})
@@ -195,6 +208,67 @@ func main() {
 		return c.JSON(fiber.Map{
 			"success": true,
 			"to":      body.To,
+		})
+	})
+
+	// Email Proxy Route to fix CORS
+	app.Post("/api/emails/send", func(c *fiber.Ctx) error {
+		var body struct {
+			To      string `json:"to"`
+			Subject string `json:"subject"`
+			Html    string `json:"html"`
+		}
+
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		// Get API Key (support both standard and Vite naming)
+		apiKey := os.Getenv("RESEND_API_KEY")
+		if apiKey == "" {
+			apiKey = os.Getenv("VITE_RESEND_API_KEY")
+		}
+
+		if apiKey == "" {
+			return c.Status(500).JSON(fiber.Map{"error": "Server missing RESEND_API_KEY"})
+		}
+
+		// Prepare Resend Request
+		resendBody := map[string]interface{}{
+			"from":    "Mestre nos Negocios <suporte@mestrenosnegocios.com>",
+			"to":      []string{body.To},
+			"subject": body.Subject,
+			"html":    body.Html,
+		}
+
+		jsonBody, _ := json.Marshal(resendBody)
+
+		req, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewBuffer(jsonBody))
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to create request"})
+		}
+
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to call Resend API"})
+		}
+		defer resp.Body.Close()
+
+		// Read response
+		var result map[string]interface{}
+		json.NewDecoder(resp.Body).Decode(&result)
+
+		if resp.StatusCode >= 400 {
+			return c.Status(resp.StatusCode).JSON(result)
+		}
+
+		return c.JSON(fiber.Map{
+			"success": true,
+			"id":      result["id"],
 		})
 	})
 
