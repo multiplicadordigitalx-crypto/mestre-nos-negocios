@@ -13,8 +13,8 @@ import { CreateInstanceModal } from '../modals/CreateInstanceModal';
 
 export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) => {
     const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
-    const [serverUrl, setServerUrl] = useState('http://localhost:3001'); // Default to local for testing
-    const [apiKey, setApiKey] = useState('');
+    const [serverUrl, setServerUrl] = useState(import.meta.env.VITE_WHATSMEOW_SERVER_URL || 'http://localhost:3001'); // Default to local for testing
+    const [apiKey, setApiKey] = useState(localStorage.getItem('whatsmeow_api_key') || import.meta.env.VITE_WHATSMEOW_API_KEY || '');
     const [isSavingUrl, setIsSavingUrl] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [qrCode, setQrCode] = useState<string | null>(null);
