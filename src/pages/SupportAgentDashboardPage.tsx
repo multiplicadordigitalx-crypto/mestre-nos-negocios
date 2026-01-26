@@ -6,9 +6,11 @@ import {
     updateRefundRequest, createEscalationRequest,
     markTicketAsRead, updateSupportAgent,
     getPendingPartnerRequests, updatePartnerRequestStatus,
-    searchStudents, getStudentsPaginated, updateStudent, consumeCredits,
+    searchStudents, getStudentsPaginated, consumeCredits,
     maskUserData, createFinanceRequest, getStudentWalletHistory,
     mockInfluencers, sendTicketMessage
+} from '../services/mockFirebase';
+import { updateStudent } from '../services/userService';
 } from '../services/mockFirebase';
 import Button from '../components/Button';
 import Card from '../components/Card';

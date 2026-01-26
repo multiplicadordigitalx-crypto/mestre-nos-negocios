@@ -21,7 +21,7 @@ import {
     getAllUsersFlat,
     updateSupportAgent
 } from '../services/mockFirebase';
-import { getDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { getDoc, doc, setDoc, updateDoc, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
 // Fix: Add missing delay helper
@@ -112,72 +112,90 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         // REAL Firebase Auth State Listener
-        const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+        let unsubscribeProfile: Unsubscribe | null = null;
+
+        const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
+            // Clean up previous profile listener if any to avoid leaks
+            if (unsubscribeProfile) {
+                unsubscribeProfile();
+                unsubscribeProfile = null;
+            }
+
             setLoading(true);
             try {
                 if (firebaseUser) {
                     // User is signed in
                     console.log('[Auth] Firebase user detected:', firebaseUser.uid);
 
-                    // Fetch user profile from Firestore
-                    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                    // REAL-TIME LISTENER (Substitutes getDoc)
+                    unsubscribeProfile = onSnapshot(doc(db, 'users', firebaseUser.uid),
+                        async (docSnap) => {
+                            if (docSnap.exists()) {
+                                const userData = docSnap.data() as User;
+                                const finalUser = enforceAdminPermissions({
+                                    ...userData,
+                                    uid: firebaseUser.uid,
+                                    email: firebaseUser.email || userData.email || '',
+                                    photoURL: firebaseUser.photoURL || userData.photoURL
+                                });
+                                setUser(finalUser);
+                                localStorage.setItem('user', JSON.stringify(finalUser)); // Backup for offline
+                                console.log('[Auth] User profile updated from Firestore (Real-time)');
+                                setLoading(false);
+                            } else {
+                                // User authenticated but no profile in Firestore
+                                console.warn('[Auth] User authenticated but no Firestore profile:', firebaseUser.email);
 
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data() as User;
-                        const finalUser = enforceAdminPermissions({
-                            ...userData,
-                            uid: firebaseUser.uid,
-                            email: firebaseUser.email || userData.email || '',
-                            photoURL: firebaseUser.photoURL || userData.photoURL
-                        });
-                        setUser(finalUser);
-                        localStorage.setItem('user', JSON.stringify(finalUser)); // Backup for offline
-                        console.log('[Auth] User profile loaded from Firestore');
-                    } else {
-                        // User authenticated but no profile in Firestore
-                        console.warn('[Auth] User authenticated but no Firestore profile:', firebaseUser.email);
+                                // Auto-provision for admins
+                                const normalizedEmail = firebaseUser.email?.toLowerCase() || '';
+                                if (ADMIN_EMAILS.includes(normalizedEmail)) {
+                                    console.log('[Auth] Auto-provisioning admin profile...');
+                                    const adminData: User = {
+                                        uid: firebaseUser.uid,
+                                        email: normalizedEmail,
+                                        displayName: firebaseUser.displayName || 'Admin',
+                                        photoURL: firebaseUser.photoURL || '',
+                                        role: 'super_admin',
+                                        permissions: ['all']
+                                    };
 
-                        // Auto-provision for admins
-                        const normalizedEmail = firebaseUser.email?.toLowerCase() || '';
-                        if (ADMIN_EMAILS.includes(normalizedEmail)) {
-                            console.log('[Auth] Auto-provisioning admin profile...');
-                            const adminData: User = {
-                                uid: firebaseUser.uid,
-                                email: normalizedEmail,
-                                displayName: firebaseUser.displayName || 'Admin',
-                                photoURL: firebaseUser.photoURL || '',
-                                role: 'super_admin',
-                                permissions: ['all']
-                            };
-
-                            await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
-                            const finalUser = enforceAdminPermissions(adminData);
-                            setUser(finalUser);
-                            localStorage.setItem('user', JSON.stringify(finalUser));
-                            console.log('[Auth] Admin profile auto-provisioned');
-                        } else {
-                            // Non-admin without profile: sign out
-                            console.error('[Auth] Non-admin user without Firestore profile');
-                            await auth.signOut();
-                            toast.error('Conta não configurada. Entre em contato com o suporte.');
+                                    // This setDoc will trigger onSnapshot again immediately
+                                    await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
+                                    // Custom claims are handled by Cloud Function trigger now
+                                    console.log('[Auth] Admin profile auto-provisioned');
+                                } else {
+                                    // Non-admin without profile: sign out
+                                    console.error('[Auth] Non-admin user without Firestore profile');
+                                    await auth.signOut();
+                                    toast.error('Conta não configurada. Entre em contato com o suporte.');
+                                    setLoading(false);
+                                }
+                            }
+                        },
+                        (error) => {
+                            console.error("[Auth] User profile snapshot error:", error);
+                            setLoading(false);
                         }
-                    }
+                    );
+
                 } else {
                     // User is signed out
                     console.log('[Auth] No Firebase user detected - signed out');
                     setUser(null);
                     localStorage.removeItem('user');
+                    setLoading(false);
                 }
             } catch (error) {
                 console.error('[Auth] Error in onAuthStateChanged:', error);
-                // Don't sign out on error, keep current state
-            } finally {
                 setLoading(false);
             }
         });
 
         // Cleanup subscription on unmount
-        return () => unsubscribe();
+        return () => {
+            if (unsubscribeProfile) unsubscribeProfile();
+            unsubscribeAuth();
+        };
     }, []);
 
     const refreshUser = async () => {

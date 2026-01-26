@@ -5,8 +5,10 @@ import { TeamUser, LinkRequest, RefundRequest, ChatMessage, Student } from '@/ty
 import {
     getLinkRequests, getRefundRequests, getTeamUsers,
     listenToAllSupportThreads, updateLinkRequest, approveLinkRequestAndEnableProduct,
-    updateRefundRequest, searchStudents, getStudentsPaginated, updateStudent, getAllUsersFlat
-} from '@/services/mockFirebase';
+    updateRefundRequest, searchStudents, getStudentsPaginated, getAllUsersFlat
+} from '../services/mockFirebase';
+import { updateStudent } from '../services/userService';
+
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';

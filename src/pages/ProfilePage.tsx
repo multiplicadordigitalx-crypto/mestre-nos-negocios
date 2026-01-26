@@ -8,7 +8,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import { ShieldCheck, Clock, RotateCcw, CheckCircle, AlertTriangle, Calendar, Pencil, X as XIcon, Wallet, LockClosed, Eye, EyeOff } from '../components/Icons';
 import { Step0Compliance, validateDoc } from '../components/ProductWizardModal';
-import { updateUserProducerData, updateStudent } from '../services/mockFirebase';
+import { updateUserProducerData, updateStudent } from '../services/userService';
 import { securityService } from '../services/securityService';
 import toast from 'react-hot-toast';
 import Input from '../components/Input';

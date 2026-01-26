@@ -14,7 +14,8 @@ import {
 import { LoadingSpinner } from './LoadingSpinner';
 import toast from 'react-hot-toast';
 import { AppProduct, ProducerBankData, User, CheckoutLink, Course, ProductPlan, CoProducerInfo, SchoolSettings, CourseCategory } from '../types';
-import { saveAppProduct, updateUserProducerData, getCourses, consumeCredits, inviteCoProducer } from '../services/mockFirebase';
+import { saveAppProduct, getCourses, consumeCredits, inviteCoProducer } from '../services/mockFirebase';
+import { updateUserProducerData } from '../services/userService';
 import { publishProduct } from '../services/firebase';
 import { AICreditGate } from './AICreditGate';
 import { useAuth } from '../hooks/useAuth';

@@ -4,7 +4,7 @@ import { Influencer, ProducerBankData } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
-import { updateUserProducerData } from '../../services/mockFirebase';
+import { updateUserProducerData } from '../../services/userService';
 import toast from 'react-hot-toast';
 
 // Layout & Components

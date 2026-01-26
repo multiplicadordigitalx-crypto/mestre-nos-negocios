@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../../hooks/useAuth';
 import { ProducerBankData, TeamUser } from '../../../types';
 import { Step0Compliance, validateDoc } from '../../../components/ProductWizardModal';
-import { updateUserProducerData } from '../../../services/mockFirebase';
+import { updateUserProducerData } from '../../../services/userService';
 import { ShieldCheck, User, Camera, LockClosed, CheckCircle } from '../../../components/Icons';
 import Card from '../../../components/Card';
 import toast from 'react-hot-toast';
@@ -13,7 +13,7 @@ const AdminProfileView: React.FC = () => {
     const { user, refreshUser, updateProfilePhoto } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    
+
     const [producerData, setProducerData] = useState<ProducerBankData>({
         fullName: user?.displayName || '',
         cpfCnpj: user?.cpf || '', // Here we map user.cpf to cpfCnpj
@@ -64,7 +64,7 @@ const AdminProfileView: React.FC = () => {
 
     const handleCepChange = async (val: string) => {
         const cleanCep = val.replace(/\D/g, '').slice(0, 8);
-        setProducerData(prev => ({...prev, address: { ...prev.address, zipCode: cleanCep }}));
+        setProducerData(prev => ({ ...prev, address: { ...prev.address, zipCode: cleanCep } }));
         if (cleanCep.length === 8) {
             try {
                 const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
@@ -107,7 +107,7 @@ const AdminProfileView: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                        <User className="w-8 h-8 text-brand-primary"/> Meu Perfil Admin
+                        <User className="w-8 h-8 text-brand-primary" /> Meu Perfil Admin
                     </h1>
                     <p className="text-gray-400 text-sm mt-1">Gerencie suas informações reais para compliance e recebimentos.</p>
                 </div>
@@ -123,19 +123,19 @@ const AdminProfileView: React.FC = () => {
                 {/* Lateral: Avatar e Status */}
                 <div className="lg:col-span-1 space-y-6">
                     <Card className="p-8 text-center flex flex-col items-center bg-gray-800">
-                        <div 
+                        <div
                             className="relative group mb-4 cursor-pointer"
                             onClick={handlePhotoClick}
                         >
-                            <img 
-                                src={user?.photoURL || `https://i.pravatar.cc/150?u=${user?.email}`} 
+                            <img
+                                src={user?.photoURL || `https://i.pravatar.cc/150?u=${user?.email}`}
                                 className="w-32 h-32 rounded-full border-4 border-gray-700 object-cover group-hover:border-brand-primary transition-all"
                                 alt="Admin"
                             />
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Camera className="w-8 h-8 text-white"/>
+                                <Camera className="w-8 h-8 text-white" />
                             </div>
-                            <input 
+                            <input
                                 type="file"
                                 ref={fileInputRef}
                                 className="hidden"
@@ -145,14 +145,14 @@ const AdminProfileView: React.FC = () => {
                         </div>
                         <h2 className="text-xl font-bold text-white">{user?.displayName}</h2>
                         <p className="text-xs text-brand-primary font-black uppercase tracking-widest mt-1">Super Administrador</p>
-                        
+
                         <div className="w-full mt-8 pt-6 border-t border-gray-700 space-y-4 text-left">
                             <div className="flex items-center gap-3 text-xs text-gray-400">
-                                <LockClosed className="w-4 h-4 text-gray-500"/>
+                                <LockClosed className="w-4 h-4 text-gray-500" />
                                 <span>Acesso Criptografado</span>
                             </div>
                             <div className="flex items-center gap-3 text-xs text-gray-400">
-                                <CheckCircle className="w-4 h-4 text-green-500"/>
+                                <CheckCircle className="w-4 h-4 text-green-500" />
                                 <span>Permissão: Total (Owner)</span>
                             </div>
                         </div>
@@ -172,7 +172,7 @@ const AdminProfileView: React.FC = () => {
                         <h3 className="text-lg font-black text-white uppercase tracking-widest mb-8 border-b border-gray-700 pb-4">
                             Dados de Cadastro & Split
                         </h3>
-                        <Step0Compliance 
+                        <Step0Compliance
                             producerData={producerData}
                             setProducerData={setProducerData}
                             handleCepChange={handleCepChange}
@@ -182,7 +182,7 @@ const AdminProfileView: React.FC = () => {
                             showSecurity={true} // Enable password change for admin
                             onPasswordChange={async (pass) => {
                                 // Direct update for simpler integration here, ideally via separate handler
-                                const { updateStudent } = await import('../../../services/mockFirebase');
+                                const { updateStudent } = await import('../../../services/userService');
                                 await updateStudent(user!.uid, { password: pass });
                                 toast.success("Senha de admin atualizada.");
                             }}

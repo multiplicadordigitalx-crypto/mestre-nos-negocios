@@ -10,7 +10,8 @@ import {
     UserSubscription,
     Student
 } from '../types/legacy';
-import { getStudents, updateStudent, getSystemStatus, updateSystemStatus, getToolCosts, saveToolCost } from './mockFirebase';
+import { getStudents, getSystemStatus, updateSystemStatus, getToolCosts, saveToolCost } from './mockFirebase';
+import { updateStudent } from './userService';
 import { creditService } from './creditService';
 import { callMestreIA } from './mestreIaService';
 

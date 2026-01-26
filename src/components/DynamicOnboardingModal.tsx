@@ -3,7 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
 import { CheckCircle, Zap, ShieldCheck, X as XIcon, Brain, Activity, Target, BookOpen, Globe, Code, HeartPulse } from './Icons';
 import { Student, ProducerBankData } from '../types';
-import { updateStudent, updateUserProducerData, generateStudentActionPlan } from '../services/mockFirebase';
+import { useNavigate } from 'react-router-dom';
+
+import { generateStudentActionPlan } from '../services/mockFirebase';
+import { updateStudent, updateUserProducerData } from '../services/userService';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import Input from './Input';

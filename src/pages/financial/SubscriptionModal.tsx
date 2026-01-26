@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, CreditCard, RefreshCw, AlertTriangle, CheckCircle, ShieldOff } from 'lucide-react';
 import { User, UserSubscription } from '../../types/legacy';
-import { updateStudent } from '../../services/mockFirebase';
+import { updateStudent } from '../../services/userService';
 import { toast } from 'react-hot-toast';
 
 interface SubscriptionModalProps {
