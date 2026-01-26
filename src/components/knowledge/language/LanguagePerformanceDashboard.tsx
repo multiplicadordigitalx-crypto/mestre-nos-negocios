@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Star, Zap, Brain, Target, TrendingUp, BookOpen, Activity, Clock, Mic, Globe } from '../../Icons';
-import { Languages } from '../../../Icons';
+import { Languages } from '../../Icons';
 import { useAuth } from '../../../hooks/useAuth';
 
 

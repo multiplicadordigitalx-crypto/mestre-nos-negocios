@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Send, User, Briefcase, StopCircle, Loader2, ShieldCheck, Play, Volume2, AlertCircle, ArrowLeft, X, Globe, MessageSquare } from '../../../Icons';
+import { Mic, Send, User, Briefcase, StopCircle, Loader2, ShieldCheck, Play, Volume2, AlertCircle, ArrowLeft, X, Globe, MessageSquare } from '../../Icons';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';
 import { consumeCredits } from '../../../services/mockFirebase';

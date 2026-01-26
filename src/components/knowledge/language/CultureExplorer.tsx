@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, MapPin, Coffee, Shirt, DollarSign, ArrowLeft, Star, Crown, ShieldCheck, Zap, Brain } from '../../../Icons';
+import { Globe, MapPin, Coffee, Shirt, DollarSign, ArrowLeft, Star, Crown, ShieldCheck, Zap, Brain } from '../../Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../Button';
 import toast from 'react-hot-toast';
