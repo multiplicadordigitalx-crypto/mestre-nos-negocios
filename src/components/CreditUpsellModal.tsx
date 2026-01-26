@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, TrendingUp, ArrowRight, X } from 'lucide-react';
+import { Zap, TrendingUp, ArrowRight, X } from './Icons';
 import Card from './Card';
 import Button from './Button';
 

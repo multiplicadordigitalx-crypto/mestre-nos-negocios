@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Brain, RotateCw, Check, X, ArrowRight, Sparkles, Zap } from 'lucide-react';
+import { Brain, RotateCw, Check, X, ArrowRight, Sparkles, Zap } from '../../../Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Flashcard {

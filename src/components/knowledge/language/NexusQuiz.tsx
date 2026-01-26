@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Star, Clock, CheckCircle, XCircle, Zap, Trophy, ArrowRight, RotateCcw, ChevronDown, TrendingUp, Target, Award } from 'lucide-react';
+import { Brain, Star, Clock, CheckCircle, XCircle, Zap, Trophy, ArrowRight, RotateCcw, ChevronDown, TrendingUp, Target, Award } from '../../../Icons';
 import Button from '../../Button';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';

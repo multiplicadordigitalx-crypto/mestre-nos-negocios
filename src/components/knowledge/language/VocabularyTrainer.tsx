@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Zap, CheckCircle, Brain, Layers, Star, AlertCircle } from '../../Icons';
-import { Trophy } from 'lucide-react';
+import { Trophy } from '../../../Icons';
 import Button from '../../Button';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, TrendingUp, Target, Award } from 'lucide-react';
+import { Trophy, TrendingUp, Target, Award } from '../../../Icons';
 import { ChevronLeft, Zap, CheckCircle, Brain, Layers, Star, XCircle, RotateCcw, AlertCircle } from '../../Icons';
 import Button from '../../Button';
 import toast from 'react-hot-toast';

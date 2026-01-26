@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Trophy, TrendingUp, Target as LucideTarget, BarChart2 } from 'lucide-react';
-import { BookOpen, CheckCircle, AlertCircle, ChevronLeft, Target, Award, Brain } from '../../Icons';
+
+import { BookOpen, CheckCircle, AlertCircle, ChevronLeft, Target, Award, Brain, Trophy, TrendingUp, BarChart2 } from '../../Icons';
 import Button from '../../Button';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';
@@ -218,7 +218,7 @@ export const OABQuizSimulator: React.FC<OABQuizSimulatorProps> = ({ onBack, navi
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-gray-900 border border-gray-800 p-3 rounded-2xl">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <LucideTarget className="w-4 h-4 text-red-500" />
+                                        <Target className="w-4 h-4 text-red-500" />
                                         <span className="text-gray-400 text-[10px] uppercase tracking-wider">Simulados</span>
                                     </div>
                                     <span className="text-2xl font-bold text-white">42</span>

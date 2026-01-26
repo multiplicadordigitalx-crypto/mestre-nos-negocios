@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { Globe, Target, Briefcase, MapPin, Star, Award, ChevronRight, Lock, BookOpen, User, X, CheckCircle, Smartphone, AlertTriangle } from '../../Icons';
-import { GraduationCap, Plane, Bot } from 'lucide-react';
+import { GraduationCap, Plane, Bot } from '../../../Icons';
 import Button from '../../Button';
 import { useAuth } from '../../../hooks/useAuth';
 import { consumeCredits, getToolCosts } from '../../../services/mockFirebase';
