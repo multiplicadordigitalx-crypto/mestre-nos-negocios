@@ -1,17 +1,5 @@
-
-import { GoogleGenAI } from "@google/genai";
+import { AiProxyService } from "./aiProxyService";
 import { ElevenLabsService } from "./ElevenLabsService";
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-let ai: any = null;
-
-if (API_KEY) {
-    try {
-        ai = new GoogleGenAI({ apiKey: API_KEY });
-    } catch (e) {
-        console.error("Failed to initialize Studio AI", e);
-    }
-}
 
 export interface VideoRequest {
     productName: string;
@@ -34,7 +22,6 @@ export interface VideoResult {
 
 export class StudioService {
     // BASE ACTORS LIBRARY (Simulator)
-    // In production, these would be IDs referring to High-Res Video Assets stored in CDN/S3.
     private static BASE_ACTORS: any[] = [
         { id: 'actor_lucas_tech', name: 'Lucas (Tech)', style: 'Casual, energetic', gender: 'male', image: 'https://randomuser.me/api/portraits/men/32.jpg', format: '9:16' },
         { id: 'actor_julia_marketing', name: 'Julia (Marketing)', style: 'Professional, warm', gender: 'female', image: 'https://randomuser.me/api/portraits/women/44.jpg', format: '9:16' },
@@ -78,7 +65,6 @@ export class StudioService {
         console.log(`👤 Actor Selected: ${actor.name}`);
 
         // 2. GENERATE SCRIPT (Gemini)
-        // We instruct the AI to write a script that fits the base actor's style and the duration.
         const scriptPrompt = `
             ACT AS: A viral TikTok/Reels Scriptwriter.
             TASK: Write a natural, persuasive testimonial script for a product.
@@ -92,13 +78,12 @@ export class StudioService {
         `;
 
         let scriptText = "";
-        if (!ai) throw new Error("IA não configurada.");
         try {
-            const scriptRes = await ai.models.generateContent({
-                model: 'gemini-2.0-flash-exp',
-                contents: scriptPrompt
-            });
-            scriptText = scriptRes.text || "Produto incrível, mudou minha vida!";
+            scriptText = await AiProxyService.generateContent([{ role: 'user', content: scriptPrompt }], {
+                model: 'gemini-1.5-flash',
+                toolId: 'ugc_script_gen'
+            }) || "Produto incrível, mudou minha vida!";
+
             console.log("📝 Script Generated:", scriptText.substring(0, 50) + "...");
         } catch (e) {
             console.error("Script Gen Failed", e);
@@ -106,22 +91,15 @@ export class StudioService {
         }
 
         // 3. GENERATE AUDIO (ElevenLabs)
-        // In real implementation, we'd use the stored voiceId for the specific actor.
         console.log("🔊 Generating Audio via ElevenLabs...");
-        // Mocking a scraping service returning trending videos
         // const audioUrl = await ElevenLabsService.generate(scriptText, actor.voiceId);
         const mockAudioDuration = request.durationContext === 'short_reel' ? 15 : 45;
 
-        // 4. LIP SYNC & RENDERING (The "Magic" Step)
-        // This is where we would call an API like SyncLabs or HeyGen.
-        // We send: { video_url: actor.baseVideoUrl, audio_url: audioUrl }
-        // The API returns a new video where the lips move perfectly.
-
+        // 4. LIP SYNC & RENDERING (Simulated)
         console.log("🔄 Sending to LipSync Engine (Simulation)...");
-        await new Promise(r => setTimeout(r, 2000)); // Simulate processing time
+        await new Promise(r => setTimeout(r, 2000));
 
         // 5. MOCK RESULT
-        // Returning a placeholder that represents the "Processed" video.
         return {
             id: `vid_${Date.now()}`,
             url: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", // Placeholder

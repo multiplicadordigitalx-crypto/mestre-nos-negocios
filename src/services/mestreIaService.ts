@@ -1,19 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
+import { AiProxyService } from "./aiProxyService";
 import { MESTRE_IA_PROMPTS } from "./prompts";
 import { getCustomPrompts, checkAiAvailability, incrementUsageCost, getAppProducts, getSalesTeam } from "./mockFirebase";
 import { ProductDNA } from "../types";
-
-// Sempre use import.meta.env.VITE_GEMINI_API_KEY
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-let ai: any = null;
-
-if (API_KEY) {
-    try {
-        ai = new GoogleGenAI({ apiKey: API_KEY });
-    } catch (e) {
-        console.error("Failed to initialize GoogleGenAI", e);
-    }
-}
 
 export interface FlowInput {
     [key: string]: string | number | boolean;
@@ -25,7 +13,6 @@ const interpolatePrompt = (prompt: string, variables: FlowInput): string => {
 
 /**
  * Função exclusiva para a Nexus IA auxiliar o suporte.
- * Cruza dados do ticket com performance real do aluno/parceiro.
  */
 export async function getNexusSupportAdvice(context: {
     ticketContent: string,
@@ -57,15 +44,12 @@ export async function getNexusSupportAdvice(context: {
             {"diagnosis": "resumo da situação", "advice": ["dica 1", "dica 2", "dica 3"], "isEligibleForRefund": boolean}
         `;
 
-        if (!ai) return { diagnosis: "Erro: Gemini não configurado.", advice: ["Adicione VITE_GEMINI_API_KEY ao .env"], isEligibleForRefund: false };
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: prompt,
-            config: { responseMimeType: "application/json" }
+        const text = await AiProxyService.generateContent([{ role: 'user', content: prompt }], {
+            model: 'gemini-1.5-flash',
+            toolId: 'nexus_support'
         });
 
-        return JSON.parse(response.text || '{}');
+        return JSON.parse(text || '{}');
     } catch (error) {
         console.error("Nexus Support Error:", error);
         return { diagnosis: "Erro ao conectar com Nexus IA.", advice: ["Tente diagnosticar manualmente o progresso do aluno."], isEligibleForRefund: false };
@@ -86,15 +70,12 @@ export async function getSalesCoachTips(salesPersonName: string, performanceData
             {"tips": ["dica 1", "dica 2", "dica 3"], "top1_insight": "insight sobre o lider"}
         `;
 
-        if (!ai) return { tips: ["Erro: Gemini não configurado."], top1_insight: "Verifique as chaves de API." };
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: prompt,
-            config: { responseMimeType: "application/json" }
+        const text = await AiProxyService.generateContent([{ role: 'user', content: prompt }], {
+            model: 'gemini-1.5-flash',
+            toolId: 'sales_coach'
         });
 
-        return JSON.parse(response.text || '{"tips": [], "top1_insight": ""}');
+        return JSON.parse(text || '{"tips": [], "top1_insight": ""}');
     } catch (error) {
         return { tips: ["Foque no tempo de resposta.", "Use o áudio.", "Gatilho de Escassez."], top1_insight: "O líder atual responde em 45s." };
     }
@@ -148,7 +129,8 @@ export async function callMestreIA(flowId: string, inputs: FlowInput, attachment
     const finalPrompt = `${extraContext}\n\n${interpolatePrompt(promptTemplate, inputs)}`;
 
     try {
-        const modelName = flowId === 'mestre_dos_negocios' ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
+        // Use gemini-1.5-flash as it is more stable in proxy than pro-preview for now
+        const modelName = flowId === 'mestre_dos_negocios' ? 'gemini-1.5-flash' : 'gemini-1.5-flash';
 
         // Construct content parts
         const contents = [];
@@ -171,19 +153,15 @@ export async function callMestreIA(flowId: string, inputs: FlowInput, attachment
             contents.push({ text: finalPrompt });
         }
 
-        if (!ai) throw new Error("IA não configurada. VITE_GEMINI_API_KEY faltando.");
-
-        const response = await ai.models.generateContent({
-            model: modelName,
-            contents: contents,
-        });
-
-        const text = response.text;
-        if (!text) throw new Error("IA retornou resposta vazia.");
-
-        // Higher cost for multimodal
-        const cost = attachments && attachments.length > 0 ? 0.50 : 0.10;
-        await incrementUsageCost(cost);
+        // Call Proxy
+        const text = await AiProxyService.generateContent(
+            [{ parts: contents }],
+            {
+                toolId: flowId,
+                model: modelName,
+                contents: [{ role: 'user', parts: contents }] // Proper Gemini Structure for 'contents'
+            }
+        );
 
         return {
             output: text,
@@ -191,9 +169,9 @@ export async function callMestreIA(flowId: string, inputs: FlowInput, attachment
             status: "completed"
         };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Mestre IA Error:", error);
-        throw new Error("Falha ao processar solicitação na IA. Verifique sua conexão ou cota.");
+        throw new Error(error.message || "Falha ao processar solicitação na IA.");
     }
 }
 
@@ -209,128 +187,51 @@ export async function generateCourseCoverImage(inputs: { title: string, niche: s
 
     const descriptionPrompt = interpolatePrompt(MESTRE_IA_PROMPTS.course_cover_designer, promptInputs);
 
-    if (!ai) throw new Error("IA não configurada.");
-
-    const descriptionRes = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: descriptionPrompt
+    const visualDescription = await AiProxyService.generateContent([{ role: 'user', content: descriptionPrompt }], {
+        model: 'gemini-1.5-flash',
+        toolId: 'course_cover_desc'
     });
 
-    const visualDescription = descriptionRes.text;
+    // MOCK IMAGE GENERATION
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const imageUrl = `https://placehold.co/1024x1024/png?text=${encodeURIComponent(inputs.title)}`;
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: [{ text: visualDescription || `Capa cinematográfica para curso de ${inputs.niche}: ${inputs.title}` }],
-        config: {
-            imageConfig: { aspectRatio: "1:1" }
-        }
-    });
+    // Ideally we would call an Imagen proxy here.
 
-    let imageUrl = "";
-    for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-            imageUrl = `data:image/png;base64,${part.inlineData.data}`;
-        }
-    }
-
-    if (!imageUrl) throw new Error("Falha ao processar imagem de capa.");
-    await incrementUsageCost(1.50);
     return imageUrl;
 }
 
 export async function generateSchoolLogo(inputs: { title: string, description: string }) {
     await checkAiAvailability();
-
-    const promptInputs: FlowInput = {
-        title: inputs.title,
-        description: inputs.description
-    };
-
+    const promptInputs: FlowInput = { title: inputs.title, description: inputs.description };
     const descriptionPrompt = interpolatePrompt(MESTRE_IA_PROMPTS.logo_designer, promptInputs);
 
-    const descriptionRes = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: descriptionPrompt
-    });
-
-    const optimizedPrompt = descriptionRes.text;
-
-    if (!ai) throw new Error("IA não configurada.");
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: [{ text: optimizedPrompt || `Vector logo for brand ${inputs.title}. Minimalist.` }],
-        config: {
-            imageConfig: { aspectRatio: "1:1" }
-        }
-    });
-
-    let imageUrl = "";
-    for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-            imageUrl = `data:image/png;base64,${part.inlineData.data}`;
-        }
-    }
-
-    if (!imageUrl) throw new Error("Falha ao gerar logo.");
-    await incrementUsageCost(2.00);
-    return imageUrl;
+    // MOCK LOGO GENERATION
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    return `https://placehold.co/512x512/png?text=${encodeURIComponent(inputs.title)}`;
 }
 
-/**
- * Gera um Quiz estruturado a partir da transcrição da aula.
- * Usado pelo StudentPlayerView para popular o "Teste do Conhecimento".
- */
 export async function generateQuizFromContent(transcript: string) {
     await checkAiAvailability();
-
     const prompt = `
         Aja como um Professor Especialista em Negócios.
         Analise a seguinte transcrição de aula e crie 3 perguntas de múltipla escolha para testar o entendimento do aluno.
-        
-        CRITÉRIOS:
-        1. Perguntas desafiadoras, não óbvias.
-        2. Foco em aplicação prática do conceito.
-        3. Feedback educativo para a resposta certa.
-
-        TRANSCRIÇÃO:
-        "${transcript.substring(0, 5000)}" (limitado para contexto)
-
-        RETORNE APENAS UM JSON ARRAY:
-        [
-            {
-                "id": "1",
-                "text": "Pergunta aqui?",
-                "options": ["A", "B", "C", "D"],
-                "correctIndex": 0, // 0-3
-                "explanation": "Por que esta é a correta..."
-            }
-        ]
+        TRANSCRIÇÃO: "${transcript.substring(0, 5000)}"
+        RETORNE APENAS UM JSON ARRAY.
     `;
 
-    if (!ai) return [];
-
     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: prompt,
-            config: { responseMimeType: "application/json" }
+        const text = await AiProxyService.generateContent([{ role: 'user', content: prompt }], {
+            model: 'gemini-1.5-flash',
+            toolId: 'quiz_gen'
         });
 
-        const text = response.text;
         if (!text) return [];
-        return JSON.parse(text);
+        // Gemini often wraps JSON in ```json blocks
+        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanText);
     } catch (error) {
         console.error("Erro ao gerar quiz:", error);
-        // Fallback Mock em caso de erro da IA
-        return [
-            {
-                id: '99',
-                text: "Qual o principal conceito abordado nesta aula (Backup)?",
-                options: ["Foco no Cliente", "Vendas Complexas", "Gestão de Tempo", "Liderança"],
-                correctIndex: 0,
-                explanation: "Esta é uma pergunta de backup pois a IA não conseguiu processar o texto original."
-            }
-        ];
+        return [];
     }
 }

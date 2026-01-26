@@ -1,63 +1,58 @@
-
-import { GoogleGenAI } from "@google/genai";
+import { AiProxyService } from "./aiProxyService";
 import { GeminiMessage } from "../types";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-// Inicialização segura
-let ai: GoogleGenAI | null = null;
-if (API_KEY) {
-  ai = new GoogleGenAI({ apiKey: API_KEY });
-}
-
-const model = 'gemini-3-flash-preview';
+const model = 'gemini-1.5-flash';
 const systemInstruction = `Você é o "Coach IA 15X", um mentor de negócios de classe mundial. Sua missão é fornecer conselhos práticos, estratégicos e inspiradores para ajudar empreendedores a escalar seus negócios em 15 vezes. Use uma linguagem clara, direta e motivadora. Seja conciso mas poderoso.`;
 
 export async function* getBusinessAdviceStream(
   prompt: string,
   history: GeminiMessage[] = []
 ): AsyncGenerator<string> {
-  // Validação Defensiva 1: Verificar inicialização
-  if (!ai) {
-    yield "Erro de Configuração: Chave de API não encontrada. Verifique as variáveis de ambiente.";
-    return;
-  }
 
-  // Validação Defensiva 2: Evitar prompt vazio (causa comum de 'Internal Error')
   if (!prompt || prompt.trim().length === 0) {
     yield "Por favor, digite uma pergunta válida para o Coach.";
     return;
   }
 
   try {
-    const chat = ai.chats.create({
+    // Convert history format if needed
+    const messages = history.map(h => ({
+      role: h.role,
+      content: h.parts.map((p: any) => p.text).join(' ')
+    }));
+
+    // Add current prompt
+    messages.push({ role: 'user', content: prompt });
+
+    // Add system instruction effectively as a pre-prompt since some models/proxies handle it differently
+    // Or assume the persona is enough context.
+    const fullMessages = [
+      { role: 'user', content: `[SYSTEM INSTRUCTION: ${systemInstruction}]` },
+      ...messages
+    ];
+
+    // Call Proxy (Non-streaming for now, simulate stream)
+    const text = await AiProxyService.generateContent(fullMessages, {
       model: model,
-      config: {
-        systemInstruction,
-        temperature: 0.7,
-        topP: 0.95,
-      },
-      history,
+      toolId: 'coach_15x'
     });
 
-    const result = await chat.sendMessageStream({ message: prompt });
-
-    for await (const chunk of result) {
-      // Validação Defensiva 3: Verificar integridade do chunk
-      if (chunk && chunk.text) {
-        yield chunk.text;
+    if (text) {
+      // Simulate streaming for UI compatibility
+      const chunks = text.match(/.{1,20}/g) || [text];
+      for (const chunk of chunks) {
+        yield chunk;
+        await new Promise(r => setTimeout(r, 30)); // Typwriter effect
       }
     }
-  } catch (error: any) {
-    console.error("Gemini API Error Detail:", error);
 
-    // Tratamento de erros específicos para feedback amigável
-    if (error.status === 429) {
-      yield "⚠️ Limite de requisições atingido. Por favor, aguarde alguns segundos.";
-    } else if (error.message?.includes('SAFETY')) {
-      yield "⚠️ O conteúdo solicitado foi bloqueado pelos filtros de segurança da IA.";
+  } catch (error: any) {
+    console.error("Gemini API Proxy Error:", error);
+
+    if (error.message?.includes('Saldo insuficiente')) {
+      yield "⚠️ Seu saldo de créditos acabou. Por favor, recarregue para continuar.";
     } else {
-      yield "Desculpe, ocorreu um erro na comunicação com a inteligência artificial. Tente reformular sua pergunta.";
+      yield "Desculpe, a conexão com o Coach IA falhou temporariamente. Tente novamente.";
     }
   }
 }

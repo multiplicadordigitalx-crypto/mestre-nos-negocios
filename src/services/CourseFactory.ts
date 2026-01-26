@@ -1,19 +1,5 @@
-
-import { GoogleGenAI } from "@google/genai";
+import { AiProxyService } from "./aiProxyService";
 import { NEXUS_TOOLS, NexusToolId } from "./ToolRegistry";
-
-// Initialize Gemini with the API key from environment variables
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-let ai: any = null;
-
-if (API_KEY) {
-    try {
-        ai = new GoogleGenAI({ apiKey: API_KEY });
-    } catch (e) {
-        console.error("CourseFactory AI Init Error:", e);
-    }
-}
-
 
 export interface CourseManifest {
     lessons: {
@@ -74,21 +60,22 @@ export const CourseFactory = {
             }
         `;
 
-        if (!ai) throw new Error("IA não configurada.");
         try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.0-flash-exp', // Using the fast experimental model for complex JSON tasks
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    temperature: 0.7
+            const text = await AiProxyService.generateContent(
+                [{ role: 'user', content: prompt }],
+                {
+                    model: 'gemini-1.5-flash',
+                    toolId: 'course_factory'
                 }
-            });
+            );
 
-            const text = response.text || '{}';
             console.log("AI Raw Output:", text); // Debugging
 
-            const manifest = JSON.parse(text) as CourseManifest;
+            let cleanText = text || '{}';
+            // Remove markdown format if present
+            cleanText = cleanText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            const manifest = JSON.parse(cleanText) as CourseManifest;
 
             // Post-processing and Validation
             manifest.lessons.forEach((l, index) => {

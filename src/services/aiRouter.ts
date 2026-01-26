@@ -1,6 +1,5 @@
-
 // src/services/aiRouter.ts
-import { GoogleGenAI } from "@google/genai";
+import { AiProxyService } from "./aiProxyService";
 
 export interface InputMestre {
   objective: string;
@@ -10,14 +9,6 @@ export interface InputMestre {
   audience: string;
   tone: string;
   history?: string;
-}
-
-// Always use const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_GEMINI_API_KEY});
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-let ai: any = null;
-
-if (API_KEY) {
-  ai = new GoogleGenAI({ apiKey: API_KEY });
 }
 
 export async function gerarConteudoCompleto(input: InputMestre) {
@@ -47,25 +38,20 @@ Retorne exatamente neste formato JSON:
 `;
 
   try {
-    // Updated model to gemini-3-flash-preview for consistency
-    if (!ai) throw new Error("IA não configurada. VITE_GEMINI_API_KEY faltando.");
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json"
-      }
+    const text = await AiProxyService.generateContent([{ role: 'user', content: prompt }], {
+      model: 'gemini-1.5-flash',
+      toolId: 'mestre_ia_router'
     });
 
-    const text = response.text;
     if (!text) {
       throw new Error("Empty response from AI");
     }
 
-    const texto = JSON.parse(text);
+    // Sanitize JSON
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const texto = JSON.parse(cleanText);
 
-    // Simulation of image/video generation delay (Mocking Flux/Veo for now as per constraints)
+    // Simulation of image/video generation delay (Mocking Flux/Veo for now)
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     const img = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop";
