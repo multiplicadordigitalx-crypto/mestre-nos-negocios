@@ -1703,7 +1703,60 @@ export const consumeCredits = async (
         }
     }
 
-    // Fallback to global creditBalance for students and primary for influencers
+    // Fallback to global creditBalance
+    // === SECURE API CALL START ===
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
+    const hasFirebaseCredentials = !!(import.meta.env.VITE_FIREBASE_PROJECT_ID);
+
+    if (hasFirebaseCredentials) {
+        try {
+            console.log(`🔒 Calling Secure Credit API for ${amount} credits...`);
+            const response = await fetch(`${API_URL}/credits/consume`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: userId, amount, description: narrative, toolId })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                return { success: false, error: err.error || 'Erro ao processar consumo seguro.' };
+            }
+
+            // Success on Server -> Update Local State for UI
+            const current = (user as any).creditBalance || 0;
+            (user as any).creditBalance = current - amount;
+
+            // Log locally for immediate UI update (optional, as Firestore snapshot should handle it eventually)
+            const tx: WalletTransaction = {
+                id: `tx-${Date.now()}`,
+                producerId: userId,
+                type: 'usage',
+                category: 'service_usage',
+                amount: -amount,
+                toolId: featureId,
+                description: description,
+                timestamp: Date.now(),
+                pocketUsed: 'global',
+                balanceSnapshot: (user as any).creditBalance
+            };
+            if ((user as any).walletTransactions) (user as any).walletTransactions.unshift(tx);
+
+            // Persist local mock state just in case
+            if (userType === 'student') saveJSON('mockStudents', students);
+            if (userType === 'influencer') saveJSON('mockInfluencers', influencers);
+
+            return { success: true, message: "Consumo processado (Seguro)." };
+
+        } catch (error: any) {
+            console.error("Secure Consumption Failed:", error);
+            // Fallback to offline/mock if network fails? Or block?
+            // Unsafe to fallback to mock if we want real protection.
+            return { success: false, error: "Falha na conexão com servidor de créditos." };
+        }
+    }
+    // === SECURE API CALL END ===
+
+    // Mock Fallback (Legacy/Offline)
     const currentBalance = (user as Student | Influencer).creditBalance || 0;
     if (currentBalance < amount) {
         return { success: false, newBalance: currentBalance, error: 'Saldo insuficiente. Recarregue seus créditos.' };
@@ -2341,8 +2394,33 @@ let mockCreditRequests: CreditRequest[] = [
     { id: 'req-1', producerId: 'user-123', producerName: 'Carlos Produtor', amount: 1000, reason: 'Escalar time de suporte na Black Friday.', status: 'pending', requestedAt: new Date(Date.now() - 3600000).toISOString() }
 ];
 
+// Reusing API_URL constant defined above (or ensuring it is available scope-wise if not)
+
 export const getProducerWallet = async (): Promise<ProducerWallet> => {
-    // Simulate API delay
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
+    const hasFirebaseCredentials = !!(import.meta.env.VITE_FIREBASE_PROJECT_ID);
+    const user = await signInWithGoogle(); // Get current user ID (mock or real)
+    // Note: In real app, use auth hook. Here we assume generic or current user.
+    // Ideally pass explicit ID to this function. Assuming 'user-123' or current.
+    const uid = user?.uid || 'user-123';
+
+    if (hasFirebaseCredentials) {
+        try {
+            const res = await fetch(`${API_URL}/finance/get-wallet?uid=${uid}`);
+            if (res.ok) {
+                const data = await res.json();
+                return {
+                    producerId: data.producerId,
+                    balance: data.balance,
+                    transactions: data.transactions
+                };
+            }
+        } catch (e) {
+            console.error("Failed to fetch wallet API", e);
+        }
+    }
+
+    // Mock Fallback
     await new Promise(resolve => setTimeout(resolve, 500));
     return mockProducerWallet;
 };
@@ -2599,6 +2677,22 @@ export const transferCredits = async (from: 'student' | 'producer', to: 'student
 };
 
 export const getStudentWalletBalance = async (studentId: string): Promise<number> => {
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
+    const hasFirebaseCredentials = !!(import.meta.env.VITE_FIREBASE_PROJECT_ID);
+
+    if (hasFirebaseCredentials) {
+        try {
+            const res = await fetch(`${API_URL}/finance/get-wallet?uid=${studentId}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data.balance;
+            }
+        } catch (e) {
+            console.error("Failed to fetch student wallet", e);
+        }
+    }
+
+    // Mock
     const student = mockStudents.find(s => s.uid === studentId);
     return student?.creditBalance || 0;
 };

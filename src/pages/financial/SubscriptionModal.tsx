@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, CreditCard, RefreshCw, AlertTriangle, CheckCircle, ShieldOff } from 'lucide-react';
 import { User, UserSubscription } from '../../types/legacy';
 import { updateStudent } from '../../services/userService';
+import { paymentService } from '../../services/paymentService'; // [NEW]
 import { toast } from 'react-hot-toast';
 
 interface SubscriptionModalProps {

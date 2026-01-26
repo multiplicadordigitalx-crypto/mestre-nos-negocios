@@ -125,6 +125,7 @@ export interface User {
     photoURL?: string;
     purchaseDate?: string;
     role?: string;
+    internalId?: string; // Added to fix build error
     permissions?: any;
     hasMestreIA?: boolean;
     dailyMestreIALimit?: number;
@@ -282,6 +283,7 @@ export interface AppProduct {
     description: string;
     category?: string;
     price?: number;
+    stripeProductId?: string; // Added to fix build error
     type?: 'Único' | 'Recorrência' | 'Assinatura';
     deliverableType?: 'course' | 'ebook' | 'link' | 'app' | 'event';
     contentSourceType?: 'internal' | 'external';

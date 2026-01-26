@@ -9,6 +9,7 @@ import { purchaseCombo, getCreditCombos } from '../../../services/mockFirebase';
 import { useAuth } from '../../../hooks/useAuth';
 import { CreditCombo, PaymentMethod } from '../../../types';
 import { LucPayService, LucPayGatewayProfile } from '../../../services/LucPayService';
+import { paymentService } from '../../../services/paymentService'; // [NEW]
 import toast from 'react-hot-toast';
 
 // Mock Data updated to include paymentMethods for demonstration if backend data is sparse
@@ -140,33 +141,28 @@ export const RechargeSection: React.FC<{ navigateTo: (page: StudentPage) => void
         // Close modal if open
         setSelectedComboForPayment(null);
 
-        // LIVE STRIPE FLOW
+        // LIVE STRIPE FLOW via Vercel API
         if (activeGateway && (method.id.startsWith('stripe'))) {
             setLoadingId(combo.id);
             try {
-                const response = await LucPayService.processPayment(
-                    combo.price,
-                    'brl',
-                    method.type,
-                    activeGateway.id,
-                    combo.id
-                );
+                // Call our new PaymentService which hits /api/stripe/checkout
+                const { url } = await paymentService.createCheckoutSession({
+                    amount: combo.price,
+                    productId: combo.id,
+                    credits: combo.credits,
+                    userUid: user?.uid || '',
+                    userEmail: user?.email || undefined
+                });
 
-                if (response.success) {
-                    if (response.paymentUrl) {
-                        toast.success("Redirecionando para pagamento...");
-                        window.open(response.paymentUrl, '_blank');
-                    } else {
-                        // Simulated Success (Local Test or Fallback)
-                        await purchaseCombo(user?.uid || '', combo);
-                        await refreshUser();
-                        toast.success(`[${activeGateway.mode === 'live' ? 'PROD' : 'TEST'}] ` + response.message);
-                    }
+                if (url) {
+                    toast.success("Redirecionando para pagamento...");
+                    window.location.href = url;
                 } else {
-                    toast.error(response.message);
+                    throw new Error("URL não gerada.");
                 }
             } catch (error: any) {
-                toast.error("Erro ao processar: " + error.message);
+                console.error("Payment error:", error);
+                toast.error("Erro ao iniciar pagamento: " + (error.message || 'Erro desconhecido'));
             } finally {
                 setLoadingId(null);
             }

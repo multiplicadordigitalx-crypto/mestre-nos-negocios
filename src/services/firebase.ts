@@ -64,33 +64,40 @@ export { auth, db, storage, functions, analytics };
 import { httpsCallable } from "firebase/functions";
 import { doc, setDoc, collection } from "firebase/firestore";
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 export const publishProduct = async (product: AppProduct) => {
-    // 1. Logic for Stripe Automation
-    const syncStripe = httpsCallable(functions, 'syncProductToStripe');
-
     try {
-        const stripeResult: any = await syncStripe({ productData: product });
+        console.log("🚀 Publishing product via Vercel API:", product.name);
 
-        if (stripeResult.data.success) {
-            // Update product with Stripe data
-            const updatedProduct = {
-                ...product,
-                stripeProductId: stripeResult.data.stripeProductId,
-                checkoutLinks: stripeResult.data.plans.map((p: any) => ({
-                    id: p.planId,
-                    platform: 'Stripe',
-                    url: p.checkoutUrl,
-                    active: true
-                }))
-            };
+        // 1. Call Vercel API to create Stripe Resources
+        const response = await fetch(`${API_URL}/stripe/create-product`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productData: product })
+        });
 
-            // 2. Save to Firestore
-            const productRef = doc(collection(db, 'products'), updatedProduct.id);
-            await setDoc(productRef, updatedProduct);
-
-            return updatedProduct;
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create product in Stripe');
         }
-        throw new Error("Stripe sync failed");
+
+        const stripeResult = await response.json();
+
+        // 2. Update local object with data from Stripe
+        const updatedProduct: AppProduct = {
+            ...product,
+            stripeProductId: stripeResult.stripeProductId,
+            checkoutLinks: stripeResult.checkoutLinks,
+            status: 'active',
+            updatedAt: new Date().toISOString() // Ensure date is updated
+        };
+
+        // 3. Save to Firestore
+        const productRef = doc(collection(db, 'products'), updatedProduct.id);
+        await setDoc(productRef, updatedProduct);
+
+        return updatedProduct;
     } catch (error: any) {
         console.error("Publishing error:", error);
         throw error;

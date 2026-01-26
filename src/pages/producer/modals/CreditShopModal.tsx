@@ -4,6 +4,7 @@ import Button from '../../../components/Button';
 import { getCreditCombos, purchaseCombo } from '../../../services/mockFirebase';
 import { LucPayService, LucPayGatewayProfile } from '../../../services/LucPayService';
 import { useAuth } from '../../../hooks/useAuth';
+import { paymentService } from '../../../services/paymentService'; // [NEW]
 import { CreditCombo } from '../../../types/legacy';
 import { toast } from 'react-hot-toast';
 
@@ -43,30 +44,21 @@ export const CreditShopModal: React.FC<CreditShopModalProps> = ({ target, title,
         setLoading(true);
         try {
             if (activeGateway) {
-                // REAL PAYMENT FLOW (REDESIGNED)
-                const response = await LucPayService.processPayment(
-                    pack.price,
-                    'brl',
-                    paymentMethod === 'pix' ? 'pix' : 'credit_card',
-                    activeGateway.id,
-                    pack.id
-                );
+                // REAL PAYMENT FLOW via Vercel API
+                const { url } = await paymentService.createCheckoutSession({
+                    amount: pack.price,
+                    productId: pack.id,
+                    credits: pack.credits,
+                    userUid: user.uid,
+                    userEmail: user.email || undefined
+                });
 
-                if (response.success) {
-                    if (response.paymentUrl) {
-                        toast.success("Redirecionando para checkout seguro...");
-                        window.open(response.paymentUrl, '_blank');
-                        onClose(); // Close shop after redirect
-                    } else {
-                        // Simulated/Direct Success
-                        await purchaseCombo(user.uid, pack);
-                        await refreshUser();
-                        toast.success(`Compra realizada! +${pack.credits} créditos adicionados.`);
-                        onSuccess();
-                        onClose();
-                    }
+                if (url) {
+                    toast.success("Redirecionando para checkout seguro...");
+                    window.location.href = url;
+                    onClose();
                 } else {
-                    toast.error(response.message);
+                    throw new Error("Falha ao gerar link de pagamento.");
                 }
             } else {
                 // FALLBACK TO SIMULATION

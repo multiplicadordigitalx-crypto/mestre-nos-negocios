@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
+import * as admin from 'firebase-admin';
 import { sendEmail } from '../../src/services/emailService';
 import {
     purchaseReceiptTemplate,
@@ -51,11 +52,11 @@ export default async function handler(
                 break;
 
             case 'transfer.paid':
-                await handleTransferPaid(event.data.object as Stripe.Transfer);
+                await handleTransferPaid((event.data.object as any) as Stripe.Transfer);
                 break;
 
             case 'payment_intent.payment_failed':
-                await handlePaymentFailed(event.data.object as Stripe.PaymentIntent);
+                await handlePaymentFailed((event.data.object as any) as Stripe.PaymentIntent);
                 break;
 
             default:
@@ -69,33 +70,79 @@ export default async function handler(
     }
 }
 
+// Import db from firebaseAdmin
+import { db } from '../utils/firebaseAdmin';
+
 /**
- * Checkout completado - enviar recibo
+ * Checkout completado - enviar recibo e liberar créditos
  */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const customerEmail = session.customer_details?.email;
-    if (!customerEmail) return;
+    const userId = session.metadata?.user_uid;
+    const creditsToAdd = parseInt(session.metadata?.credits_to_add || '0');
 
-    const order = {
-        id: session.id,
-        date: new Date(session.created * 1000).toLocaleDateString('pt-BR'),
-        productName: 'Créditos Mestre nos Negócios',
-        amount: (session.amount_total || 0) / 100,
-        paymentMethod: 'Cartão de Crédito',
-        customerName: session.customer_details?.name || 'Cliente',
-        customerEmail: customerEmail
-    };
+    if (!userId) {
+        console.error('❌ Webhook Error: Missing user_uid in metadata');
+        return;
+    }
 
-    await sendEmail({
-        to: customerEmail,
-        subject: `✅ Recibo de Compra - ${order.productName}`,
-        html: purchaseReceiptTemplate(order)
-    });
+    try {
+        await db.runTransaction(async (transaction) => {
+            const userRef = db.collection('users').doc(userId);
+            const userDoc = await transaction.get(userRef);
 
-    console.log(`✅ Recibo enviado para ${customerEmail}`);
+            if (!userDoc.exists) {
+                throw new Error(`User ${userId} not found`);
+            }
 
-    // TODO: Atualizar saldo de créditos no Firestore
-    // await updateUserCredits(session.client_reference_id, credits);
+            const currentBalance = userDoc.data()?.creditBalance || 0;
+            const newBalance = currentBalance + creditsToAdd;
+
+            // 1. Update User Balance
+            transaction.update(userRef, {
+                creditBalance: newBalance,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            // 2. Create Wallet Transaction Record
+            const transactionRef = db.collection('wallet_transactions').doc();
+            transaction.set(transactionRef, {
+                userId,
+                type: 'credit_purchase',
+                amount: creditsToAdd,
+                valueBrl: (session.amount_total || 0) / 100,
+                description: 'Compra de Créditos via Stripe',
+                stripeSessionId: session.id,
+                status: 'completed',
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        });
+
+        console.log(`✅ ${creditsToAdd} créditos adicionados para ${userId}`);
+
+        // Send Email Receipt
+        if (customerEmail) {
+            const order = {
+                id: session.id,
+                date: new Date(session.created * 1000).toLocaleDateString('pt-BR'),
+                productName: `Pacote de ${creditsToAdd} Créditos`,
+                amount: (session.amount_total || 0) / 100,
+                paymentMethod: 'Cartão/Pix',
+                customerName: session.customer_details?.name || 'Cliente',
+                customerEmail: customerEmail
+            };
+
+            await sendEmail({
+                to: customerEmail,
+                subject: `✅ Seus Créditos Chegaram! - ${order.productName}`,
+                html: purchaseReceiptTemplate(order)
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Failed to process checkout fulfillment:', error);
+        throw error;
+    }
 }
 
 /**
