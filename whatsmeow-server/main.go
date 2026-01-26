@@ -37,8 +37,12 @@ var instanceLock sync.RWMutex
 
 func main() {
 	// Load environment variables from parent directory
-	if err := godotenv.Load("../.env"); err != nil {
-		fmt.Println("⚠️ Note: Could not load ../.env file")
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("⚠️ Could not load local .env, trying parent...")
+		if err := godotenv.Load("../.env"); err != nil {
+			fmt.Println("⚠️ Note: Could not load ../.env file either")
+		}
 	}
 
 	// Database connection

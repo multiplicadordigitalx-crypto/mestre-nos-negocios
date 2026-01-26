@@ -900,3 +900,20 @@ export const Wand2: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <path d="m19 19-2 2-2-2 2-2 2 2Z" />
   </svg>
 );
+
+export const GraduationCap: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+    <path d="M22 10v6" />
+    <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+  </svg>
+);
+
+export const ShieldOff: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="m2 2 20 20" />
+    <path d="M5 5a6 6 0 0 0-1.5 2.2c-.2.5-.5 1.1-.5 1.7 0 6 8 10 8 10s3.25-1.62 5.5-4.13" />
+    <path d="M19.5 9.77c.33.82.5 1.73.5 2.73 0 6-8 10-8 10-.76-.38-1.5-.78-2.22-1.22" />
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v1.6" />
+  </svg>
+);

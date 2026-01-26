@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { PlansState } from './types';
-import { Brain, MessageSquare, Mic, Share2, Users, Video, Zap, FileText, Globe, GraduationCap, PenTool, Bot, Folder, Search, Scale, Megaphone, Filter, Mail, BookOpen, Target, Activity, HeartPulse, Rocket } from 'lucide-react';
+import { Brain, MessageSquare, Mic, Share2, Users, Video, Zap, FileText, Globe, GraduationCap, PenTool, Bot, Folder, Search, Scale, Megaphone, Filter, Mail, BookOpen, Target, Activity, HeartPulse, Rocket } from '../../../../components/Icons';
 
 export interface SystemToolExtended {
     id: string;

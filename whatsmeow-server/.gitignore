@@ -11,3 +11,7 @@ whatsmeow-server
 # Go
 vendor/
 go.sum
+
+# Environment
+.env
+.env.local

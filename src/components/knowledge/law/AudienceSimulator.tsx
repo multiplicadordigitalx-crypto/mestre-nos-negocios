@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Activity, Sparkles, Star } from 'lucide-react';
-import { Mic, Play, MessageSquare, ChevronLeft, User, Volume2, AlertCircle, Award, Brain } from '../../Icons';
+
+import { Mic, Play, MessageSquare, ChevronLeft, User, Volume2, AlertCircle, Award, Brain, Trophy, Activity, Sparkles, Star } from '../../Icons';
 import Button from '../../Button';
 import toast from 'react-hot-toast';
 
