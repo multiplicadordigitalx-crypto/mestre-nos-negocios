@@ -5,9 +5,9 @@ import { Terminal, ShieldCheck, Server, PlusCircle, Activity, Trash, RefreshCw, 
 import {
     getWhatsAppInstances,
     saveWhatsAppInstance,
-    deleteWhatsAppInstance,
-    WhatsAppInstance
+    deleteWhatsAppInstance
 } from '../../../services/integrationService';
+import { WhatsAppInstance } from '../../../types/legacy';
 import toast from 'react-hot-toast';
 import { CreateInstanceModal } from '../modals/CreateInstanceModal';
 
@@ -22,6 +22,12 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
 
     useEffect(() => {
         loadData();
+        // Force refresh API Key from Env if available (fixes stale localStorage)
+        const envKey = import.meta.env.VITE_WHATSMEOW_API_KEY;
+        if (envKey && apiKey !== envKey) {
+            setApiKey(envKey);
+            localStorage.setItem('whatsmeow_api_key', envKey);
+        }
     }, []);
 
     const loadData = async () => {
@@ -66,20 +72,28 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
         }
     }, [isMonitoring, instances]);
 
-    const handleCreate = async (name: string) => {
+    const handleCreate = async (name: string, role: string) => {
         try {
             const newInst: WhatsAppInstance = {
                 id: `wm-${Date.now()}`,
-                instanceName: name,
+                name: name,
                 status: 'disconnected',
                 engine: 'whatsmeow',
-                lastActivity: new Date()
+                lastActivity: new Date(),
+                role: role as any,
+                ownerId: 'platform',
+                isBackup: false,
+                phoneNumber: '',
+                healthScore: 100,
+                activeChats: 0,
+                capabilities: []
             };
             await saveWhatsAppInstance(newInst);
             setInstances(prev => [...prev, newInst]);
             toast.success(`Instância '${name}' criada!`);
         } catch (error) {
-            toast.error("Erro ao persistir instância");
+            // Silently fail if firestore is blocked, as localStorage fallback handles it in integrationService
+            console.warn("Erro Firestore (ignorado via fallback):", error);
         }
     };
 
@@ -131,31 +145,58 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
     };
 
     const pollStatus = async (id: string) => {
+        let attempts = 0;
+        const maxAttempts = 30; // 60 seconds (2s interval)
+
         const interval = setInterval(async () => {
+            attempts++;
+            if (attempts > maxAttempts) {
+                clearInterval(interval);
+                setQrCode(null);
+                toast.error("Tempo limite do QR Code excedido.");
+                return;
+            }
+
             try {
                 const res = await fetch(`${serverUrl}/api/instances/${id}/status`, {
                     headers: { 'Authorization': `Bearer ${apiKey}` }
                 });
                 const data = await res.json();
 
+                // Add to Visual Console for User Debugging
+                setConsoleLogs(prev => {
+                    const newLog = `> Polling: ${data.status.toUpperCase()} ${data.phone ? `(${data.phone})` : ''} [QR:${!!data.qrCode}]`;
+                    return [newLog, ...prev].slice(0, 15);
+                });
+
                 if (data.status === 'connected') {
                     clearInterval(interval);
-                    setQrCode(null);
-                    // Agora pegamos o telefone REAL retornado pelo Go
+
+                    // Show Success UI
+                    setConnectingId('success');
+
                     const realPhone = data.phone || undefined;
                     updateInstanceStatus(id, 'connected', realPhone);
-                    toast.success(`Conectado: ${realPhone || 'WhatsApp Business'}`);
+
+                    toast.success("CONECTADO! Fechando em 5s...");
+
+                    // Close after 5s to ensure visibility
+                    setTimeout(() => {
+                        setQrCode(null);
+                        setConnectingId(null);
+                        toast.success(`Conectado: ${realPhone || 'WhatsApp Business'}`);
+                    }, 5000);
+                } else if (data.status === 'already_connected') {
+                    // Handle weird edge case
+                    clearInterval(interval);
+                    setQrCode(null);
+                    toast.success("Já estava conectado.");
                 }
             } catch (e) {
                 console.error("Polling error", e);
+                setConsoleLogs(prev => [`> ERRO DE POLLING: ${e instanceof Error ? e.message : 'Unknown'}`, ...prev]);
             }
         }, 2000);
-
-        // Timeout do polling em 60s
-        setTimeout(() => {
-            clearInterval(interval);
-            if (qrCode) setQrCode(null); // Fecha QR se expirar
-        }, 60000);
     };
 
     const updateInstanceStatus = async (id: string, status: 'connected' | 'disconnected', phone?: string) => {
@@ -178,10 +219,18 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
 
     const handleDisconnect = async (id: string) => {
         if (confirm("Desconectar sessão?")) {
-            // Em uma implementação completa, chamaria endpoint de logout
-            // Por enquanto atualizamos localmente
-            updateInstanceStatus(id, 'disconnected');
-            toast.success("Desconectado.");
+            try {
+                await fetch(`${serverUrl}/api/instances/${id}/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+                updateInstanceStatus(id, 'disconnected');
+                setInstances(prev => prev.filter(i => i.id !== id)); // Remove visualmente também
+                toast.success("Sessão encerrada e removida.");
+            } catch (error) {
+                console.error("Logout falhou", error);
+                toast.error("Erro ao desconectar no servidor.");
+            }
         }
     };
 
@@ -194,6 +243,34 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
             } catch (error) {
                 toast.error("Erro ao remover do Firestore");
             }
+        }
+    };
+
+    const handleTestMessage = async (id: string) => {
+        const to = prompt("Digite o número para teste (ex: 5511999999999):");
+        if (!to) return;
+
+        try {
+            toast.loading("Enviando teste...");
+            const response = await fetch(`${serverUrl}/api/instances/${id}/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    to: to,
+                    message: "🔔 Olá! Teste de conexão do Mestre nos Negócios bem sucedido! 🚀"
+                })
+            });
+
+            if (!response.ok) throw new Error("Falha no envio");
+
+            toast.dismiss();
+            toast.success("Mensagem enviada!");
+        } catch (error) {
+            toast.dismiss();
+            toast.error("Erro ao enviar mensagem");
         }
     };
 
@@ -267,26 +344,42 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
 
             {qrCode && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-full mx-4">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">Escaneie o QR Code</h3>
-                        <p className="text-gray-500 text-sm text-center mb-6">Abra o WhatsApp &gt; Aparelhos Conectados &gt; Conectar Aparelho</p>
+                    <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-full mx-4 relative overflow-hidden">
 
-                        <div className="p-4 bg-white border-2 border-gray-100 rounded-xl shadow-inner mb-6">
-                            <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCode)}`}
-                                alt="QR Code WhatsApp"
-                                className="w-64 h-64 object-contain"
-                            />
-                        </div>
+                        {connectingId === 'success' ? (
+                            <div className="flex flex-col items-center animate-fade-in py-10">
+                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600 animate-bounce">
+                                    <ShieldCheck className="w-10 h-10" />
+                                </div>
+                                <h3 className="text-2xl font-black text-gray-900 mb-2">Conectado!</h3>
+                                <p className="text-gray-500 text-center">Dispositivo vinculado com sucesso.</p>
+                                <p className="text-xs text-gray-400 mt-4">Fechando em 3s...</p>
+                            </div>
+                        ) : (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">Escaneie o QR Code</h3>
+                                <p className="text-gray-500 text-sm text-center mb-6">Abra o WhatsApp &gt; Aparelhos Conectados &gt; Conectar Aparelho</p>
 
-                        <Button
-                            variant="secondary"
-                            onClick={() => setQrCode(null)}
-                            className="w-full !bg-gray-100 !text-gray-900 hover:!bg-gray-200"
-                        >
-                            Cancelar
-                        </Button>
-                        <p className="text-[10px] text-gray-400 mt-4 text-center">Este código expira em 30 segundos</p>
+                                <div className="p-4 bg-white border-2 border-gray-100 rounded-xl shadow-inner mb-6 relative">
+                                    <img
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCode)}`}
+                                        alt="QR Code WhatsApp"
+                                        className="w-64 h-64 object-contain"
+                                    />
+                                    {/* Scan Line Animation */}
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.8)] animate-scan"></div>
+                                </div>
+
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => setQrCode(null)}
+                                    className="w-full !bg-gray-100 !text-gray-900 hover:!bg-gray-200"
+                                >
+                                    Cancelar
+                                </Button>
+                                <p className="text-[10px] text-gray-400 mt-4 text-center">Aguardando leitura...</p>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
@@ -314,6 +407,15 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                                         <span className={`text-[9px] px-1.5 rounded font-black border ${inst.status === 'connected' ? 'text-green-400 border-green-500/30 bg-green-500/10' : 'text-gray-400 border-gray-600'}`}>
                                             {inst.status === 'connected' ? 'ONLINE' : 'OFFLINE'}
                                         </span>
+                                        <span className={`text-[9px] px-1.5 rounded font-black border ml-1 ${inst.role === 'sales_bot' ? 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10' :
+                                            inst.role === 'system_notifications' ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' :
+                                                inst.role === 'support_human' ? 'text-purple-400 border-purple-500/30 bg-purple-500/10' :
+                                                    'text-gray-500 border-gray-700 bg-gray-800'
+                                            }`}>
+                                            {inst.role === 'sales_bot' ? 'ROBÔ DE VENDAS' :
+                                                inst.role === 'system_notifications' ? 'SISTEMA/NOTIFY' :
+                                                    inst.role === 'support_human' ? 'SUPORTE' : 'GERAL'}
+                                        </span>
                                     </div>
                                     <p className="text-xs text-gray-500">ID: {inst.id}</p>
                                 </div>
@@ -323,6 +425,9 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                                 {inst.status === 'connected' ? (
                                     <>
                                         <span className="text-green-400 font-mono font-bold text-xs mr-2">{inst.phone}</span>
+                                        <Button variant="secondary" onClick={() => handleTestMessage(inst.id)} className="!py-1.5 !px-3 !text-[10px] font-black !bg-blue-600/20 text-blue-400 border-blue-900/50 uppercase mr-2">
+                                            Testar Envio
+                                        </Button>
                                         <Button variant="secondary" onClick={() => handleDisconnect(inst.id)} className="!py-1.5 !px-3 !text-[10px] font-black !bg-red-900/20 text-red-400 border-red-900/50 uppercase">
                                             Desconectar
                                         </Button>

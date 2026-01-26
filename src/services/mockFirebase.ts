@@ -1800,11 +1800,60 @@ export const sendSystemNotification = async (channel: 'whatsapp' | 'email', to: 
 };
 
 // Replaces the old generic invite function to ensure platform identity
-// Replaces the old generic invite function to ensure platform identity
+import { sendEmail } from './emailService';
+import { getWhatsAppInstances, sendWhatsAppMessage } from './integrationService';
+
 export const sendPlatformInvite = async (channel: 'whatsapp' | 'email', to: string, name: string, context: string, link: string) => {
-    await delay(1000);
-    const sender = channel === 'whatsapp' ? '📱 WhatsApp: "Contato" (Plataforma)' : '📧 Email: contato@mestrenosnegocios.com';
-    console.log(`[PLATFORM INVITE - ${sender}] To: ${to} | Name: ${name} | Context: ${context} | Link: ${link}`);
+    // await delay(1000); // Remove artificial delay for pro feel
+
+    if (channel === 'email') {
+        try {
+            console.log(`📧 Sending Real Email to ${to}...`);
+            await sendEmail({
+                to,
+                subject: `🚀 Convite Mestre nos Negócios: ${context}`,
+                html: `
+                    <div style="font-family: sans-serif; color: #333;">
+                        <h2>Olá, ${name}!</h2>
+                        <p>Você foi convidado para participar do <strong>${context}</strong> na plataforma Mestre nos Negócios.</p>
+                        <p>Para aceitar e criar sua conta, clique no botão abaixo:</p>
+                        <a href="${link}" style="background-color: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin: 10px 0;">ACEITAR CONVITE</a>
+                        <p style="font-size: 12px; color: #666; margin-top: 20px;">Se você não esperava por este convite, ignore este email.</p>
+                    </div>
+                `
+            });
+            console.log("✅ Email sent successfully via Proxy!");
+        } catch (error: any) {
+            console.error("❌ Failed to send email:", error.message);
+            // Don't throw to avoid breaking the UI flow, just log
+        }
+    }
+
+    if (channel === 'whatsapp') {
+        try {
+            console.log(`📱 Sending Real WhatsApp to ${to}...`);
+            // 1. Get Active Instance
+            const instances = await getWhatsAppInstances();
+            const activeInstance = instances.find(i => i.status === 'connected');
+
+            if (!activeInstance) {
+                console.warn("⚠️ No active WhatsApp instance found. Skipping WA invite.");
+                return;
+            }
+
+            // 2. Format Phone (Basic sanitization)
+            const cleanPhone = to.replace(/\D/g, ''); // Remove non-digits
+
+            // 3. Send Message
+            const message = `👋 Olá *${name}*!\n\nVocê recebeu um convite oficial para: *${context}*.\n\nPara acessar, clique no link abaixo:\n${link}\n\n🚀 _Equipe Mestre nos Negócios_`;
+
+            await sendWhatsAppMessage(activeInstance.id, cleanPhone, message);
+            console.log("✅ WhatsApp sent successfully via Whatsmeow!");
+
+        } catch (error: any) {
+            console.error("❌ Failed to send WhatsApp:", error.message);
+        }
+    }
 };
 
 export const addPublishedCourseToUser = async (userId: string, courseId: string) => {

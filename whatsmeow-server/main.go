@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -32,6 +33,7 @@ type Instance struct {
 }
 
 var instances = make(map[string]*Instance)
+var instanceLock sync.RWMutex
 
 func main() {
 	// Load environment variables from parent directory
@@ -85,9 +87,12 @@ func main() {
 
 	// Routes
 	app.Get("/health", func(c *fiber.Ctx) error {
+		instanceLock.RLock()
+		count := len(instances)
+		instanceLock.RUnlock()
 		return c.JSON(fiber.Map{
 			"status":    "healthy",
-			"instances": len(instances),
+			"instances": count,
 			"timestamp": time.Now().Unix(),
 		})
 	})
@@ -101,8 +106,10 @@ func main() {
 		}
 
 		// Check existing
+		instanceLock.Lock()
 		if existing, ok := instances[body.UserID]; ok {
 			if existing.Client.IsConnected() {
+				instanceLock.Unlock()
 				return c.JSON(fiber.Map{
 					"instanceId": body.UserID,
 					"status":     "already_connected",
@@ -111,6 +118,7 @@ func main() {
 			existing.Client.Disconnect()
 			delete(instances, body.UserID)
 		}
+		instanceLock.Unlock()
 
 		// Create new device
 		deviceStore := container.NewDevice()
@@ -119,7 +127,27 @@ func main() {
 
 		// Generate QR
 		qrChan, _ := client.GetQRChannel(context.Background())
-		client.Connect()
+
+		err = client.Connect()
+		if err != nil {
+			fmt.Printf("❌ Connect error: %v\n", err)
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to connect to WA"})
+		}
+
+		// ANTI-GHOST CHECK
+		if client.IsLoggedIn() {
+			fmt.Printf("👻 GHOST SESSION DETECTED for %s! Force clearing...\n", body.UserID)
+			client.Logout(context.Background())
+			client.Store.Delete(context.Background())
+			// Force disconnect
+			client.Disconnect()
+
+			// Recreate cleanly
+			deviceStore = container.NewDevice()
+			client = whatsmeow.NewClient(deviceStore, clientLog)
+			qrChan, _ = client.GetQRChannel(context.Background())
+			client.Connect()
+		}
 
 		// Wait for QR
 		var qrCode string
@@ -139,12 +167,16 @@ func main() {
 			QRCode:    qrCode,
 			CreatedAt: time.Now(),
 		}
+
+		instanceLock.Lock()
 		instances[body.UserID] = instance
+		instanceLock.Unlock()
 
 		// Listen for connection
 		go func() {
 			for evt := range qrChan {
 				if evt.Event == "success" {
+					fmt.Printf("✅ Connection Event: Success for %s\n", body.UserID)
 					instance.Status = "connected"
 					instance.QRCode = ""
 					if client.Store.ID != nil {
@@ -162,18 +194,54 @@ func main() {
 		})
 	})
 
+	app.Post("/api/instances/:userId/logout", func(c *fiber.Ctx) error {
+		userID := c.Params("userId")
+
+		instanceLock.Lock()
+		instance, ok := instances[userID]
+		if ok {
+			delete(instances, userID)
+		}
+		instanceLock.Unlock()
+
+		if ok {
+			instance.Client.Disconnect()
+			fmt.Printf("👋 Instance %s logged out and removed.\n", userID)
+		}
+		return c.JSON(fiber.Map{"status": "logged_out"})
+	})
+
 	app.Get("/api/instances/:userId/status", func(c *fiber.Ctx) error {
 		userID := c.Params("userId")
+
+		instanceLock.RLock()
 		instance, ok := instances[userID]
+		instanceLock.RUnlock()
 
 		if !ok {
 			return c.Status(404).JSON(fiber.Map{"status": "not_found"})
 		}
 
 		status := "disconnected"
-		if instance.Client.IsConnected() {
+		connected := instance.Client.IsConnected()
+		loggedIn := instance.Client.IsLoggedIn()
+		hasID := instance.Client.Store.ID != nil
+		qr_len := len(instance.QRCode)
+
+		// DEBUG LOGGING
+		fmt.Printf("[DEBUG STATUS] User=%s | Connected=%v | LoggedIn=%v | HasID=%v | QR_Len=%d | CurrentStatus=%s\n",
+			userID, connected, loggedIn, hasID, qr_len, instance.Status)
+
+		// If we have a QR code, we are PENDING, regardless of transient connection state
+		if instance.QRCode != "" {
+			status = "qr_pending"
+		} else if connected && loggedIn && hasID {
 			status = "connected"
-		} else if instance.QRCode != "" {
+		}
+
+		// Force sync logic output (Resolving the Paradox)
+		if status == "connected" && instance.QRCode != "" {
+			fmt.Println("⚠️ CRITICAL PARADOX DETECTED: Logic says connected but QR exists. Forcing qr_pending.")
 			status = "qr_pending"
 		}
 
@@ -196,13 +264,16 @@ func main() {
 			return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 		}
 
+		instanceLock.RLock()
 		instance, ok := instances[userID]
+		instanceLock.RUnlock()
+
 		if !ok || !instance.Client.IsConnected() {
 			return c.Status(404).JSON(fiber.Map{"error": "Instance not connected"})
 		}
 
 		jid := types.NewJID(body.To, types.DefaultUserServer)
-		// Send message would go here with proper proto
+		// Send message placeholder
 		_ = jid
 
 		return c.JSON(fiber.Map{
@@ -223,7 +294,6 @@ func main() {
 			return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
-		// Get API Key (support both standard and Vite naming)
 		apiKey := os.Getenv("RESEND_API_KEY")
 		if apiKey == "" {
 			apiKey = os.Getenv("VITE_RESEND_API_KEY")
@@ -233,7 +303,6 @@ func main() {
 			return c.Status(500).JSON(fiber.Map{"error": "Server missing RESEND_API_KEY"})
 		}
 
-		// Prepare Resend Request
 		resendBody := map[string]interface{}{
 			"from":    "Mestre nos Negocios <suporte@mestrenosnegocios.com>",
 			"to":      []string{body.To},
@@ -258,7 +327,6 @@ func main() {
 		}
 		defer resp.Body.Close()
 
-		// Read response
 		var result map[string]interface{}
 		json.NewDecoder(resp.Body).Decode(&result)
 
@@ -277,6 +345,10 @@ func main() {
 		port = "3001"
 	}
 
-	fmt.Printf("🚀 Whatsmeow server starting on port %s\n", port)
+	fmt.Printf("____________________________________________________\n")
+	fmt.Printf("🚀 WHATSMEOW SERVER v3.0 (PARADOX_FIX_ACTIVE)\n")
+	fmt.Printf("⏰ Build Timestamp: %s\n", time.Now().Format(time.RFC3339))
+	fmt.Printf("____________________________________________________\n")
+	fmt.Printf("🚀 Server starting on port %s\n", port)
 	log.Fatal(app.Listen(":" + port))
 }

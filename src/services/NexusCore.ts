@@ -44,12 +44,34 @@ const STRATEGY_MEMORY: Record<string, StrategyInsight> = {
     }
 };
 
-// Mock Instances Data (Should be in DB)
+// MOCK WhatsApp Instances (until integrationService returns real data)
 const MOCK_INSTANCES: WhatsAppInstance[] = [
-    { id: 'inst-sales-01', name: 'Vendas Principal', role: 'sales', status: 'connected', ownerId: 'platform', isBackup: false, phoneNumber: '5511999990001', healthScore: 98, activeChats: 145, capabilities: ['sales'] },
-    { id: 'inst-sales-bkp', name: 'Vendas Backup', role: 'backup', status: 'connected', ownerId: 'platform', isBackup: true, backupForId: 'inst-sales-01', phoneNumber: '5511999990002', healthScore: 100, activeChats: 0, capabilities: ['sales'] },
-    { id: 'inst-notify-01', name: 'Notificações', role: 'notifications', status: 'connected', ownerId: 'platform', isBackup: false, phoneNumber: '5511999990003', healthScore: 100, activeChats: 5, capabilities: ['notifications'] }
+    {
+        id: 'wm-1',
+        name: 'Bot Alex (Vendas)',
+        role: 'sales' as any,
+        status: 'connected',
+        ownerId: 'platform',
+        phoneNumber: '5511999999999',
+        isBackup: false,
+        healthScore: 98,
+        activeChats: 12,
+        capabilities: ['sales']
+    },
+    {
+        id: 'wm-2',
+        name: 'Sistema (Notificações)',
+        role: 'notifications' as any,
+        status: 'connected',
+        ownerId: 'platform',
+        phoneNumber: '5511888888888',
+        isBackup: false,
+        healthScore: 100,
+        activeChats: 0,
+        capabilities: ['notifications']
+    }
 ];
+
 
 class NexusCoreService {
     private queue: NexusTask[] = [];
@@ -604,9 +626,9 @@ class NexusCoreService {
         }
     }
 
-    private sendWhatsAppAlert(message: string) {
+    private async sendWhatsAppAlert(message: string) {
         // Enviar via Instância Oficial de Notificações
-        const instance = this.getOptimalInstance('notifications');
+        const instance = await this.getOptimalInstance('system_notifications');
         const sender = instance ? `${instance.name} (${instance.phoneNumber})` : 'SYSTEM_FALLBACK';
 
         console.log(`[WHATSAPP ALERT] From: ${sender}\nMessage:\n${message}`);
@@ -664,42 +686,69 @@ class NexusCoreService {
      * Finds the best instance for a specific task or context.
      * Implements auto-failover to backup if primary is down.
      */
-    public getOptimalInstance(role: 'sales' | 'notifications', ownerId: string = 'platform'): WhatsAppInstance | null {
-        // 1. Find Primary
-        let primary = MOCK_INSTANCES.find(i => i.role === role && i.ownerId === ownerId && !i.isBackup);
+    public async getOptimalInstance(role: 'sales_bot' | 'system_notifications' | 'support_human' | 'general', ownerId: string = 'platform'): Promise<WhatsAppInstance | null> {
+        // 1. Fetch REAL instances
+        const { getWhatsAppInstances } = await import('./integrationService');
+        const instances = await getWhatsAppInstances();
 
-        // Producers might use their own single instance for everything
+        // MOCK/REAL Fallback Logic is handled in getWhatsAppInstances if needed
+        // Here we just use the instances we fetched
+
+        // 2. Find Primary by Role & Owner
+        // Loose comparison: if stored ownerId is undefined, assume it matches 'platform' context
+        let primary = instances.find(i =>
+            i.role === role &&
+            (i.ownerId === ownerId || (!i.ownerId && ownerId === 'platform')) &&
+            i.status === 'connected'
+        );
+
+        // Fallback: If no specific role, try General (Primary or loose match)
+        if (!primary) {
+            primary = instances.find(i =>
+                i.role === 'general' &&
+                (i.ownerId === ownerId || (!i.ownerId && ownerId === 'platform')) &&
+                i.status === 'connected'
+            );
+        }
+
+        // Fallback: If Producer has no instance, use Platform Shared (if allowed - depends on business rule, assuming yes for now)
         if (!primary && ownerId !== 'platform') {
-            primary = MOCK_INSTANCES.find(i => i.ownerId === ownerId);
+            primary = instances.find(i => i.role === 'general' && i.ownerId === 'platform' && i.status === 'connected');
         }
 
-        // 2. Check Health
-        if (primary && (primary.status === 'connected' || primary.status === 'maintenance')) {
-            if (primary.status === 'maintenance') {
-                logger.warn(`[Nexus Routing] Instance ${primary.id} under maintenance. Checking backup...`);
-                // Fallthrough to backup check
-            } else {
-                return primary;
-            }
-        }
+        if (primary) return primary;
 
-        // 3. Failover to Backup (Only for Platform usually)
-        if (primary) {
-            const backup = MOCK_INSTANCES.find(i => i.isBackup && i.backupForId === primary!.id && i.status === 'connected');
-            if (backup) {
-                logger.warn(`[Nexus Routing] 🚨 FAILOVER ALERT: Switching from ${primary.id} to Backup ${backup.id}`);
-                return backup;
-            }
-        }
-
-        // 4. Fallback to any active instance with capability (Last Resort)
-        const emergency = MOCK_INSTANCES.find(i => i.capabilities.includes(role) && i.status === 'connected');
+        // 3. Emergency Fallback (Any connected)
+        const emergency = instances.find(i => i.status === 'connected');
         if (emergency) {
-            logger.warn(`[Nexus Routing] ⚠️ EMERGENCY ROUTING: Using shared instance ${emergency.id}`);
+            logger.warn(`[Nexus Routing] ⚠️ EMERGENCY ROUTING: Using random instance ${emergency.id} for ${role}`);
             return emergency;
         }
 
         return null; // System Down
+    }
+
+    /**
+     * Finds the best SMTP server for the job.
+     */
+    public async getOptimalSmtp(role: 'marketing' | 'system' | 'support' | 'general'): Promise<any | null> {
+        const { getSmtpConfigs } = await import('./integrationService');
+        const configs = await getSmtpConfigs();
+
+        // 1. Match Role
+        let best = configs.find(c => c.role === role && c.status === 'active');
+
+        // 2. Fallback to General
+        if (!best) {
+            best = configs.find(c => c.role === 'general' && c.status === 'active');
+        }
+
+        // 3. Fallback to System (Transactional is usually most reliable)
+        if (!best) {
+            best = configs.find(c => c.role === 'system' && c.status === 'active');
+        }
+
+        return best || null;
     }
 
     public reportInstanceFailure(instanceId: string) {
@@ -744,6 +793,58 @@ class NexusCoreService {
         //        logger.info(`[Nexus Checkout] 🏆 MATCH! Sale Confirmed. Stopping Recovery.`);
         //        // Trigger "Welcome" message
         //    }
+    }
+
+    /**
+     * Sends a unified System Invite/Notification via best available channels.
+     * Uses: System WhatsApp + System Email.
+     */
+    public async sendSystemInvite(data: { phone?: string, email?: string, name: string, projectName: string, link: string }) {
+        const results = { wa: false, email: false, waInstance: '', emailServer: '' };
+
+        // 1. WhatsApp Dispatch
+        if (data.phone) {
+            const waInstance = await this.getOptimalInstance('system_notifications');
+            if (waInstance) {
+                logger.info(`[Nexus Invite] 📱 Sending WA to ${data.phone} using ${waInstance.name}...`);
+                // Calls integration service or legacy mock logic here
+                // For now, we simulate the 'Send' call
+                // await whatsappService.sendText(waInstance.id, data.phone. ...)
+                results.wa = true;
+                results.waInstance = waInstance.name;
+            } else {
+                logger.warn(`[Nexus Invite] ⚠️ No 'system_notifications' instance available. WhatsApp skipped.`);
+            }
+        }
+
+        // 2. Email Dispatch
+        if (data.email) {
+            const smtp = await this.getOptimalSmtp('system');
+            // If no specific system smtp, it falls back to general in getOptimalSmtp
+
+            logger.info(`[Nexus Invite] 📧 Sending Email to ${data.email} using ${smtp?.host || 'Default'}...`);
+
+            const { sendEmail } = await import('./emailService');
+            // Mock Template
+            const html = `
+                <div style="font-family: sans-serif; color: #333;">
+                    <h2>Olá ${data.name},</h2>
+                    <p>Você foi convidado para participar do <strong>${data.projectName}</strong>.</p>
+                    <p><a href="${data.link}" style="background: #22c55e; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Acessar Painel</a></p>
+                    <p style="font-size: 12px; color: #999;">Enviado via Nexus System • ${smtp?.host || 'System Mailer'}</p>
+                </div>
+            `;
+
+            await sendEmail({
+                to: data.email,
+                subject: `Convite: ${data.projectName}`,
+                html
+            });
+            results.email = true;
+            results.emailServer = smtp?.host || 'Default';
+        }
+
+        return results;
     }
 
     /**

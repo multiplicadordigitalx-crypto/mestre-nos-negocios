@@ -518,7 +518,7 @@ export interface WhiteLabelConfig {
     }[];
 }
 
-export type InstanceRole = 'sales' | 'notifications' | 'support' | 'router' | 'backup';
+export type InstanceRole = 'sales' | 'notifications' | 'support' | 'router' | 'backup' | 'sales_bot' | 'system_notifications' | 'support_human' | 'general';
 export type InstanceStatus = 'connected' | 'disconnected' | 'banned' | 'maintenance';
 
 export interface WhatsAppInstance {
@@ -535,6 +535,13 @@ export interface WhatsAppInstance {
     creditValueBRL?: number;
     activeChats: number;
     capabilities: ('sales' | 'notifications' | 'mass_sending')[];
+    engine?: 'whatsmeow' | 'evolution'; // Optional for backward compatibility
+    lastActivity?: Date;
+    profilePic?: string;
+    battery?: number;
+    port?: number;
+    ram?: string;
+    goroutines?: number;
 }
 
 export type SafetyRule = 'block_mass_sending' | 'throttle_sending' | 'active_only_if_primary_down';

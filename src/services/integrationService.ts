@@ -1,6 +1,7 @@
 
 import { db } from './firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc, query, where, getDoc } from 'firebase/firestore';
+import { WhatsAppInstance } from '../types/legacy';
 
 export interface PaymentGateway {
     id: string;
@@ -19,20 +20,6 @@ export interface RoutingRules {
     creditCard: string;
     boleto: string;
     international: string;
-}
-
-export interface WhatsAppInstance {
-    id: string;
-    instanceName: string;
-    status: 'connected' | 'disconnected';
-    phone?: string;
-    profilePic?: string;
-    battery?: number;
-    lastActivity?: any;
-    engine: 'whatsmeow' | 'evolution';
-    port?: number;
-    ram?: string;
-    goroutines?: number;
 }
 
 export interface DomainProvider {
@@ -72,6 +59,7 @@ export interface SmtpConfig {
     product: string;
     status: 'active' | 'inactive';
     updatedAt: any;
+    role: 'marketing' | 'system' | 'support' | 'general';
 }
 
 export interface AIConfig {
@@ -266,7 +254,50 @@ export const saveWhatsAppInstance = async (instance: WhatsAppInstance) => {
 };
 
 export const deleteWhatsAppInstance = async (id: string) => {
-    await deleteDoc(doc(db, WHATSAPP_COLLECTION, id));
+    try {
+        await deleteDoc(doc(db, WHATSAPP_COLLECTION, id));
+    } catch (error) {
+        console.warn("Firestore delete failed, cleaning up localStorage fallback:", error);
+        // Fallback for Mock Mode
+        const stored = localStorage.getItem(`mock_${WHATSAPP_COLLECTION}`);
+        if (stored) {
+            const instances = JSON.parse(stored) as WhatsAppInstance[];
+            const filtered = instances.filter(i => i.id !== id);
+            localStorage.setItem(`mock_${WHATSAPP_COLLECTION}`, JSON.stringify(filtered));
+        }
+    }
+};
+
+export const sendWhatsAppMessage = async (instanceId: string, phone: string, message: string) => {
+    // 1. Get Instance to retrieve API Key (for security)
+    // Ideally this should be handled by the backend, but for this hybrid setup:
+    const instances = await getWhatsAppInstances();
+    const instance = instances.find(i => i.id === instanceId);
+
+    if (!instance) throw new Error("Instance not found");
+
+    // 2. Local Proxy URL
+    const SERVER_URL = 'http://localhost:3001';
+
+    // 3. Make Request
+    const response = await fetch(`${SERVER_URL}/api/instances/${instanceId}/send`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            // If using API Key auth in Go:
+            // 'Authorization': `Bearer ${localStorage.getItem('whatsmeow_api_key') || ''}`
+        },
+        body: JSON.stringify({
+            to: phone,
+            message: message
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to send WA message: ${response.statusText}`);
+    }
+
+    return await response.json();
 };
 
 export const getDomainProviders = async (): Promise<DomainProvider[]> => {

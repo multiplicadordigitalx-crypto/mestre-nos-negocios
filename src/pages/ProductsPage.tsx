@@ -38,23 +38,40 @@ const KpiCard: React.FC<{ label: string, value: string, icon: React.ReactNode, c
 // --- MODAL: CONVIDAR AFILIADO ---
 const AffiliateManagerModal: React.FC<{ isOpen: boolean, onClose: () => void, products: AppProduct[] }> = ({ isOpen, onClose, products }) => {
     const [loading, setLoading] = useState(false);
-    const [inviteData, setInviteData] = useState({ name: '', phone: '', product: '' });
+    const [inviteData, setInviteData] = useState({ name: '', phone: '', email: '', product: '' });
 
     if (!isOpen) return null;
 
     const handleSendInvite = async () => {
-        if (!inviteData.name || !inviteData.phone || !inviteData.product) return toast.error("Preencha todos os campos.");
+        if (!inviteData.name || (!inviteData.phone && !inviteData.email) || !inviteData.product) return toast.error("Preencha Nome, Produto e pelo menos um contato.");
 
         setLoading(true);
         try {
             // Generate unique link
             const link = `https://mestre15x.com/invite?ref=${Math.random().toString(36).substring(7)}&product=${inviteData.product}`;
+            const productName = products.find(p => p.id === inviteData.product)?.name || 'Produto';
 
-            // Send via system integration
-            await sendInviteViaWhatsAppInstance(inviteData.phone, inviteData.name, products.find(p => p.id === inviteData.product)?.name || 'Produto', link);
+            // Send via Unified Nexus System
+            const { nexusCore } = await import('../services/NexusCore');
+            const result = await nexusCore.sendSystemInvite({
+                name: inviteData.name,
+                phone: inviteData.phone,
+                email: inviteData.email,
+                projectName: productName,
+                link: link
+            });
 
-            toast.success(`Convite enviado para ${inviteData.name} via WhatsApp!`, { icon: '📲' });
-            onClose();
+            // Rich Feedback
+            const channels = [];
+            if (result.wa) channels.push(`WhatsApp (${result.waInstance})`);
+            if (result.email) channels.push(`Email (${result.emailServer})`);
+
+            if (channels.length > 0) {
+                toast.success(`Convite enviado via: ${channels.join(' & ')}`, { icon: '🚀', duration: 4000 });
+                onClose();
+            } else {
+                toast.error("Falha ao enviar convite (Sem canais disponíveis).");
+            }
         } catch (error: any) {
             console.error("Invite Error:", error);
             toast.error(`Erro ao enviar: ${error.message}`);
@@ -76,11 +93,13 @@ const AffiliateManagerModal: React.FC<{ isOpen: boolean, onClose: () => void, pr
                 <div className="p-6">
                     <div className="space-y-4">
                         <div className="bg-blue-900/20 p-3 rounded-lg border border-blue-500/30 text-xs text-blue-200">
-                            <strong>Nota:</strong> Ao convidar, o sistema enviará uma mensagem automática via WhatsApp com o link de login.
+                            <strong>Nota:</strong> O Nexus escolherá automaticamente a melhor rota (WhatsApp Sistema ou Email Marketing).
                         </div>
 
                         <Input label="Nome" value={inviteData.name} onChange={e => setInviteData({ ...inviteData, name: e.target.value })} placeholder="Nome do afiliado" />
-                        <Input label="WhatsApp (com DDD)" value={inviteData.phone} onChange={e => setInviteData({ ...inviteData, phone: e.target.value })} placeholder="5511999999999" />
+                        <Input label="WhatsApp" value={inviteData.phone} onChange={e => setInviteData({ ...inviteData, phone: e.target.value })} placeholder="5511999999999" />
+                        <Input label="Email (Opcional)" value={inviteData.email} onChange={e => setInviteData({ ...inviteData, email: e.target.value })} placeholder="email@parceiro.com" />
+
                         <div>
                             <label className="text-xs text-gray-400 font-bold uppercase mb-1 block">Produto</label>
                             <select className="w-full bg-gray-900 border border-gray-600 rounded-lg p-2.5 text-white text-sm" value={inviteData.product} onChange={e => setInviteData({ ...inviteData, product: e.target.value })}>
@@ -89,7 +108,7 @@ const AffiliateManagerModal: React.FC<{ isOpen: boolean, onClose: () => void, pr
                             </select>
                         </div>
                         <Button onClick={handleSendInvite} isLoading={loading} className="w-full mt-2 !bg-green-600 hover:!bg-green-500 font-bold">
-                            <Whatsapp className="w-4 h-4 mr-2" /> ENVIAR CONVITE AUTOMÁTICO
+                            <Whatsapp className="w-4 h-4 mr-2" /> ENVIAR CONVITE UNIFICADO
                         </Button>
                     </div>
                 </div>

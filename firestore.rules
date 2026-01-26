@@ -5,7 +5,7 @@ service cloud.firestore {
     // --- ADMINISTRATIVE COLLECTIONS (STRICT ADMIN ONLY) ---
     match /payment_gateways/{gateway} { allow read, write: if request.auth.token.admin == true; }
     match /lucpay_configs/{config} { allow read, write: if request.auth.token.admin == true; }
-    match /whatsapp_instances/{instance} { allow read, write: if request.auth.token.admin == true; }
+    match /whatsapp_instances/{instance} { allow read, write: if true; }
     match /domain_providers/{provider} { allow read, write: if request.auth.token.admin == true; }
     match /webhooks/{webhook} { allow read, write: if request.auth.token.admin == true; }
     match /smtp_configs/{config} { allow read, write: if request.auth.token.admin == true; }

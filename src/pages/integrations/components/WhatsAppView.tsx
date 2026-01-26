@@ -5,9 +5,9 @@ import { Smartphone, Zap, Server, PlusCircle, Trash, RefreshCw, LogOut, Eye, Eye
 import {
     getWhatsAppInstances,
     saveWhatsAppInstance,
-    deleteWhatsAppInstance,
-    WhatsAppInstance
+    deleteWhatsAppInstance
 } from '../../../services/integrationService';
+import { WhatsAppInstance } from '../../../types/legacy';
 import toast from 'react-hot-toast';
 import { WhatsmeowManager } from './WhatsmeowManager';
 import { CreateInstanceModal } from '../modals/CreateInstanceModal';
@@ -77,10 +77,17 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
 
             const newInst: WhatsAppInstance = {
                 id: `wa-${Date.now()}`,
-                instanceName: name,
+                name: name,
                 status: 'disconnected',
                 lastActivity: new Date(),
-                engine: whatsAppEngine
+                engine: whatsAppEngine,
+                ownerId: 'platform',
+                isBackup: false,
+                phoneNumber: '',
+                healthScore: 100,
+                activeChats: 0,
+                capabilities: [],
+                role: 'general'
             };
 
             await saveWhatsAppInstance(newInst);

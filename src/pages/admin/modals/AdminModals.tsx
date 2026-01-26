@@ -429,12 +429,28 @@ export const TeamMemberModal: React.FC<{ initialData?: TeamUser | null, onClose:
             } else {
                 // New member creation
                 await createTeamUser(formData);
-                // Simulation of WhatsApp invite
-                if (formData.phone) {
-                    await sendInviteViaWhatsAppInstance(formData.phone, formData.name, "Acesso Equipe 15X", "https://admin.mestre15x.com/login");
-                    toast.success(`Convite enviado via WhatsApp para ${formData.phone}`, { icon: '📲' });
-                } else {
-                    toast("Membro criado, mas sem telefone para convite automático.", { icon: '⚠️' });
+
+                // Unified Nexus Invite (WhatsApp + Email)
+                if (formData.phone || formData.email) {
+                    const { nexusCore } = await import('../../../services/NexusCore');
+                    const inviteResult = await nexusCore.sendSystemInvite({
+                        phone: formData.phone,
+                        email: formData.email,
+                        name: formData.name,
+                        projectName: "Acesso Equipe 15X",
+                        link: "https://admin.mestre15x.com/login"
+                    });
+
+                    // Rich Feedback
+                    const channels = [];
+                    if (inviteResult.wa) channels.push(`WhatsApp (${inviteResult.waInstance})`);
+                    if (inviteResult.email) channels.push(`Email (${inviteResult.emailServer})`);
+
+                    if (channels.length > 0) {
+                        toast.success(`Convite enviado via: ${channels.join(' & ')}`, { icon: '🚀', duration: 5000 });
+                    } else {
+                        toast("Membro salvo, mas sem canais de envio disponíveis.", { icon: '⚠️' });
+                    }
                 }
             }
 
