@@ -493,7 +493,7 @@ export const stripeWebhook = onRequest(async (req, res) => {
         return;
     }
 
-    const stripe = new Stripe(stripeSecret, { apiVersion: '2025-02-24.acacia' });
+    const stripe = new Stripe(stripeSecret, { apiVersion: '2023-10-16' });
 
     let event;
 
@@ -660,7 +660,7 @@ async function getProductOwner(productId: string): Promise<string> {
 }
 
 async function distributeSplits(sessionId: string, data: any, stripeSecret: string) {
-    const stripe = new Stripe(stripeSecret, { apiVersion: '2025-02-24.acacia' });
+    const stripe = new Stripe(stripeSecret, { apiVersion: '2023-10-16' });
     const { splits, currency } = data;
     const transferResults: any = {};
 
