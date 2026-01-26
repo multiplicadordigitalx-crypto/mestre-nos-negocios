@@ -90,7 +90,6 @@ export const publishProduct = async (product: AppProduct) => {
             stripeProductId: stripeResult.stripeProductId,
             checkoutLinks: stripeResult.checkoutLinks,
             status: 'active',
-            updatedAt: new Date().toISOString() // Ensure date is updated
         };
 
         // 3. Save to Firestore

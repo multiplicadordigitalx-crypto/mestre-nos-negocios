@@ -42,7 +42,9 @@ export default async function handler(
 
     // Handle events
     try {
-        switch (event.type) {
+        const eventType = event.type as string;
+
+        switch (eventType) {
             case 'checkout.session.completed':
                 await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
                 break;
@@ -52,11 +54,11 @@ export default async function handler(
                 break;
 
             case 'transfer.paid':
-                await handleTransferPaid((event.data.object as any) as Stripe.Transfer);
+                await handleTransferPaid(event.data.object as unknown as Stripe.Transfer);
                 break;
 
             case 'payment_intent.payment_failed':
-                await handlePaymentFailed((event.data.object as any) as Stripe.PaymentIntent);
+                await handlePaymentFailed(event.data.object as unknown as Stripe.PaymentIntent);
                 break;
 
             default:

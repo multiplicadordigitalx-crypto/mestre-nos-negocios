@@ -1,7 +1,7 @@
 import toast from 'react-hot-toast';
+import { auth } from './firebase';
 
-const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || ''; // Ensure this env var is set
-const API_URL = 'https://api.elevenlabs.io/v1';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export interface VoiceOption {
     id: string;
@@ -19,47 +19,42 @@ export const AVAILABLE_VOICES: VoiceOption[] = [
 
 export const ElevenLabsService = {
     /**
-     * Generates audio from text using ElevenLabs API.
+     * Generates audio from text using ElevenLabs API (Via Secure Server Proxy).
      * @param text The text to speak.
      * @param voiceId The ID of the voice to use.
      * @returns Blob URL of the generated audio.
      */
-    async generateAudio(text: string, voiceId: string = '21m00Tcm4TlvDq8ikWAM'): Promise<string | null> {
-        if (!ELEVENLABS_API_KEY) {
-            console.warn('ElevenLabs API Key not found. Using mock response.');
-            // Return a dummy audio url or null if we want to fail gracefully in UI
-            // For now, let's toast and return null so the UI doesn't break but user knows.
-            // toast.error("Chave de API ElevenLabs não configurada.");
-            return null; // Or return a local mock file for testing
-        }
-
+    async generateAudio(text: string, voiceId: string = "21m00Tcm4TlvDq8ikWAM"): Promise<string | null> {
         try {
-            const response = await fetch(`${API_URL}/text-to-speech/${voiceId}`, {
+            const user = auth?.currentUser;
+            if (!user) {
+                console.error("User not authenticated for Audio Generation");
+                return null;
+            }
+
+            const response = await fetch(`${API_URL}/ai/tts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'xi-api-key': ELEVENLABS_API_KEY,
                 },
                 body: JSON.stringify({
                     text,
-                    model_id: 'eleven_multilingual_v2', // Good for Portuguese
-                    voice_settings: {
-                        stability: 0.5,
-                        similarity_boost: 0.75,
-                    },
-                }),
+                    voiceId,
+                    uid: user.uid
+                })
             });
 
             if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.detail?.message || 'Failed to generate audio');
+                if (response.status === 403) throw new Error("Saldo insuficiente para gerar áudio.");
+                throw new Error("Erro na geração de áudio");
             }
 
             const blob = await response.blob();
             return URL.createObjectURL(blob);
         } catch (error) {
-            console.error('ElevenLabs Error:', error);
-            toast.error("Erro ao gerar áudio do mentor.");
+            console.error("ElevenLabs Error:", error);
+            // toast.error("Erro ao gerar áudio do mentor."); 
+            // Suppress toast loop in chat interface, let UI handle it if needed
             return null;
         }
     },
@@ -67,7 +62,7 @@ export const ElevenLabsService = {
     /**
      * Preloads standard responses to cache/minimize API usage.
      */
-    async preloadWelcomeMessage(studentName: string) {
+    async preloadWelcomeMessage(_studentName: string) {
         // Implementation for pre-caching specific static phrases
     }
 };
