@@ -87,23 +87,97 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     useEffect(() => {
-        const initAuth = () => {
-            try {
-                const storedUser = localStorage.getItem('user');
-                if (storedUser) {
-                    const parsedUser = JSON.parse(storedUser);
-                    if (parsedUser && parsedUser.uid) {
-                        setUser(enforceAdminPermissions(parsedUser));
+        // CRITICAL: Firebase onAuthStateChanged listener (replaces localStorage)
+        // This is the single source of truth for authentication state
+        if (!auth) {
+            // Mock mode fallback (no Firebase configured)
+            const initAuthMock = () => {
+                try {
+                    const storedUser = localStorage.getItem('user');
+                    if (storedUser) {
+                        const parsedUser = JSON.parse(storedUser);
+                        if (parsedUser && parsedUser.uid) {
+                            setUser(enforceAdminPermissions(parsedUser));
+                        }
                     }
+                } catch (error) {
+                    console.error("Auth init error (mock mode)", error);
+                    localStorage.removeItem('user');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            initAuthMock();
+            return;
+        }
+
+        // REAL Firebase Auth State Listener
+        const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+            setLoading(true);
+            try {
+                if (firebaseUser) {
+                    // User is signed in
+                    console.log('[Auth] Firebase user detected:', firebaseUser.uid);
+
+                    // Fetch user profile from Firestore
+                    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data() as User;
+                        const finalUser = enforceAdminPermissions({
+                            ...userData,
+                            uid: firebaseUser.uid,
+                            email: firebaseUser.email || userData.email || '',
+                            photoURL: firebaseUser.photoURL || userData.photoURL
+                        });
+                        setUser(finalUser);
+                        localStorage.setItem('user', JSON.stringify(finalUser)); // Backup for offline
+                        console.log('[Auth] User profile loaded from Firestore');
+                    } else {
+                        // User authenticated but no profile in Firestore
+                        console.warn('[Auth] User authenticated but no Firestore profile:', firebaseUser.email);
+
+                        // Auto-provision for admins
+                        const normalizedEmail = firebaseUser.email?.toLowerCase() || '';
+                        if (ADMIN_EMAILS.includes(normalizedEmail)) {
+                            console.log('[Auth] Auto-provisioning admin profile...');
+                            const adminData: User = {
+                                uid: firebaseUser.uid,
+                                email: normalizedEmail,
+                                displayName: firebaseUser.displayName || 'Admin',
+                                photoURL: firebaseUser.photoURL || '',
+                                role: 'super_admin',
+                                permissions: ['all']
+                            };
+
+                            await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
+                            const finalUser = enforceAdminPermissions(adminData);
+                            setUser(finalUser);
+                            localStorage.setItem('user', JSON.stringify(finalUser));
+                            console.log('[Auth] Admin profile auto-provisioned');
+                        } else {
+                            // Non-admin without profile: sign out
+                            console.error('[Auth] Non-admin user without Firestore profile');
+                            await auth.signOut();
+                            toast.error('Conta não configurada. Entre em contato com o suporte.');
+                        }
+                    }
+                } else {
+                    // User is signed out
+                    console.log('[Auth] No Firebase user detected - signed out');
+                    setUser(null);
+                    localStorage.removeItem('user');
                 }
             } catch (error) {
-                console.error("Auth init error", error);
-                localStorage.removeItem('user');
+                console.error('[Auth] Error in onAuthStateChanged:', error);
+                // Don't sign out on error, keep current state
             } finally {
                 setLoading(false);
             }
-        };
-        initAuth();
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
     }, []);
 
     const refreshUser = async () => {
@@ -195,140 +269,111 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             const normalizedEmail = email.trim().toLowerCase();
 
-            // Try REAL Firebase Auth first
-            try {
-                const firebaseUser = await firebaseSignInWithEmail(normalizedEmail, password);
-                if (firebaseUser) {
-                    // Fetch user data from Firestore
-                    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data() as User;
+            // REAL Firebase Auth (Primary Path)
+            if (auth) {
+                try {
+                    // Just authenticate - onAuthStateChanged will handle the rest
+                    console.log('[Auth] Signing in with Firebase:', normalizedEmail);
+                    await firebaseSignInWithEmail(normalizedEmail, password);
 
-                        // Log activity in Firestore
-                        await updateDoc(doc(db, 'users', firebaseUser.uid), {
-                            lastLogin: new Date().toISOString(),
-                            lastLoginIp: 'Client-side sync' // IP could be handled better via Cloud Functions or external API
-                        }).catch(e => console.warn("Failed to log activity", e));
+                    // onAuthStateChanged will:
+                    // 1. Detect the sign-in
+                    // 2. Load user profile from Firestore
+                    // 3. Auto-provision admin if needed
+                    // 4. Set user state
+                    // 5. Show success toast
 
-                        const finalUser = enforceAdminPermissions({
-                            ...userData,
-                            uid: firebaseUser.uid,
-                            email: firebaseUser.email || normalizedEmail
-                        });
-                        setUser(finalUser);
-                        localStorage.setItem('user', JSON.stringify(finalUser));
-                        toast.success(`Bem-vindo(a), ${finalUser.displayName || 'Admin'}!`);
-                        return;
+                    setFailedAttempts(0);
+                    // Note: We don't show toast here because onAuthStateChanged will do it
+                    console.log('[Auth] Firebase sign-in successful, waiting for onAuthStateChanged...');
+                    return;
+                } catch (firebaseError: any) {
+                    console.error("[Auth] Firebase Auth Error:", firebaseError.code, firebaseError.message);
+
+                    const errorCode = firebaseError.code;
+
+                    // Handle common Firebase Auth errors
+                    if (errorCode === 'auth/wrong-password' ||
+                        errorCode === 'auth/user-not-found' ||
+                        errorCode === 'auth/invalid-credential') {
+                        throw new Error("E-mail ou senha incorretos.");
                     }
 
-                    // AUTO-PROVISIONING logic for ADMINS (Professional Mode)
-                    if (ADMIN_EMAILS.includes(normalizedEmail)) {
-                        console.log("Requesting Professional Provisioning for Admin...");
-
-                        try {
-                            const initAdminFn = httpsCallable(functions, 'initializeAdminUser');
-                            const result: any = await initAdminFn();
-                            console.info("Server-side Admin initialization response:", result.data);
-
-                            // Essential: Wait a bit for claims to propagate in Google's cloud
-                            await delay(2000);
-
-                            const { getAuth } = require('firebase/auth');
-                            const authInst = getAuth();
-                            if (authInst.currentUser) {
-                                // Force token refresh to include NEW admin claim
-                                await authInst.currentUser.getIdToken(true);
-                                console.info("Token refreshed with new claims.");
-                            }
-                        } catch (provisionError: any) {
-                            console.error("Professional Provisioning failed:", provisionError);
-                        }
-
-                        // Re-fetch from Firestore to get the finalized profile
-                        const finalDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-                        const finalData = finalDoc.exists() ? finalDoc.data() as User : {
-                            uid: firebaseUser.uid,
-                            email: normalizedEmail,
-                            displayName: firebaseUser.displayName || 'Admin',
-                            photoURL: firebaseUser.photoURL || '',
-                            role: 'super_admin'
-                        };
-
-                        const finalUser = enforceAdminPermissions(finalData as User);
-                        setUser(finalUser);
-                        localStorage.setItem('user', JSON.stringify(finalUser));
-                        toast.success(`Logado como Administrador: ${finalUser.email}`);
-                        return;
+                    if (errorCode === 'auth/user-disabled') {
+                        throw new Error("Esta conta foi desativada.");
                     }
-                }
-            } catch (firebaseError: any) {
-                console.error("Firebase Auth Error:", firebaseError.code, firebaseError.message);
 
-                const errorCode = firebaseError.code;
+                    if (errorCode === 'auth/too-many-requests') {
+                        throw new Error("Muitas tentativas de login. Tente novamente mais tarde.");
+                    }
 
-                // Tratar erros de permissão (Firestore) durante o provisionamento
-                if (errorCode === 'permission-denied' || firebaseError.message?.includes('permissions')) {
-                    throw new Error("Erro de Permissão: A conta foi autenticada, mas o banco de dados bloqueou a criação do seu perfil. Verifique as 'Firestore Rules'.");
-                }
-
-                // Tratar erros comuns do Firebase Auth
-                if (errorCode === 'auth/wrong-password' ||
-                    errorCode === 'auth/user-not-found' ||
-                    errorCode === 'auth/invalid-credential') {
-                    throw new Error("E-mail ou senha incorretos. Verifique suas credenciais no Console do Firebase.");
-                }
-
-                if (errorCode === 'auth/user-disabled') throw new Error("Esta conta foi desativada.");
-
-                // If it's an admin email, we want to know exactly what's happening
-                if (ADMIN_EMAILS.includes(normalizedEmail)) {
-                    throw new Error(`Erro na conexão com Firebase (${errorCode || 'unk'}): ${firebaseError.message}`);
+                    // Generic Firebase error
+                    throw new Error(`Erro de autenticação: ${firebaseError.message}`);
                 }
             }
 
-            // FALLBACK logic: Only for Students or when Firestore is literally empty during migration
-            // In Professional Mode, we should eventually remove this entirely.
-            if (!ADMIN_EMAILS.includes(normalizedEmail)) {
-                await delay(500);
-                const staffMember = [...mockTeamUsers, ...mockSalesTeam, ...mockSupportAgents].find(u => u.email?.toLowerCase() === normalizedEmail);
-                if (staffMember) {
-                    if ((staffMember as any).password && (staffMember as any).password !== password) {
-                        throw new Error("Senha incorreta.");
-                    }
-                    let normalizedUser: User;
-                    if ('id' in staffMember && !('uid' in staffMember)) {
-                        const teamUser = staffMember as TeamUser;
-                        if (teamUser.status !== 'active') throw new Error("Acesso bloqueado ou inativo.");
-                        normalizedUser = { uid: teamUser.id, email: teamUser.email, displayName: teamUser.name, photoURL: teamUser.photoURL, role: teamUser.role, permissions: teamUser.permissions };
-                    } else {
-                        const agent = staffMember as any;
-                        normalizedUser = { uid: agent.uid, email: agent.email, displayName: agent.displayName, photoURL: agent.photoURL, role: agent.role, permissions: agent.permissions };
-                    }
-                    const finalUser = enforceAdminPermissions(normalizedUser);
-                    setUser(finalUser);
-                    localStorage.setItem('user', JSON.stringify(finalUser));
-                    setFailedAttempts(0);
-                    toast.success(`Bem-vindo(a), ${finalUser.displayName}!`);
-                    return;
+            // MOCK MODE FALLBACK (when Firebase is not configured)
+            // This will be removed once Firebase is fully deployed
+            console.warn('[Auth] Firebase not configured, using mock auth mode');
+
+            await delay(500);
+            const staffMember = [...mockTeamUsers, ...mockSalesTeam, ...mockSupportAgents].find(
+                u => u.email?.toLowerCase() === normalizedEmail
+            );
+
+            if (staffMember) {
+                if ((staffMember as any).password && (staffMember as any).password !== password) {
+                    throw new Error("Senha incorreta.");
                 }
 
-                const students = await getStudents();
-                const student = students.find(s => s.email?.toLowerCase() === normalizedEmail);
-
-                if (student) {
-                    if ((student as any).password && (student as any).password !== password) {
-                        throw new Error("Senha incorreta.");
-                    }
-                    const finalUser = enforceAdminPermissions(student);
-                    setUser(finalUser);
-                    localStorage.setItem('user', JSON.stringify(finalUser));
-                    setFailedAttempts(0);
-                    toast.success(`Bem-vindo(a) de volta, ${student.displayName}!`);
-                    return;
+                let normalizedUser: User;
+                if ('id' in staffMember && !('uid' in staffMember)) {
+                    const teamUser = staffMember as TeamUser;
+                    if (teamUser.status !== 'active') throw new Error("Acesso bloqueado ou inativo.");
+                    normalizedUser = {
+                        uid: teamUser.id,
+                        email: teamUser.email,
+                        displayName: teamUser.name,
+                        photoURL: teamUser.photoURL,
+                        role: teamUser.role,
+                        permissions: teamUser.permissions
+                    };
+                } else {
+                    const agent = staffMember as any;
+                    normalizedUser = {
+                        uid: agent.uid,
+                        email: agent.email,
+                        displayName: agent.displayName,
+                        photoURL: agent.photoURL,
+                        role: agent.role,
+                        permissions: agent.permissions
+                    };
                 }
+
+                const finalUser = enforceAdminPermissions(normalizedUser);
+                setUser(finalUser);
+                localStorage.setItem('user', JSON.stringify(finalUser));
+                setFailedAttempts(0);
+                toast.success(`Bem-vindo(a), ${finalUser.displayName}!`);
+                return;
             }
 
-            throw new Error('Conta não encontrada no Firebase. Use as credenciais criadas no console.');
+            const students = await getStudents();
+            const student = students.find(s => s.email?.toLowerCase() === normalizedEmail);
+
+            if (student) {
+                if ((student as any).password && (student as any).password !== password) {
+                    throw new Error("Senha incorreta.");
+                }
+                const finalUser = enforceAdminPermissions(student);
+                setUser(finalUser);
+                localStorage.setItem('user', JSON.stringify(finalUser));
+                setFailedAttempts(0);
+                toast.success(`Bem-vindo(a) de volta, ${student.displayName}!`);
+                return;
+            }
+
+            throw new Error('Conta não encontrada. Verifique suas credenciais.');
         } catch (error: any) {
             handleLoginError(error.message);
         } finally {
