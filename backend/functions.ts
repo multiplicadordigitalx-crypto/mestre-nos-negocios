@@ -1,5 +1,5 @@
 import { onCall, HttpsError, CallableRequest, onRequest } from 'firebase-functions/v2/https';
-import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { onDocumentUpdated, onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
 
@@ -220,6 +220,51 @@ const ADMIN_EMAILS = [
     'paulo@mestrenosnegocios.com',
     'thales@mestrenosnegocios.com'
 ];
+
+// --- AUTOMATIC CUSTOM CLAIMS TRIGGER ---
+// This trigger automatically sets admin claims when a user profile is created
+// Eliminates the need for manual calls to initializeAdminUser
+export const onUserProfileCreated = onDocumentCreated(
+    {
+        document: 'users/{userId}',
+        ...FUNCTION_OPTS
+    },
+    async (event) => {
+        if (!event.data) return;
+
+        const userId = event.params.userId;
+        const userData = event.data.data();
+        const email = userData?.email?.toLowerCase();
+
+        if (!email) {
+            console.log(`[Custom Claims] User ${userId} has no email, skipping claims check`);
+            return;
+        }
+
+        // Check if user is an admin based on email
+        if (ADMIN_EMAILS.includes(email)) {
+            try {
+                // Set admin custom claims
+                await admin.auth().setCustomUserClaims(userId, {
+                    admin: true,
+                    role: 'super_admin'
+                });
+
+                console.log(`[Custom Claims] ✅ Admin claims set for ${email} (${userId})`);
+
+                // Update Firestore to mark claims as applied
+                await event.data.ref.update({
+                    customClaimsApplied: true,
+                    customClaimsAppliedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (error) {
+                console.error(`[Custom Claims] ❌ Failed to set claims for ${email}:`, error);
+            }
+        } else {
+            console.log(`[Custom Claims] User ${email} is not in ADMIN_EMAILS, no claims applied`);
+        }
+    }
+);
 
 export const initializeAdminUser = onCall(FUNCTION_OPTS, async (request: CallableRequest) => {
     if (!request.auth) {
