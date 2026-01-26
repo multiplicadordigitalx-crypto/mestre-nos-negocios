@@ -11,7 +11,7 @@ import {
     mockInfluencers, sendTicketMessage
 } from '../services/mockFirebase';
 import { updateStudent } from '../services/userService';
-} from '../services/mockFirebase';
+
 import Button from '../components/Button';
 import Card from '../components/Card';
 import {
