@@ -10,8 +10,17 @@ import { WhatsAppInstance } from '../../../types/legacy';
 import toast from 'react-hot-toast';
 import { CreateInstanceModal } from '../modals/CreateInstanceModal';
 
+import { auth } from '../../../services/firebase';
+
 export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) => {
     const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
+
+    // Config State (Input-only, not stored in localStorage)
+    const [serverUrl, setServerUrl] = useState('');
+    const [apiKey, setApiKey] = useState('');
+
+    const [isSavingUrl, setIsSavingUrl] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [connectingId, setConnectingId] = useState<string | null>(null);
 
@@ -27,8 +36,45 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
         try {
             const data = await getWhatsAppInstances('whatsmeow');
             setInstances(data || []);
+            // We do NOT load keys back to the UI for security. 
+            // If it works, it works. If not, user re-enters.
         } catch (error) {
             console.error("Error loading Whatsmeow data:", error);
+        }
+    };
+
+    const handleSecureSave = async () => {
+        if (!auth.currentUser) {
+            toast.error("Usuário não autenticado");
+            return;
+        }
+
+        setIsSavingUrl(true);
+        try {
+            const response = await fetch('/api/vault/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    uid: auth.currentUser.uid,
+                    type: 'whatsapp',
+                    config: {
+                        serverUrl,
+                        apiKey
+                    }
+                })
+            });
+
+            if (!response.ok) throw new Error("Falha ao salvar no cofre");
+
+            toast.success("Configuração criptografada e salva!");
+            setIsEditMode(false);
+            // Clear sensitive data from memory after save
+            setApiKey('');
+        } catch (error) {
+            console.error(error);
+            toast.error("Erro ao salvar segurança.");
+        } finally {
+            setIsSavingUrl(false);
         }
     };
 
@@ -211,7 +257,56 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
                 </div>
             </div>
 
-            {/* Removed Configuration UI - Managed by Server Now */}
+
+            <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 relative overflow-hidden mb-6">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="flex flex-col gap-4 relative z-10">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Server className="w-5 h-5 text-blue-500" /> Configuração Segura (Cofre)
+                    </h3>
+                    <p className="text-xs text-gray-500">Seus dados são criptografados e salvos no servidor. O navegador não guarda nada.</p>
+
+                    {isEditMode ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                            <div>
+                                <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">Server URL</label>
+                                <input
+                                    className="w-full bg-gray-800 border border-blue-500 rounded-lg p-2.5 text-white text-sm font-mono outline-none"
+                                    value={serverUrl}
+                                    onChange={e => setServerUrl(e.target.value)}
+                                    placeholder="https://seu-api.onrender.com"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">API Authentication Key</label>
+                                <input
+                                    type="password"
+                                    className="w-full bg-gray-800 border border-blue-500 rounded-lg p-2.5 text-white text-sm font-mono outline-none"
+                                    value={apiKey}
+                                    onChange={e => setApiKey(e.target.value)}
+                                    placeholder="Sua chave secreta"
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span className="text-xs text-green-400 font-mono">Configuração Sincronizada com o Cofre</span>
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-2 mt-2">
+                        {isEditMode ? (
+                            <>
+                                <Button variant="secondary" onClick={() => setIsEditMode(false)} className="h-8 text-xs">Cancelar</Button>
+                                <Button onClick={handleSecureSave} isLoading={isSavingUrl} className="h-8 text-xs !bg-green-600">Salvar no Cofre</Button>
+                            </>
+                        ) : (
+                            <Button onClick={() => setIsEditMode(true)} className="h-8 text-xs !bg-blue-600">Editar Configurações</Button>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             {qrCode && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
