@@ -216,8 +216,7 @@ export const getWhatsAppInstances = async (engine?: 'whatsmeow' | 'evolution'): 
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WhatsAppInstance));
     } catch (error: any) {
         if (isSuperAdmin() && error.code === 'permission-denied') {
-            console.info("Firestore: Acesso silenciado para admin (WhatsApp)");
-            return [];
+            console.info("Firestore: Acesso silenciado para admin (WhatsApp), buscando fallback local...");
         }
 
         // Fallback for Mock Mode
