@@ -32,6 +32,8 @@ export interface AppProduct {
 
     // State
     status: ProductStatus;
+    setupProgress?: number; // UI Helper
+    schoolSubdomain?: string; // UI Helper (Denormalized)
     createdAt: string;
     updatedAt: string;
 }

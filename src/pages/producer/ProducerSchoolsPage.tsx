@@ -6,6 +6,7 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { Brain, Users, DollarSign, Settings, Globe, Monitor, AlertTriangle, CheckCircle, Clock } from '../../components/Icons';
 import { getSchoolConfigByNiche } from '../../services/schoolService';
+import { courseService } from '../../services/courseService';
 import { LaunchChecklist } from '../../components/LaunchChecklist';
 import { useProducerProducts } from '../../hooks/useEcosystem';
 import { AppProduct } from '../../types';
@@ -18,7 +19,6 @@ export const ProducerSchoolsPage: React.FC<{ onNavigate?: (page: string) => void
 
     // NEW: Use Ecosystem Hooks
     const { products, loading } = useProducerProducts();
-    const [schools, setSchools] = useState<AppProduct[]>([]);
 
     useEffect(() => {
         if (!loading && products) {
@@ -238,11 +238,14 @@ export const ProducerSchoolsPage: React.FC<{ onNavigate?: (page: string) => void
                             ));
 
                             // Also trigger global update if needed (in real app)
-                            const all = await getCourses();
-                            const target = all.find(c => c.id === schoolForChecklist.id);
-                            if (target) {
-                                target.setupProgress = val;
-                                // In real app we would call updateCourse(target)
+                            if (user?.uid) {
+                                const all = await courseService.listCourses(user.uid);
+                                const target = all.find(c => c.id === schoolForChecklist.id);
+                                if (target) {
+                                    // In a real app we would call updateCourse(target) here
+                                    // target.setupProgress = val;
+                                    console.log("Mock update target:", target);
+                                }
                             }
                         }}
                     />
