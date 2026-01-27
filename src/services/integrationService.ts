@@ -277,25 +277,15 @@ export const deleteWhatsAppInstance = async (id: string) => {
 };
 
 export const sendWhatsAppMessage = async (instanceId: string, phone: string, message: string) => {
-    // 1. Get Instance to retrieve API Key (for security)
-    // Ideally this should be handled by the backend, but for this hybrid setup:
-    const instances = await getWhatsAppInstances();
-    const instance = instances.find(i => i.id === instanceId);
-
-    if (!instance) throw new Error("Instance not found");
-
-    // 2. Local Proxy URL
-    const SERVER_URL = 'http://localhost:3001';
-
-    // 3. Make Request
-    const response = await fetch(`${SERVER_URL}/api/instances/${instanceId}/send`, {
+    // Uses Vercel Proxy to protect API Key
+    const response = await fetch('/api/whatsapp/proxy', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            // If using API Key auth in Go:
-            // 'Authorization': `Bearer ${localStorage.getItem('whatsmeow_api_key') || ''}`
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+            action: 'send',
+            userId: instanceId,
             to: phone,
             message: message
         })
