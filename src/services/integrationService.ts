@@ -1,5 +1,5 @@
 
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc, query, where, getDoc } from 'firebase/firestore';
 import { WhatsAppInstance } from '../types/legacy';
 
@@ -96,15 +96,12 @@ export interface SocialApiIntegration {
     updatedAt: any;
 }
 
-const GATEWAYS_COLLECTION = 'payment_gateways';
-const WHATSAPP_COLLECTION = 'whatsapp_instances';
-const DOMAINS_COLLECTION = 'domain_providers';
-const WEBHOOKS_COLLECTION = 'webhooks';
-const SMTP_COLLECTION = 'smtp_configs';
-const AI_COLLECTION = 'ai_configs';
-const TRAFFIC_COLLECTION = 'traffic_accounts';
-const SOCIAL_COLLECTION = 'social_apis';
 const CONFIGS_COLLECTION = 'lucpay_configs';
+
+// Helper to get Vault Path
+const getVaultCollection = (uid: string, type: string) => {
+    return collection(db, 'integrations', uid, 'providers', type, 'items');
+};
 
 // Helper to check if current user should have silent fallback (no error UI)
 const isSuperAdmin = () => {
@@ -352,77 +349,121 @@ export const deleteWebhook = async (id: string) => {
 
 // SMTP
 export const getSmtpConfigs = async (): Promise<SmtpConfig[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+
     try {
-        const querySnapshot = await getDocs(collection(db, SMTP_COLLECTION));
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SmtpConfig));
+        // Read from Vault Structure
+        const querySnapshot = await getDocs(getVaultCollection(user.uid, 'smtp'));
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            // Mask password to avoid exposing encrypted hash
+            return { id: doc.id, ...data, password: '***SECURE_STORED***' } as SmtpConfig;
+        });
     } catch (error: any) {
-        if (isSuperAdmin() && error.code === 'permission-denied') {
-            console.info("Firestore: Acesso silenciado para admin (SMTP)");
-            return [];
-        }
-        throw error;
+        console.error("Vault Read Error (SMTP):", error);
+        return [];
     }
 };
 
-
-
 export const saveSmtpConfig = async (config: SmtpConfig) => {
-    const docRef = doc(db, SMTP_COLLECTION, config.id);
-    await setDoc(docRef, { ...config, updatedAt: new Date() }, { merge: true });
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+
+    const response = await fetch('/api/vault/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            uid: user.uid,
+            type: 'smtp',
+            config: config
+        })
+    });
+
+    if (!response.ok) throw new Error("Vault Save Failed");
 };
 
 export const deleteSmtpConfig = async (id: string) => {
-    await deleteDoc(doc(db, SMTP_COLLECTION, id));
+    const user = auth.currentUser;
+    if (!user) return;
+    await deleteDoc(doc(getVaultCollection(user.uid, 'smtp'), id));
 };
 
 // AI Brains
 export const getAIConfigs = async (): Promise<AIConfig[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+
     try {
-        const querySnapshot = await getDocs(collection(db, AI_COLLECTION));
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AIConfig));
+        const querySnapshot = await getDocs(getVaultCollection(user.uid, 'ai'));
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return { id: doc.id, ...data, key: '***SECURE_STORED***' } as AIConfig;
+        });
     } catch (error: any) {
-        if (isSuperAdmin() && error.code === 'permission-denied') {
-            console.info("Firestore: Acesso silenciado para admin (AI)");
-            return [];
-        }
-        throw error;
+        console.error("Vault Read Error (AI):", error);
+        return [];
     }
 };
 
-
-
 export const saveAIConfig = async (config: AIConfig) => {
-    const docRef = doc(db, AI_COLLECTION, config.id);
-    await setDoc(docRef, { ...config, updatedAt: new Date() }, { merge: true });
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+
+    const response = await fetch('/api/vault/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            uid: user.uid,
+            type: 'ai',
+            config: config
+        })
+    });
+
+    if (!response.ok) throw new Error("Vault Save Failed");
 };
 
 export const deleteAIConfig = async (id: string) => {
-    await deleteDoc(doc(db, AI_COLLECTION, id));
+    const user = auth.currentUser;
+    if (!user) return;
+    await deleteDoc(doc(getVaultCollection(user.uid, 'ai'), id));
 };
 
 // Traffic Accounts
 export const getTrafficAccounts = async (): Promise<TrafficAccount[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+
     try {
-        const querySnapshot = await getDocs(collection(db, TRAFFIC_COLLECTION));
+        const querySnapshot = await getDocs(getVaultCollection(user.uid, 'traffic'));
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TrafficAccount));
     } catch (error: any) {
-        if (isSuperAdmin() && error.code === 'permission-denied') {
-            console.info("Firestore: Acesso silenciado para admin (Traffic)");
-            return [];
-        }
-        throw error;
+        console.error("Vault Read Error (Traffic):", error);
+        return [];
     }
 };
 
-
-
 export const saveTrafficAccount = async (account: TrafficAccount) => {
-    const docRef = doc(db, TRAFFIC_COLLECTION, account.id);
-    await setDoc(docRef, { ...account, updatedAt: new Date() }, { merge: true });
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+
+    const response = await fetch('/api/vault/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            uid: user.uid,
+            type: 'traffic',
+            config: account
+        })
+    });
+
+    if (!response.ok) throw new Error("Vault Save Failed");
 };
 
 export const deleteTrafficAccount = async (id: string) => {
-    await deleteDoc(doc(db, TRAFFIC_COLLECTION, id));
+    const user = auth.currentUser;
+    if (!user) return;
+    await deleteDoc(doc(getVaultCollection(user.uid, 'traffic'), id));
 };
 
 // Social APIs

@@ -33,11 +33,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Save to Firestore under 'integrations' collection
-        // Structure: integrations/{uid}/providers/{type}
-        await db.collection('integrations').doc(uid).collection('providers').doc(type).set({
-            ...encryptedConfig,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        // Structure: integrations/{uid}/providers/{type} (Singleton)
+        // OR: integrations/{uid}/providers/{type}/items/{id} (Collection)
+
+        const providerRef = db.collection('integrations').doc(uid).collection('providers').doc(type);
+
+        if (config.id) {
+            // It's a list item (SMTP, Traffic, AI)
+            await providerRef.collection('items').doc(config.id).set({
+                ...encryptedConfig,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        } else {
+            // It's a singleton (WhatsApp Server Config)
+            await providerRef.set({
+                ...encryptedConfig,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        }
 
         return res.status(200).json({ success: true, message: 'Configuration saved securely' });
 
