@@ -16,14 +16,14 @@ import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
 import { callMestreIA, generateCourseCoverImage } from '../../../services/mestreIaService';
-import { getToolCosts, NICHOS_BY_CATEGORY, CATEGORY_CONTEXT } from '../../../services/mockFirebase'; // Keeping static data mocks
+import { getToolCosts } from '../../../services/mockFirebase'; // Keeping static data mocks
 import { useCreditGuard } from '../../../hooks/useCreditGuard';
 import { Course, FinancialViability } from '../../../types';
 import { courseService } from '../../../services/courseService';
 import { uploadFileToStorage } from '../../../services/firebase';
 import { addPublishedCourseToUser } from '../../../services/mockFirebase'; // Legacy user sync, keep for now or replace later
 import { AnimatePresence, motion } from 'framer-motion';
-import { SchoolSetupModal } from '../../../components/SchoolSetupModal';
+// import { SchoolSetupModal } from '../../../components/SchoolSetupModal'; // Removed unused
 import { SchoolToolsSelector, CreditControlCard, ToolSelectionGrid, CostSummaryCard } from '../../../components/SchoolToolsSelector';
 import { PremiumToolId, FinancialModel } from '../../../types/legacy';
 import { CreditBalanceWidget } from '../../../components/CreditBalanceWidget';
@@ -1602,7 +1602,7 @@ const Step6Financial: React.FC<{
 
 // Fixed: Defined the props interface before its usage in the component
 interface StudentCourseCreatorViewProps {
-    navigateTo: (page: StudentPage) => void;
+    navigateTo: (page: string) => void;
 }
 
 // Fixed: Consolidated and exported the component once with all dependencies defined
@@ -1936,10 +1936,10 @@ export const StudentCourseCreatorView: React.FC<StudentCourseCreatorViewProps> =
     const availableNichos = NICHOS_BY_CATEGORY[data.category] || NICHOS_BY_CATEGORY.all;
     const currentContext = CATEGORY_CONTEXT[data.category] || CATEGORY_CONTEXT.standard;
 
-    const handleSchoolSuccess = (settings: SchoolSettings) => {
+    const handleSchoolSuccess = (settings: SchoolConfig) => {
         setData({ ...data, schoolSubdomain: settings.subdomain });
         setIsSchoolSetupOpen(false);
-        toast.success(`Portal ${settings.schoolName} vinculado ao curso!`);
+        toast.success(`Portal ${settings.name} vinculado ao curso!`);
     };
 
     return (

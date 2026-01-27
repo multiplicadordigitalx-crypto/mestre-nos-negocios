@@ -22,7 +22,21 @@ export interface SchoolConfig {
     supportTeam: SupportTeamMember[];
     linkedProductIds: string[]; // List of products belonging to this school
 
+    // Features & Modules
+    features?: {
+        enableMestreIA: boolean;
+        enableNexusPlayer: boolean;
+        enableGamification: boolean;
+        enableStore: boolean;
+        enableCommunity: boolean;
+        enableLiveEvents: boolean;
+    };
+
+    // Navigation
+    menuConfig?: any[]; // Typed as StudentMenuItem[] but preventing circular dependency for now
+
     createdAt: string;
+    updatedAt?: string;
 }
 
 export interface SupportTeamMember {
