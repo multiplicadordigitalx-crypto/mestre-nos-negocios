@@ -74,7 +74,7 @@ export default async function handler(
 }
 
 // Import db from firebaseAdmin
-import { db } from '../utils/firebaseAdmin';
+import { db } from '../_utils/firebaseAdmin';
 
 /**
  * Checkout completado - enviar recibo e liberar créditos

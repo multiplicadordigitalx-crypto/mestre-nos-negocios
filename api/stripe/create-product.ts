@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
-import { db } from '../utils/firebaseAdmin';
+import { db } from '../_utils/firebaseAdmin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2025-02-24.acacia',

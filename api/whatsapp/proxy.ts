@@ -1,7 +1,7 @@
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from '../utils/firebaseAdmin';
-import { security } from '../utils/security';
+import { db } from '../_utils/firebaseAdmin';
+import { security } from '../_utils/security';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*');

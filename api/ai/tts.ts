@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from '../utils/firebaseAdmin';
-import { AI_COSTS } from '../utils/aiCost';
+import { db } from '../_utils/firebaseAdmin';
+import { AI_COSTS } from '../_utils/aiCost';
 import * as admin from 'firebase-admin';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
