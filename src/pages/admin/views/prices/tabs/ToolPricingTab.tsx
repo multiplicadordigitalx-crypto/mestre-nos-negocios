@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Calculator, Search, Save, AlertTriangle, CheckCircle, Check, Coins, DollarSign, RefreshCw, TrendingUp, Server, Brain, ShieldCheck, Zap, Box, Activity, Users, Mic, List, PlayCircle, Percent
+    Calculator, Search, Save, AlertTriangle, CheckCircle, Check, Coins, DollarSign, RefreshCw, TrendingUp, Server, Brain, ShieldCheck, Zap, Box, ActivityIcon, Users, Mic, List, PlayCircle, Percent
 } from '../../../../../components/Icons';
 import { LoadingSpinner } from '../../../../../components/LoadingSpinner';
 import { getToolCosts, saveToolCost, getSystemSettings, saveSystemSettings } from '../../../../../services/mockFirebase';
@@ -326,7 +326,7 @@ export const ToolPricingTab: React.FC = () => {
 
                         {/* GLOBAL ACTIONS SECTION */}
                         <div className="border-t border-gray-800 pt-3 mt-1 space-y-2">
-                            <label className="text-[9px] text-gray-500 font-black uppercase flex items-center gap-1"><Activity className="w-3 h-3" /> Gatilho Global</label>
+                            <label className="text-[9px] text-gray-500 font-black uppercase flex items-center gap-1"><ActivityIcon className="w-3 h-3" /> Gatilho Global</label>
 
                             <div className="grid grid-cols-2 gap-2">
                                 {/* Trigger Input */}
@@ -445,7 +445,7 @@ export const ToolPricingTab: React.FC = () => {
                         {/* 2. SIMULATOR (Full Width Bottom) */}
                         <div className="bg-black/20 rounded-xl p-6 border border-gray-700/50">
                             <p className="text-[10px] text-gray-400 uppercase font-bold mb-4 flex justify-between items-center border-b border-gray-800 pb-2">
-                                <span className="flex items-center gap-2"><Activity className="w-4 h-4" /> Simulação de Transação (Venda Limpa R$ 100,00)</span>
+                                <span className="flex items-center gap-2"><ActivityIcon className="w-4 h-4" /> Simulação de Transação (Venda Limpa R$ 100,00)</span>
                                 <div className="text-right">
                                     <span className="block text-[9px] text-gray-500">Taxa Total Produtor: <span className="text-red-400">{(lucPayFee + marketingFee + stripeFee).toFixed(2)}%</span></span>
                                     <span className="text-white">Repasse Líquido: <span className="text-green-400 font-mono text-lg">{(100 - (100 * (lucPayFee + marketingFee + stripeFee) / 100)).toFixed(2)}%</span></span>

@@ -1,16 +1,16 @@
 
 import React, { useState } from 'react';
 import Card from '../../../components/Card';
-import { Activity, Filter, LogOut, MousePointer } from '../../../components/Icons';
+import { ActivityIcon, Filter, LogOut, MousePointer } from '../../../components/Icons';
 
 export const AnalyticsTab: React.FC = () => {
     const [heatmapView, setHeatmapView] = useState<'clicks' | 'scroll'>('clicks');
 
     const metrics = {
-        bounceRate: { 
-            mobile: { val: '65%', status: 'warning' }, 
-            desktop: { val: '42%', status: 'good' }, 
-            source: 'Ads' 
+        bounceRate: {
+            mobile: { val: '65%', status: 'warning' },
+            desktop: { val: '42%', status: 'good' },
+            source: 'Ads'
         },
         avgTime: '4m 12s',
         microConversions: [
@@ -57,16 +57,16 @@ export const AnalyticsTab: React.FC = () => {
                     <Card className="p-6 bg-gray-800 h-full border-gray-700">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Activity className="w-5 h-5 text-orange-500"/> Heatmaps & Comportamento
+                                <ActivityIcon className="w-5 h-5 text-orange-500" /> Heatmaps & Comportamento
                             </h3>
                             <div className="flex bg-gray-900 rounded p-1">
-                                <button 
+                                <button
                                     onClick={() => setHeatmapView('clicks')}
                                     className={`px-3 py-1 rounded text-xs font-bold transition-all ${heatmapView === 'clicks' ? 'bg-orange-600 text-white' : 'text-gray-400 hover:text-white'}`}
                                 >
                                     Cliques
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setHeatmapView('scroll')}
                                     className={`px-3 py-1 rounded text-xs font-bold transition-all ${heatmapView === 'scroll' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
                                 >
@@ -112,17 +112,17 @@ export const AnalyticsTab: React.FC = () => {
                 <div className="space-y-6">
                     <Card className="p-6 bg-gray-800 border-gray-700">
                         <h3 className="text-sm font-bold text-white mb-4 uppercase flex items-center gap-2">
-                            <Filter className="w-4 h-4 text-brand-primary"/> Funil de Conversão Real
+                            <Filter className="w-4 h-4 text-brand-primary" /> Funil de Conversão Real
                         </h3>
                         <div className="space-y-1 relative">
                             <div className="absolute left-3 top-2 bottom-6 w-0.5 bg-gray-700"></div>
-                            
+
                             <div className="relative pl-8">
                                 <div className="absolute left-1.5 top-1.5 w-3 h-3 bg-blue-500 rounded-full border-2 border-gray-800 z-10"></div>
                                 <p className="text-xs text-gray-400">Visualizações (Page View)</p>
                                 <p className="text-lg font-bold text-white">12.500</p>
                             </div>
-                            
+
                             <div className="relative pl-8 pt-4">
                                 <div className="absolute left-1.5 top-5 w-3 h-3 bg-purple-500 rounded-full border-2 border-gray-800 z-10"></div>
                                 <p className="text-xs text-gray-400">Leads (Checkout Iniciado)</p>
@@ -139,7 +139,7 @@ export const AnalyticsTab: React.FC = () => {
 
                     <Card className="p-6 bg-gray-800 border-gray-700">
                         <h3 className="text-sm font-bold text-white mb-4 uppercase flex items-center gap-2">
-                            <LogOut className="w-4 h-4 text-red-400"/> Taxa de Saída (Fuga)
+                            <LogOut className="w-4 h-4 text-red-400" /> Taxa de Saída (Fuga)
                         </h3>
                         <div className="space-y-3">
                             {metrics.exitRates.map((exit, idx) => (
@@ -147,9 +147,9 @@ export const AnalyticsTab: React.FC = () => {
                                     <span className="text-xs text-gray-300">{exit.section}</span>
                                     <div className="flex items-center gap-2">
                                         <div className="w-24 h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                                            <div 
-                                                className={`h-full ${parseInt(exit.rate) > 40 ? 'bg-red-500' : 'bg-yellow-500'}`} 
-                                                style={{width: exit.rate}}
+                                            <div
+                                                className={`h-full ${parseInt(exit.rate) > 40 ? 'bg-red-500' : 'bg-yellow-500'}`}
+                                                style={{ width: exit.rate }}
                                             ></div>
                                         </div>
                                         <span className="text-xs font-bold text-white w-8 text-right">{exit.rate}</span>
@@ -163,7 +163,7 @@ export const AnalyticsTab: React.FC = () => {
 
             <Card className="p-6 bg-gray-800 border-gray-700">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <MousePointer className="w-5 h-5 text-blue-400"/> Micro-Conversões & Eventos
+                    <MousePointer className="w-5 h-5 text-blue-400" /> Micro-Conversões & Eventos
                 </h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">

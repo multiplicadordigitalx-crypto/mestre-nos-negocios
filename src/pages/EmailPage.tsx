@@ -8,7 +8,7 @@ import Card from '../components/Card';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import {
     Mail, Zap, BarChart3,
-    Activity, CheckCircle,
+    ActivityIcon, CheckCircle,
     Trash, PlusCircle, Filter,
     Clock, DollarSign, Link as LinkIcon,
     RefreshCw, Brain, FileText,
@@ -472,7 +472,7 @@ const EmailPage: React.FC<EmailPageProps> = ({ navigateTo }) => {
                 {(isOptimizer || isMestreFull) && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ height: 0, opacity: 0 }} className="mb-8">
                         <div className="bg-black/50 border border-green-500/30 rounded-xl p-4 font-mono text-xs shadow-inner">
-                            <p className="text-green-500 font-bold mb-2 flex items-center gap-2"><Activity className="w-3 h-3 animate-pulse" /> LOG DE ATIVIDADE AUTÔNOMA</p>
+                            <p className="text-green-500 font-bold mb-2 flex items-center gap-2"><ActivityIcon className="w-3 h-3 animate-pulse" /> LOG DE ATIVIDADE AUTÔNOMA</p>
                             <div className="space-y-1">
                                 {autoLogs.map((log, i) => (
                                     <p key={i} className="text-gray-400 truncate border-b border-gray-800/50 pb-1 last:border-0">

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
-import { Activity, TrendingUp, BarChart3, Instagram, Tiktok, Youtube, Zap, Brain, Trophy, DollarSign, Eye, PlayCircle } from '@/components/Icons';
+import { ActivityIcon, TrendingUp, BarChart3, Instagram, Tiktok, Youtube, Zap, Brain, Trophy, DollarSign, Eye, PlayCircle } from '@/components/Icons';
 import { Influencer } from '@/types';
 import { ConnectSocialModal } from '../modals/ConnectSocialModal';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -36,7 +36,7 @@ export const VisaoGeralSection: React.FC<{ influencer: Influencer; setActiveTab:
             <div className="bg-gradient-to-r from-blue-900/40 to-gray-900 border border-blue-500/30 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
                 <div className="flex items-start gap-4">
                     <div className="p-3 bg-blue-600/20 rounded-full text-blue-400 border border-blue-500/30">
-                        <Activity className="w-6 h-6" />
+                        <ActivityIcon className="w-6 h-6" />
                     </div>
                     <div>
                         <h3 className="text-white font-bold text-lg uppercase tracking-tight">Análise Nexus Pro Ativa</h3>

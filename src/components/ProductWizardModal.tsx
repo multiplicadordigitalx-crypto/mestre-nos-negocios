@@ -7,7 +7,7 @@ import Card from './Card';
 import {
     X as XIcon, AlertTriangle, CloudUpload, Brain, Zap, Sparkles,
     CheckCircle, Info, Trash, Link as LinkIcon, BookOpen, Smartphone, FileText, Server,
-    HeartPulse, Activity, Target, Search, Database, PlusCircle, DollarSign, User as UserIcon,
+    HeartPulse, ActivityIcon, Target, Search, Database, PlusCircle, DollarSign, User as UserIcon,
     Wallet, CreditCard, ShoppingBag, Users, MapPin, Globe, ShieldCheck, File, Whatsapp, Share2,
     Calendar, PlayCircle, Monitor, Clock, Tag, ExternalLink, ChevronRight, LockClosed, Eye, EyeOff
 } from './Icons';

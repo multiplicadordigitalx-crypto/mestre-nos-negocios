@@ -3,7 +3,7 @@ import CertificateApprovalQueue from './CertificateApprovalQueue';
 import HRProductivityView from './HRProductivityView';
 import HRTeamManagementView from './HRTeamManagementView';
 import Button from '../../../components/Button';
-import { FileText, Zap, Users } from '../../../components/Icons';
+import { Trophy, TrendingUp, Users, ActivityIcon, X as XIcon, Zap, FileText } from '../../../components/Icons';
 import { useAuth } from '@/hooks/useAuth';
 
 const HRManagerDashboard: React.FC = () => {

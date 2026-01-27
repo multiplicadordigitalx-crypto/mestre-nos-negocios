@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Card from '../../../components/Card';
 import Button from '../../../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, PlusCircle, Brain, TrendingUp, Box, CheckCircle, Clock, AlertTriangle, Trash, MessageCircle, Instagram, Tiktok, Search, Activity, Link as LinkIcon, Copy, ChevronDown, ChevronRight, Users, Server, Terminal, Shield, Lock, FileText, Zap } from '../../../components/Icons';
+import { User, PlusCircle, Brain, TrendingUp, Box, CheckCircle, Clock, AlertTriangle, Trash, MessageCircle, Instagram, Tiktok, Search, ActivityIcon, Link as LinkIcon, Copy, ChevronDown, ChevronRight, Users, Server, Terminal, Shield, Lock, FileText, Zap } from '../../../components/Icons';
 import { SharedAccount } from '../../../types';
 import { ConnectAccountModal } from '../components/ConnectAccountModal';
 import { getAppProducts, getProductDNA } from '../../../services/mockFirebase';
@@ -255,7 +255,7 @@ export const BotAutomationTab: React.FC<BotAutomationTabProps> = ({ accounts, on
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                        <Activity className="w-4 h-4 text-brand-primary" /> Volume de Respostas (7 Dias)
+                                        <ActivityIcon className="w-4 h-4 text-brand-primary" /> Volume de Respostas (7 Dias)
                                     </h3>
                                     <p className="text-[10px] text-gray-500">Fluxo de interações automáticas nos posts.</p>
                                 </div>

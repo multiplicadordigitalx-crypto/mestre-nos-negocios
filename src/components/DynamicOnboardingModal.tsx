@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
-import { CheckCircle, Zap, ShieldCheck, X as XIcon, Brain, Activity, Target, BookOpen, Globe, Code, HeartPulse } from './Icons';
+import { CheckCircle, Zap, ShieldCheck, X as XIcon, Brain, ActivityIcon, Target, BookOpen, Globe, Code, HeartPulse } from './Icons';
 import { Student, ProducerBankData } from '../types';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,7 +29,7 @@ const NICHE_FORM_CONFIG: Record<string, {
 }> = {
     'Terapia': {
         title: 'Ficha de Saúde & Contexto',
-        icon: Activity,
+        icon: ActivityIcon,
         color: 'text-pink-500',
         description: 'Dados para adaptar o protocolo clínico à sua realidade.',
         questions: [

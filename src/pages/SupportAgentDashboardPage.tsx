@@ -16,7 +16,7 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import {
     MessageSquare, CheckCircle, Star, User, LogOut, Search,
-    DollarSign, Link as LinkIcon, Users, ShieldCheck, TrendingUp, X as XIcon, Activity, Brain, Clock, Zap, RefreshCw, Key, PlusCircle, LockClosed, FileText, Calendar, Menu, Wallet, PieChart,
+    DollarSign, Link as LinkIcon, Users, ShieldCheck, TrendingUp, X as XIcon, ActivityIcon, Brain, Clock, Zap, RefreshCw, Key, PlusCircle, LockClosed, FileText, Calendar, Menu, Wallet, PieChart,
     ChevronLeft, ChevronRight
 } from '../components/Icons';
 import toast from 'react-hot-toast';
@@ -382,7 +382,7 @@ const SupportAgentDashboardPage: React.FC<SupportAgentDashboardProps> = ({ agent
                     <MenuButton id="tickets" label="Atendimentos" icon={MessageSquare} badge={tickets.filter(t => t.status === 'open').length} />
                     <MenuButton id="students" label="Central Alunos" icon={Users} />
                     <MenuButton id="partners" label="Aprovar Parceiros" icon={ShieldCheck} />
-                    <MenuButton id="productivity" label="Produtividade" icon={Activity} />
+                    <MenuButton id="productivity" label="Produtividade" icon={ActivityIcon} />
                     <MenuButton id="chat" label="Chat Interno" icon={Users} />
                     <MenuButton id="community" label="Comunidades" icon={MessageSquare} />
                     <MenuButton id="hr" label="Meu RH" icon={FileText} />
@@ -421,7 +421,7 @@ const SupportAgentDashboardPage: React.FC<SupportAgentDashboardProps> = ({ agent
                     <MenuButton id="tickets" label="Atendimentos" icon={MessageSquare} badge={tickets.filter(t => t.status === 'open').length} />
                     <MenuButton id="students" label="Central Alunos" icon={Users} />
                     <MenuButton id="partners" label="Aprovar Parceiros" icon={ShieldCheck} />
-                    <MenuButton id="productivity" label="Produtividade" icon={Activity} />
+                    <MenuButton id="productivity" label="Produtividade" icon={ActivityIcon} />
                     <MenuButton id="chat" label="Chat Interno" icon={Users} />
                     <MenuButton id="community" label="Comunidades" icon={MessageSquare} />
                     {agent.permissions.viewFinance && <MenuButton id="refunds" label="Reembolsos" icon={DollarSign} />}
@@ -463,7 +463,7 @@ const SupportAgentDashboardPage: React.FC<SupportAgentDashboardProps> = ({ agent
                         <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-gray-900 w-full max-w-6xl rounded-[2rem] border border-brand-primary/30 shadow-2xl relative flex flex-col max-h-[90vh]">
                             <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/80">
                                 <h3 className="text-xl font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                                    <Activity className="w-6 h-6 text-brand-primary" /> Auditoria de Resultados: {selectedTicket.studentName}
+                                    <ActivityIcon className="w-6 h-6 text-brand-primary" /> Auditoria de Resultados: {selectedTicket.studentName}
                                 </h3>
                                 <button onClick={() => setShowStudentResults(false)} className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors">
                                     <XIcon className="w-6 h-6" />

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { SalesPerson, ProducerBankData } from '@/types';
-import { User, ShieldCheck, Save, MapPin, CreditCard, LockClosed, RefreshCw, Activity, Eye, EyeOff } from '@/components/Icons';
+import { User, ShieldCheck, Save, MapPin, CreditCard, LockClosed, RefreshCw, ActivityIcon, Eye, EyeOff } from '@/components/Icons';
 import { motion } from 'framer-motion';
 import { Step0Compliance, validateDoc } from '@/components/ProductWizardModal';
 import { updateSalesPerson } from '@/services/mockFirebase';
@@ -274,7 +274,7 @@ export const ProfileView: React.FC<{ salesPerson: SalesPerson }> = ({ salesPerso
 
                     <Card className="p-5 bg-gray-800/50 border-gray-700">
                         <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-blue-400" /> Auditoria de Acesso
+                            <ActivityIcon className="w-4 h-4 text-blue-400" /> Auditoria de Acesso
                         </h4>
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-300">Sua conta é monitorada:</span>

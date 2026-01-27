@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Activity, PieChart, DollarSign, Zap, X as XIcon, Users, ChevronLeft, ChevronRight, RefreshCw } from '../../../components/Icons';
+import { Brain, ActivityIcon, PieChart, DollarSign, Zap, X as XIcon, Users, ChevronLeft, ChevronRight, RefreshCw } from '../../../components/Icons';
 import Button from '../../../components/Button';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { SupportTicket, Student, Influencer } from '../../../types';
@@ -88,7 +88,7 @@ export const StudentIntelligenceSidebar: React.FC<StudentIntelligenceSidebarProp
                         {(student || partner) && (
                             <>
                                 <button onClick={onShowResults} className="p-3 bg-gray-700 rounded-xl text-gray-300 hover:text-white hover:bg-gray-600 transition-all group relative">
-                                    <Activity className="w-6 h-6" />
+                                    <ActivityIcon className="w-6 h-6" />
                                     <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">Auditoria</span>
                                 </button>
                                 <button onClick={() => onShowFinance(student || (partner as Influencer))} className="p-3 bg-blue-600/10 rounded-xl text-blue-400 hover:bg-blue-600/20 transition-all group relative">
@@ -128,7 +128,7 @@ export const StudentIntelligenceSidebar: React.FC<StudentIntelligenceSidebarProp
                                         <span className="text-white font-black text-xs">{student.gamification?.level}</span>
                                     </div>
                                     <Button onClick={onShowResults} variant="secondary" className="w-full !py-1.5 !text-[9px] uppercase font-black">
-                                        <Activity className="w-3 h-3 mr-1.5" /> Resultados
+                                        <ActivityIcon className="w-3 h-3 mr-1.5" /> Resultados
                                     </Button>
                                     <Button onClick={() => onShowFinance(student)} variant="secondary" className="w-full !py-1.5 !text-[9px] uppercase font-black !bg-blue-600/10 text-blue-400 border border-blue-600/20">
                                         <PieChart className="w-3 h-3 mr-1.5" /> Financeiro

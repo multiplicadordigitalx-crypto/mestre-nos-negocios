@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../../../components/Card';
 import {
     TrendingUp, BarChart3, DollarSign, Target, CheckCircle,
-    Zap, Brain, Trophy, Activity,
+    Zap, Brain, Trophy, ActivityIcon,
     BookOpen, ShieldCheck,
     ArrowRight, ArrowLeft, Download, HeartPulse, Scale, Clock, History, Calendar
 } from '../../../components/Icons';
@@ -24,7 +24,7 @@ const METRIC_CONFIG: Record<string, any> = {
     standard: {
         primaryMetric: { label: 'Sucesso Financeiro', icon: DollarSign, color: 'text-green-500', sublabel: 'Vendas Realizadas' },
         progressMetric: { label: 'Estudo Teórico', icon: BookOpen, color: 'text-blue-500', sublabel: 'Aulas Concluídas' },
-        consistencyMetric: { label: 'Consistência', icon: Activity, color: 'text-orange-500', sublabel: 'Volume de Postagens' },
+        consistencyMetric: { label: 'Consistência', icon: ActivityIcon, color: 'text-orange-500', sublabel: 'Volume de Postagens' },
         aiMetric: { label: 'Execução IA', icon: Brain, color: 'text-purple-500', sublabel: 'Sugestões Aplicadas' },
         title: 'Performance 50X',
         subtitle: 'Auditoria de resultados e engajamento do usuário.',
@@ -41,7 +41,7 @@ const METRIC_CONFIG: Record<string, any> = {
     },
     slimming_master: {
         primaryMetric: { label: 'Bio-Evolução', icon: Scale, color: 'text-emerald-500', sublabel: 'Metas Físicas' },
-        progressMetric: { label: 'Protocolo', icon: Activity, color: 'text-blue-500', sublabel: 'Fases Concluídas' },
+        progressMetric: { label: 'Protocolo', icon: ActivityIcon, color: 'text-blue-500', sublabel: 'Fases Concluídas' },
         consistencyMetric: { label: 'Disciplina', icon: CheckCircle, color: 'text-orange-500', sublabel: 'Treinos Realizados' },
         aiMetric: { label: 'Nutri AI', icon: Brain, color: 'text-green-400', sublabel: 'Ajustes na Dieta' },
         title: 'Corpo & Mente',

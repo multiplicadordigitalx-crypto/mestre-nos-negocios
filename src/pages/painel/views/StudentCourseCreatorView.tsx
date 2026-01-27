@@ -6,7 +6,7 @@ import Input from '../../../components/Input';
 import {
     PlusCircle, BookOpen, Brain, Settings, X as XIcon, Sparkles,
     Zap, DollarSign, TrendingUp, Target, Pencil,
-    Activity, ShieldCheck, HeartPulse, Camera, RefreshCw, LockClosed,
+    ActivityIcon, ShieldCheck, HeartPulse, Camera, RefreshCw, LockClosed,
     CheckCircle, Info, ChevronRight, ArrowLeft, CloudUpload, Trash, Layers, ArrowRight,
     Smartphone, FileText, BarChart3, AlertTriangle, Coins, ShoppingBag, Phone, Mic, ShieldAlert,
     Layout, List, Gauge, Film, Clock, Rocket, Link as LinkIcon, Image, Youtube, Palette, Monitor, Megaphone, Eye, Star,
@@ -60,7 +60,7 @@ const CATEGORY_CONTEXT: Record<string, {
         promisePlaceholder: "Ex: Reprograme seu metabolismo para queimar gordura visceral de forma natural sem dietas restritivas...",
         aiNamingContext: "emagrecimento, bio-hacking e nutrição",
         contentHint: "Suba planos alimentares, tabelas nutricionais ou vídeos de treinos para que a IA gere planos adaptativos.",
-        icon: Activity
+        icon: ActivityIcon
     }
 };
 
@@ -97,7 +97,7 @@ const CATEGORIES_LIST = [
     {
         id: 'slimming_master',
         label: 'Mestre do Emagrecimento',
-        icon: Activity,
+        icon: ActivityIcon,
         color: 'green',
         desc: 'Especialista em saúde e performance. Bio-scaneamento e dietas adaptativas automatizadas pela inteligência do mestre.',
         longDesc: 'A máquina de transformação física. A IA analisa dados biométricos do aluno e ajusta planos alimentares e de treino de forma dinâmica.\n\nEstratégia Nexus:\n• Prova Social: Resultados físicos visíveis geram viralização.\n• Recorrência: Acompanhamento de metas de curto e médio prazo.'

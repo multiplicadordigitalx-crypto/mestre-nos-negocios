@@ -3,7 +3,7 @@ import React from 'react';
 import {
     ShieldCheck, FileText, Link as LinkIcon,
     ShoppingBag, Briefcase,
-    TrendingUp, MessageSquare, DollarSign, BarChart3, Wallet, Activity,
+    TrendingUp, MessageSquare, DollarSign, BarChart3, Wallet, ActivityIcon,
     Unlock, Smartphone, Settings, CreditCard, Users
 } from '../../../components/Icons';
 
@@ -54,7 +54,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({ currentView, setCurre
             <NavButton view="withdrawals" label="Saques" icon={<DollarSign className="w-4 h-4 text-green-400" />} />
             <NavButton view="commissions" label="Comissões" icon={<Wallet className="w-4 h-4 text-green-400" />} />
             <NavButton view="lucpay_center" label="LucPay (Stripe)" icon={<CreditCard className="w-4 h-4 text-indigo-400" />} badge="NOVO" />
-            <NavButton view="productivity" label="Produtividade" icon={<Activity className="w-4 h-4" />} />
+            <NavButton view="productivity" label="Produtividade" icon={<ActivityIcon className="w-4 h-4" />} />
             <NavButton view="access_recovery" label="Acesso" icon={<Unlock className="w-4 h-4" />} />
 
             {isSuperAdmin && (

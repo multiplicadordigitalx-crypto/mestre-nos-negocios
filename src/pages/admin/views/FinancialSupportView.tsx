@@ -14,7 +14,7 @@ import { getNexusSupportAdvice } from '../../../services/mestreIaService';
 import { CreditManagementModal } from '../../support/components/SupportModals';
 import { DetailedFinanceStatementModal } from '../components/DetailedFinanceStatementModal';
 import { MeusResultados } from '../../painel/sections/MeusResultados';
-import { Activity, X as XIcon } from '../../../components/Icons';
+import { ActivityIcon, X as XIcon } from '../../../components/Icons';
 
 interface FinancialSupportViewProps {
     user: any;
@@ -181,7 +181,7 @@ export const FinancialSupportView: React.FC<FinancialSupportViewProps> = ({ user
                     <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-gray-900 w-full max-w-6xl rounded-[2rem] border border-brand-primary/30 shadow-2xl relative flex flex-col max-h-[90vh]">
                         <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/80">
                             <h3 className="text-xl font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                                <Activity className="w-6 h-6 text-brand-primary" /> Auditoria de Resultados: {selectedTicket.studentName}
+                                <ActivityIcon className="w-6 h-6 text-brand-primary" /> Auditoria de Resultados: {selectedTicket.studentName}
                             </h3>
                             <button onClick={() => setShowStudentResults(false)} className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors">
                                 <XIcon className="w-6 h-6" />

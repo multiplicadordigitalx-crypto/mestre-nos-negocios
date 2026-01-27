@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, DollarSign, TrendingUp, BarChart3, CreditCard, PieChart, User, Package, Layers, Activity } from '../../../components/Icons';
+import { X, Search, DollarSign, TrendingUp, BarChart3, CreditCard, PieChart, User, Package, Layers, ActivityIcon } from '../../../components/Icons';
 import Button from '../../../components/Button';
 import { getStudentDeepAudit, getProductDeepAudit } from '../../../services/mockFirebase';
 
@@ -68,7 +68,7 @@ export const DeepEntityAuditModal: React.FC<DeepEntityAuditModalProps> = ({ type
                 </div>
                 <div>
                     <h4 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-indigo-400" /> Uso de Inteligência Artificial
+                        <ActivityIcon className="w-4 h-4 text-indigo-400" /> Uso de Inteligência Artificial
                     </h4>
                     <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 space-y-4">
                         {Object.entries(data.apiUsageMetrics).map(([key, val]: any, i) => (

@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { SalesPerson } from '@/types';
 import {
-    Activity, BarChart3, Brain, Zap, Sparkles, Trophy,
+    ActivityIcon, BarChart3, Brain, Zap, Sparkles, Trophy,
     DollarSign, ShoppingBag
 } from '@/components/Icons';
 import Card from '@/components/Card';
@@ -94,7 +94,7 @@ export const PerformanceView: React.FC<PerformanceViewProps> = ({ salesPerson })
 
             <div className="flex flex-col md:flex-row justify-between items-center mb-2 gap-4">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                    <Activity className="w-7 h-7 text-brand-primary" /> Performance Comercial
+                    <ActivityIcon className="w-7 h-7 text-brand-primary" /> Performance Comercial
                 </h2>
                 <div className="flex bg-gray-800 p-1 rounded-xl border border-gray-700 shadow-lg">
                     {(['day', 'week', 'month'] as const).map(p => (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../../components/Button';
-import { Phone, Brain, CheckCircle, PlayCircle, Send, PlusCircle, Bell, Trash, Zap, EyeOff, Eye, X as XIcon, User, MessageSquare, Link as LinkIcon, Activity, Mic, Paperclip, ShoppingBag, RefreshCw, ShieldCheck, Tag, ChevronDown, ChevronRight, Box, Clock, AlertTriangle, TrendingUp, BarChart2, PieChart, DollarSign, Shield, Lock, FileText } from '../../../components/Icons';
+import { Phone, Brain, CheckCircle, PlayCircle, Send, PlusCircle, Bell, Trash, Zap, EyeOff, Eye, X as XIcon, User, MessageSquare, Link as LinkIcon, ActivityIcon, Mic, Paperclip, ShoppingBag, RefreshCw, ShieldCheck, Tag, ChevronDown, ChevronRight, Box, Clock, AlertTriangle, TrendingUp, BarChart2, PieChart, DollarSign, Shield, Lock, FileText } from '../../../components/Icons';
 import Card from '../../../components/Card';
 import Input from '../../../components/Input';
 import toast from 'react-hot-toast';
@@ -630,7 +630,7 @@ export const WhatsAppEvolutionTab: React.FC<WhatsAppEvolutionTabProps> = () => {
                     <div className="flex justify-between items-start mb-2">
                         <div>
                             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                <Activity className="w-4 h-4 text-brand-primary" /> Tendência de Vendas (7 Dias)
+                                <ActivityIcon className="w-4 h-4 text-brand-primary" /> Tendência de Vendas (7 Dias)
                             </h3>
                             <p className="text-[10px] text-gray-500">Evolução diária de fechamentos automáticos.</p>
                         </div>
@@ -702,7 +702,7 @@ export const WhatsAppEvolutionTab: React.FC<WhatsAppEvolutionTabProps> = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                             <div className="bg-gray-900/80 border-l-2 border-green-500 p-2 rounded-r flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Shield className="w-3 h-3 text-green-500" />
+                                    <ActivityIcon className="w-3 h-3 text-green-500" />
                                     <span className="text-[10px] text-gray-200 font-bold">Rapport Acelerado</span>
                                 </div>
                                 <span className="text-[9px] text-gray-500 italic">"Gírias leves & Emojis"</span>
@@ -1140,7 +1140,7 @@ export const WhatsAppEvolutionTab: React.FC<WhatsAppEvolutionTabProps> = () => {
 
                                 <div className="flex justify-between items-center">
                                     <p className="text-[10px] text-gray-500 uppercase font-bold flex items-center gap-1">
-                                        <Activity className="w-3 h-3" /> Digitando como Humano
+                                        <ActivityIcon className="w-3 h-3" /> Digitando como Humano
                                     </p>
                                     <button
                                         onClick={() => handleToggleAutonomous(activeChat.id)}

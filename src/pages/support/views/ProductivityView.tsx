@@ -3,14 +3,14 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { SupportAgent } from '../../../types';
 import Card from '../../../components/Card';
-import { 
-    CheckCircle, Star, Clock, Trophy, TrendingUp, 
-    Brain, Zap, Activity, MessageSquare, Award 
+import {
+    CheckCircle, Star, Clock, Trophy, TrendingUp,
+    Brain, Zap, ActivityIcon, MessageSquare, Award
 } from '../../../components/Icons';
 import RankingSection from '../../../components/RankingSection';
 
 export const ProductivityView: React.FC<{ agent: SupportAgent }> = ({ agent }) => {
-    
+
     // Mock Data para o Rank
     const teamRank = [
         { name: 'Ana Suporte', resolved: 145, nps: 4.9, status: 'online' },
@@ -32,7 +32,7 @@ export const ProductivityView: React.FC<{ agent: SupportAgent }> = ({ agent }) =
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                            <Activity className="w-8 h-8 text-brand-primary" /> Painel de Produtividade
+                            <ActivityIcon className="w-8 h-8 text-brand-primary" /> Painel de Produtividade
                         </h2>
                         <p className="text-gray-400 text-sm mt-1">Sua performance em tempo real monitorada pelo Nexus.</p>
                     </div>
@@ -43,14 +43,14 @@ export const ProductivityView: React.FC<{ agent: SupportAgent }> = ({ agent }) =
                         <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Tickets Resolvidos</p>
                         <h3 className="text-3xl font-black text-white mt-1">{agent.ticketsResolved}</h3>
                         <p className="text-[10px] text-green-400 mt-2 flex items-center gap-1 font-bold">
-                            <TrendingUp className="w-3 h-3"/> +12% vs Ontem
+                            <TrendingUp className="w-3 h-3" /> +12% vs Ontem
                         </p>
                     </Card>
                     <Card className="p-5 border-l-4 border-l-yellow-500 bg-gray-800">
                         <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Satisfação (NPS)</p>
                         <h3 className="text-3xl font-black text-yellow-400 mt-1">{agent.npsScore}</h3>
                         <div className="flex text-yellow-500 mt-2">
-                            <Star className="w-3 h-3 fill-current"/><Star className="w-3 h-3 fill-current"/><Star className="w-3 h-3 fill-current"/><Star className="w-3 h-3 fill-current"/><Star className="w-3 h-3 fill-current"/>
+                            <Star className="w-3 h-3 fill-current" /><Star className="w-3 h-3 fill-current" /><Star className="w-3 h-3 fill-current" /><Star className="w-3 h-3 fill-current" /><Star className="w-3 h-3 fill-current" />
                         </div>
                     </Card>
                     <Card className="p-5 border-l-4 border-l-blue-500 bg-gray-800">
@@ -72,7 +72,7 @@ export const ProductivityView: React.FC<{ agent: SupportAgent }> = ({ agent }) =
                             <div className="absolute top-0 right-0 p-8 opacity-10">
                                 <Brain className="w-32 h-32 text-purple-400" />
                             </div>
-                            
+
                             <div className="relative z-10">
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="p-3 bg-purple-600 rounded-2xl shadow-lg shadow-purple-900/40">
@@ -103,21 +103,21 @@ export const ProductivityView: React.FC<{ agent: SupportAgent }> = ({ agent }) =
                                     </div>
                                     <div className="flex gap-4 items-start">
                                         <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30 shrink-0">
-                                            <Activity className="w-4 h-4 text-blue-400" />
+                                            <ActivityIcon className="w-4 h-4 text-blue-400" />
                                         </div>
                                         <p className="text-sm text-gray-300 leading-relaxed">
                                             O pico de chamados hoje será às <strong className="text-white">15:00</strong>. Prepare-se para uma carga maior.
                                         </p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="mt-10 pt-6 border-t border-gray-800">
                                     <div className="flex justify-between text-xs mb-2">
                                         <span className="text-gray-400 font-bold uppercase">Meta Diária de Resoluções</span>
                                         <span className="text-brand-primary font-black">{progress}%</span>
                                     </div>
                                     <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden border border-gray-700">
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${progress}%` }}
                                             className="h-full bg-brand-primary shadow-[0_0_10px_#FACC15]"
@@ -133,7 +133,7 @@ export const ProductivityView: React.FC<{ agent: SupportAgent }> = ({ agent }) =
                         <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden flex flex-col">
                             <div className="p-5 border-b border-gray-700 bg-gray-900/50">
                                 <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
-                                    <Trophy className="w-4 h-4 text-yellow-500"/> Rank da Equipe
+                                    <Trophy className="w-4 h-4 text-yellow-500" /> Rank da Equipe
                                 </h3>
                             </div>
                             <div className="flex-1 overflow-x-auto">
@@ -141,7 +141,7 @@ export const ProductivityView: React.FC<{ agent: SupportAgent }> = ({ agent }) =
                                     {teamRank.map((r, i) => (
                                         <div key={i} className={`p-4 border-b border-gray-700/50 flex items-center justify-between transition-colors ${r.name === agent.displayName ? 'bg-brand-primary/5 border-l-4 border-l-brand-primary' : ''}`}>
                                             <div className="flex items-center gap-3">
-                                                <span className={`text-xs font-black w-4 ${i === 0 ? 'text-yellow-500' : 'text-gray-500'}`}>{i+1}º</span>
+                                                <span className={`text-xs font-black w-4 ${i === 0 ? 'text-yellow-500' : 'text-gray-500'}`}>{i + 1}º</span>
                                                 <div>
                                                     <p className="text-sm font-bold text-white leading-tight">{r.name}</p>
                                                     <div className="flex items-center gap-2 mt-0.5">
@@ -153,7 +153,7 @@ export const ProductivityView: React.FC<{ agent: SupportAgent }> = ({ agent }) =
                                             <div className="text-right">
                                                 <p className="text-xs font-black text-white">{r.resolved}</p>
                                                 <p className="text-[9px] text-yellow-500 flex items-center justify-end gap-1 font-bold">
-                                                    <Star className="w-2 h-2 fill-current"/> {r.nps}
+                                                    <Star className="w-2 h-2 fill-current" /> {r.nps}
                                                 </p>
                                             </div>
                                         </div>

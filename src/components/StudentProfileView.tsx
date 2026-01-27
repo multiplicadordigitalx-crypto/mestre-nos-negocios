@@ -6,7 +6,7 @@ import Button from './Button';
 import {
     Trophy, CheckCircle, Clock, AlertTriangle, MapPin, Smartphone,
     Monitor, Calendar, Download, MessageSquare, Ban, DollarSign,
-    Activity, Eye, Pencil, Camera, PlusCircle, ShieldCheck, LockClosed, Globe, Server,
+    ActivityIcon, Eye, Pencil, Camera, PlusCircle, ShieldCheck, LockClosed, Globe, Server,
     Key, CreditCard, ExternalLink
 } from './Icons';
 import { useAuth } from '../hooks/useAuth';
@@ -222,7 +222,7 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({ student, viewer
 
                 <Card className="p-6 bg-gradient-to-br from-gray-800 to-gray-900/50">
                     <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-green-400" /> Status de Performance & Nível
+                        <ActivityIcon className="w-5 h-5 text-green-400" /> Status de Performance & Nível
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-700 text-center">

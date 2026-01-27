@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Droplet, Activity, FlaskConical, Gauge,
+    Droplet, ActivityIcon, FlaskConical, Gauge,
     Thermometer, Camera, Zap, Plus,
     CheckCircle, Info, Stethoscope, TestTube,
     Microscope, ArrowRight, Scan, RefreshCw,
@@ -139,7 +139,7 @@ export const BioLabCard: React.FC<BioLabCardProps> = ({ hasPhysicalKit }) => {
                                         </div>
                                     </div>
                                     <div className="p-4 md:p-5 rounded-2xl md:rounded-3xl bg-gray-950 border border-gray-800 text-blue-500 shrink-0">
-                                        <Activity className="w-7 h-7 md:w-9 md:h-9" />
+                                        <ActivityIcon className="w-7 h-7 md:w-9 md:h-9" />
                                     </div>
                                 </div>
                                 <div className="flex gap-2 mt-6 pt-6 border-t border-gray-700/50">
@@ -282,7 +282,7 @@ export const BioLabCard: React.FC<BioLabCardProps> = ({ hasPhysicalKit }) => {
                     <div className="bg-white/5 p-5 md:p-6 rounded-2xl md:rounded-3xl border border-white/10 backdrop-blur-sm">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-gray-900 flex items-center justify-center border border-gray-800 shrink-0">
-                                <Activity className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
+                                <ActivityIcon className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
                             </div>
                             <div>
                                 <span className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase tracking-widest">Estado Metabólico</span>

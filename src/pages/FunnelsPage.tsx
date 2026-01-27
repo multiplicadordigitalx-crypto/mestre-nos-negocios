@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Layers, Settings, DollarSign, MousePointer, Activity,
+    Layers, Settings, DollarSign, MousePointer, ActivityIcon,
     ShieldCheck, Brain, Globe, TrendingUp, GitBranch,
     Zap, BarChart3, Target
 } from '../components/Icons';
@@ -140,7 +140,7 @@ const FunnelsPage: React.FC<FunnelsPageProps> = ({ navigateTo }) => {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Activity className="w-5 h-5" /></div>
+                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><ActivityIcon className="w-5 h-5" /></div>
                         <div>
                             <p className="text-[10px] text-gray-500 uppercase font-bold">Testes Ativos</p>
                             <p className="text-xl font-black text-white">3 <span className="text-xs font-normal text-gray-500">variações</span></p>
@@ -190,7 +190,7 @@ const FunnelsPage: React.FC<FunnelsPageProps> = ({ navigateTo }) => {
                 <button onClick={() => setActiveTab('builder')} className={`px-6 py-3 rounded-lg font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'builder' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}><Brain className="w-4 h-4" /> Construtor AI</button>
                 <button onClick={() => setActiveTab('optimizer')} className={`px-6 py-3 rounded-lg font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'optimizer' ? 'bg-orange-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}><Zap className="w-4 h-4" /> Otimizador 24h</button>
                 <button onClick={() => setActiveTab('strategies')} className={`px-6 py-3 rounded-lg font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'strategies' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}><GitBranch className="w-4 h-4" /> Estratégias de Funis</button>
-                <button onClick={() => setActiveTab('analytics')} className={`px-6 py-3 rounded-lg font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'analytics' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}><Activity className="w-4 h-4" /> Deep Analytics 24h</button>
+                <button onClick={() => setActiveTab('analytics')} className={`px-6 py-3 rounded-lg font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'analytics' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}><ActivityIcon className="w-4 h-4" /> Deep Analytics 24h</button>
                 <button onClick={() => setActiveTab('persona')} className={`px-6 py-3 rounded-lg font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'persona' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}><Target className="w-4 h-4" /> Persona</button>
             </div>
 

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-    Activity, Server, Database, Globe, CheckCircle, RefreshCw, 
+import {
+    ActivityIcon, Server, Database, Globe, CheckCircle, RefreshCw,
     Brain, ShieldAlert, ShieldCheck
 } from '../components/Icons';
 import Button from '../components/Button';
@@ -31,7 +31,7 @@ const GuardianMonitor: React.FC = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             setStatus(nexusCore.getStatus());
-        }, 3000); 
+        }, 3000);
         return () => clearInterval(interval);
     }, []);
 
@@ -42,17 +42,16 @@ const GuardianMonitor: React.FC = () => {
     }
 
     return (
-        <div className={`w-full py-1.5 px-4 flex justify-between items-center text-xs font-bold uppercase tracking-widest border-b transition-colors duration-500 ${
-            status.health > 80 ? 'bg-green-900/10 border-green-500/20 text-green-500' :
-            'bg-red-900/30 border-red-500/50 text-red-400 animate-pulse'
-        }`}>
+        <div className={`w-full py-1.5 px-4 flex justify-between items-center text-xs font-bold uppercase tracking-widest border-b transition-colors duration-500 ${status.health > 80 ? 'bg-green-900/10 border-green-500/20 text-green-500' :
+                'bg-red-900/30 border-red-500/50 text-red-400 animate-pulse'
+            }`}>
             <div className="flex items-center gap-2">
                 <ShieldCheck className={`w-4 h-4 ${status.isProcessing ? 'animate-spin-slow' : ''}`} />
                 <span>NEXUS CORE: {status.mode.toUpperCase()} MODE • SAÚDE {status.health}%</span>
             </div>
             <div className="hidden md:flex items-center gap-4">
-                <span className="flex items-center gap-1"><Server className="w-3 h-3"/> FILA: {status.queueSize}</span>
-                <span className="flex items-center gap-1"><Database className="w-3 h-3"/> LEARNING: ON</span>
+                <span className="flex items-center gap-1"><Server className="w-3 h-3" /> FILA: {status.queueSize}</span>
+                <span className="flex items-center gap-1"><Database className="w-3 h-3" /> LEARNING: ON</span>
             </div>
         </div>
     );
@@ -63,14 +62,14 @@ const SystemHealthPage: React.FC = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [aiIntegrations, setAiIntegrations] = useState<any[]>([]);
     const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
-    
+
     // Mock Metrics Data (Simplified for display)
     const serverMetrics: HealthMetric[] = [
         { id: 'cpu', label: 'CPU Load', value: 32, unit: '%', status: 'good' },
         { id: 'ram', label: 'Memory', value: 4.2, unit: 'GB', status: 'good' },
         { id: 'disk', label: 'Disk', value: 68, unit: '%', status: 'warning' },
     ];
-    
+
     const dbMetrics: HealthMetric[] = [
         { id: 'reads', label: 'Reads/s', value: 450, unit: '', status: 'good' },
         { id: 'writes', label: 'Writes/s', value: 120, unit: '', status: 'good' },
@@ -90,15 +89,15 @@ const SystemHealthPage: React.FC = () => {
     ];
 
     useEffect(() => {
-         const mockAIs = [
-             { id: '1', name: 'Google Gemini 2.5', status: 'online', latency: '120ms', uptime: '99.9%', type: ['text', 'vision'], api: 'Google Cloud' },
-             { id: '2', name: 'OpenAI GPT-4o', status: 'online', latency: '240ms', uptime: '99.8%', type: ['text'], api: 'OpenAI API' },
-             { id: '3', name: 'Anthropic Claude 3.5', status: 'online', latency: '180ms', uptime: '99.9%', type: ['text', 'code'], api: 'Anthropic API' },
-             { id: '4', name: 'Flux Pro (Image)', status: 'online', latency: '2.5s', uptime: '99.5%', type: ['image'], api: 'Replicate' },
-             { id: '5', name: 'Google Veo (Video)', status: 'warning', latency: '8.0s', uptime: '92.0%', type: ['video'], api: 'Google Cloud' },
-             { id: '6', name: 'ElevenLabs', status: 'online', latency: '450ms', uptime: '99.9%', type: ['audio'], api: 'ElevenLabs API' },
-         ];
-         setAiIntegrations(mockAIs);
+        const mockAIs = [
+            { id: '1', name: 'Google Gemini 2.5', status: 'online', latency: '120ms', uptime: '99.9%', type: ['text', 'vision'], api: 'Google Cloud' },
+            { id: '2', name: 'OpenAI GPT-4o', status: 'online', latency: '240ms', uptime: '99.8%', type: ['text'], api: 'OpenAI API' },
+            { id: '3', name: 'Anthropic Claude 3.5', status: 'online', latency: '180ms', uptime: '99.9%', type: ['text', 'code'], api: 'Anthropic API' },
+            { id: '4', name: 'Flux Pro (Image)', status: 'online', latency: '2.5s', uptime: '99.5%', type: ['image'], api: 'Replicate' },
+            { id: '5', name: 'Google Veo (Video)', status: 'warning', latency: '8.0s', uptime: '92.0%', type: ['video'], api: 'Google Cloud' },
+            { id: '6', name: 'ElevenLabs', status: 'online', latency: '450ms', uptime: '99.9%', type: ['audio'], api: 'ElevenLabs API' },
+        ];
+        setAiIntegrations(mockAIs);
     }, []);
 
     const handleRefresh = () => {
@@ -108,19 +107,19 @@ const SystemHealthPage: React.FC = () => {
             toast.success("Métricas atualizadas.");
         }, 1000);
     };
-    
+
     const lastUpdate = new Date();
 
     return (
         <div className="min-h-screen bg-gray-900 text-gray-200">
             <GuardianMonitor />
-            
+
             <div className="p-4 md:p-8 animate-fade-in space-y-8">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-800 pb-6">
                     <div>
                         <h1 className="text-3xl font-black text-white flex items-center gap-3">
-                            <Activity className="w-8 h-8 text-brand-primary" />
+                            <ActivityIcon className="w-8 h-8 text-brand-primary" />
                             Mission Control Center
                         </h1>
                         <p className="text-gray-400 mt-1 flex items-center gap-2 text-sm">
@@ -131,10 +130,10 @@ const SystemHealthPage: React.FC = () => {
                     <div className="flex gap-3">
                         <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 flex flex-col items-end">
                             <span className="text-[10px] text-gray-500 uppercase font-bold">Status Global</span>
-                            <span className="text-green-400 font-bold text-sm flex items-center gap-1"><CheckCircle className="w-3 h-3"/> OPERACIONAL</span>
+                            <span className="text-green-400 font-bold text-sm flex items-center gap-1"><CheckCircle className="w-3 h-3" /> OPERACIONAL</span>
                         </div>
                         <Button onClick={handleRefresh} variant="secondary" className="!p-3">
-                            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}/>
+                            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                         </Button>
                     </div>
                 </div>
@@ -144,30 +143,30 @@ const SystemHealthPage: React.FC = () => {
 
                 {/* Main Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                    <MetricCard 
-                        title="Infraestrutura (Server)" 
-                        icon={<Server className="w-5 h-5 text-blue-400"/>} 
+                    <MetricCard
+                        title="Infraestrutura (Server)"
+                        icon={<Server className="w-5 h-5 text-blue-400" />}
                         metrics={serverMetrics}
                         color="text-blue-400"
                         onClick={() => setSelectedSection('infra')}
                     />
-                    <MetricCard 
-                        title="Banco de Dados" 
-                        icon={<Database className="w-5 h-5 text-purple-400"/>} 
+                    <MetricCard
+                        title="Banco de Dados"
+                        icon={<Database className="w-5 h-5 text-purple-400" />}
                         metrics={dbMetrics}
                         color="text-purple-400"
                         onClick={() => setSelectedSection('db')}
                     />
-                    <MetricCard 
-                        title="Inteligência Artificial" 
-                        icon={<Brain className="w-5 h-5 text-yellow-400"/>} 
+                    <MetricCard
+                        title="Inteligência Artificial"
+                        icon={<Brain className="w-5 h-5 text-yellow-400" />}
                         metrics={aiMetrics}
                         color="text-yellow-400"
                         onClick={() => setSelectedSection('ai')}
                     />
-                    <MetricCard 
-                        title="Operação & Negócio" 
-                        icon={<Globe className="w-5 h-5 text-green-400"/>} 
+                    <MetricCard
+                        title="Operação & Negócio"
+                        icon={<Globe className="w-5 h-5 text-green-400" />}
                         metrics={bizMetrics}
                         color="text-green-400"
                         onClick={() => setSelectedSection('biz')}
@@ -191,7 +190,7 @@ const SystemHealthPage: React.FC = () => {
                 </div>
 
                 {/* --- DETAILED MODALS --- */}
-                
+
                 <DetailedModal isOpen={selectedSection === 'infra'} onClose={() => setSelectedSection(null)} title="Detalhes de Infraestrutura">
                     <InfrastructureDetail />
                 </DetailedModal>

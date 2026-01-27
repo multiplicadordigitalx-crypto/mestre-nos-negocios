@@ -5,7 +5,7 @@ import {
     HeartPulse, Brain, Zap, Plus,
     Smile, Meh, Frown, Angry,
     Camera, TrendingUp, Calendar, ArrowRight,
-    Sparkles, Activity
+    Sparkles, ActivityIcon
 } from '../components/Icons';
 import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
 import Button from '../components/Button';
@@ -177,7 +177,7 @@ const HealthMindDiaryPage: React.FC<HealthMindDiaryPageProps> = ({ navigateTo })
                                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Estresse (HRV)</p>
                                     <h3 className="text-3xl font-black">Baixo</h3>
                                 </div>
-                                <Activity className="w-10 h-10 text-pink-400" />
+                                <ActivityIcon className="w-10 h-10 text-pink-400" />
                             </motion.div>
                         </>
                     )}
@@ -322,7 +322,7 @@ const HealthMindDiaryPage: React.FC<HealthMindDiaryPageProps> = ({ navigateTo })
                                 disabled={isProcessing || isGeneratingReport}
                                 className="!bg-blue-600 text-white font-black uppercase px-12 py-4 shadow-xl shadow-blue-900/20"
                             >
-                                {isProcessing || isGeneratingReport ? <><Activity className="animate-spin w-4 h-4 mr-2" /> Gerando...</> : "Gerar Nova Análise"}
+                                {isProcessing || isGeneratingReport ? <><ActivityIcon className="animate-spin w-4 h-4 mr-2" /> Gerando...</> : "Gerar Nova Análise"}
                             </Button>
                         </div>
                     )}

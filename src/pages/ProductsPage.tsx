@@ -9,7 +9,7 @@ import {
     ClipboardCopy, Pencil, Link as LinkIcon, Eye, CheckCircle,
     Clock, X as XIcon, LockClosed, PlusCircle, ShoppingBag, Trophy,
     DollarSign, BarChart3, Users, Zap, ShieldCheck,
-    Search, Trash, Activity,
+    Search, Trash, ActivityIcon,
     Brain, Target, Star, ArrowRight, Whatsapp, Wallet, TrendingUp, PieChart, ExternalLink,
     Info, Crown, AlertTriangle
 } from '../components/Icons';

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Star, Zap, Brain, Target, TrendingUp, BookOpen, Activity, Lock, CheckCircle, BarChart2, Clock } from '../Icons';
+import { Trophy, Star, Zap, Brain, Target, TrendingUp, BookOpen, ActivityIcon, Lock, CheckCircle, BarChart2, Clock } from '../Icons';
 import { useAuth } from '../../hooks/useAuth';
 
 const StatCard = ({ icon: Icon, label, value, subtext, color }: any) => (
@@ -90,7 +90,7 @@ export const PerformanceDashboard = () => {
                     <StatCard icon={Zap} label="XP Total" value="12.450" subtext="Nível Senior" color="yellow" />
                     <StatCard icon={Target} label="Questões" value="342" subtext="85% Acerto" color="green" />
                     <StatCard icon={BookOpen} label="Aulas" value="24/60" subtext="Módulo 3" color="blue" />
-                    <StatCard icon={Activity} label="Consistência" value="12 Dias" subtext="Maior sequência" color="green" />
+                    <StatCard icon={ActivityIcon} label="Consistência" value="12 Dias" subtext="Maior sequência" color="green" />
                 </div>
             </div>
 
@@ -173,7 +173,7 @@ export const PerformanceDashboard = () => {
                             <div className="bg-gray-800/50 p-5 rounded-2xl border border-gray-700/50">
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-2">
-                                        <Activity className="w-5 h-5 text-pink-500" />
+                                        <ActivityIcon className="w-5 h-5 text-pink-500" />
                                         <h4 className="font-bold text-white">Simulador de Audiência</h4>
                                     </div>
                                     <span className="text-xs font-bold text-pink-400">Score 8.5</span>

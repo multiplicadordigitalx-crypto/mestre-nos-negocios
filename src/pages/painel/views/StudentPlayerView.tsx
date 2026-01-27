@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ReactiveAudioVisualizer, VisualizerMode } from '@/components/ReactiveAudioVisualizer';
 import { GrokChatInterface, GrokChatHandle } from '@/components/GrokChatInterface';
 import { PlayerControls } from '@/components/PlayerControls';
-import { ChevronLeft, Disc, Activity, Wind, Zap, Star, Radio, Aperture, Sun, Moon, LockClosed, FlaskConical, Play, Pause, Pencil } from '@/components/Icons';
+import { ChevronLeft, Disc, ActivityIcon, Wind, Zap, Star, Radio, Aperture, Sun, Moon, LockClosed, FlaskConical, Play, Pause, Pencil } from '@/components/Icons';
 import { MobileMiniPlayer } from '@/components/MobileMiniPlayer';
 import { MobileExpandedPlayer } from '@/components/MobileExpandedPlayer';
 import { useLessonFlow } from '@/hooks/useLessonFlow';

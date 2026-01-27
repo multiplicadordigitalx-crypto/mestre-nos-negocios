@@ -54,6 +54,7 @@ export default async function handler(
                 break;
 
             case 'transfer.paid':
+                // @ts-ignore: Event type not in definition
                 await handleTransferPaid(event.data.object as unknown as Stripe.Transfer);
                 break;
 

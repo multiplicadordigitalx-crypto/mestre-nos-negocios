@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, CreditCard, RefreshCw, AlertTriangle, CheckCircle, ShieldOff } from '../../../../components/Icons';
+import { X, Calendar, CreditCard, RefreshCw, AlertTriangle, CheckCircle, ShieldOff } from '../../components/Icons';
 import { User, UserSubscription } from '../../types/legacy';
 import { updateStudent } from '../../services/userService';
 import { paymentService } from '../../services/paymentService'; // [NEW]

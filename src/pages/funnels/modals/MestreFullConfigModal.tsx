@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Button from '../../../components/Button';
-import { Sliders, X as XIcon, TrendingUp, Activity, ShieldCheck } from '../../../components/Icons';
+import { Sliders, X as XIcon, TrendingUp, ActivityIcon, ShieldCheck } from '../../../components/Icons';
 import { MestreFullConfig } from '../types';
 
 interface Props {
@@ -25,22 +25,22 @@ export const MestreFullConfigModal: React.FC<Props> = ({ isOpen, onClose, config
 
     return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[110] p-4">
-            <motion.div 
-                initial={{ scale: 0.95, opacity: 0 }} 
+            <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="bg-gray-800 w-full max-w-2xl rounded-2xl border border-yellow-500/30 shadow-2xl p-6 relative overflow-y-auto max-h-[90vh] custom-scrollbar"
             >
                 <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Sliders className="w-6 h-6 text-yellow-500"/> Parâmetros do Modo Mestre Full
+                        <Sliders className="w-6 h-6 text-yellow-500" /> Parâmetros do Modo Mestre Full
                     </h3>
-                    <button onClick={onClose}><XIcon className="w-5 h-5 text-gray-400 hover:text-white"/></button>
+                    <button onClick={onClose}><XIcon className="w-5 h-5 text-gray-400 hover:text-white" /></button>
                 </div>
 
                 <div className="space-y-6">
                     <div>
                         <h4 className="text-sm font-bold text-green-400 uppercase mb-3 flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4"/> Avaliação Exata para Liberar Escala
+                            <TrendingUp className="w-4 h-4" /> Avaliação Exata para Liberar Escala
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -60,7 +60,7 @@ export const MestreFullConfigModal: React.FC<Props> = ({ isOpen, onClose, config
 
                     <div>
                         <h4 className="text-sm font-bold text-red-400 uppercase mb-3 flex items-center gap-2">
-                            <Activity className="w-4 h-4"/> Sensores de Desgaste e Regras Implacáveis
+                            <ActivityIcon className="w-4 h-4" /> Sensores de Desgaste e Regras Implacáveis
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -84,7 +84,7 @@ export const MestreFullConfigModal: React.FC<Props> = ({ isOpen, onClose, config
 
                     <div>
                         <h4 className="text-sm font-bold text-blue-400 uppercase mb-3 flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4"/> Gestão de Risco e Orçamento
+                            <ShieldCheck className="w-4 h-4" /> Gestão de Risco e Orçamento
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>

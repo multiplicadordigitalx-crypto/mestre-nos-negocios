@@ -3370,7 +3370,7 @@ export const getOperationsMetrics = async (): Promise<OperationsMetric[]> => {
         { label: 'Receita Hoje', value: 'R$ 14.520', trend: 'up', trendValue: '+12%', status: 'good', icon: 'DollarSign' },
         { label: 'Chamados Abertos', value: 42, trend: 'down', trendValue: '-5%', status: 'good', icon: 'MessageSquare' },
         { label: 'Saques Pendentes', value: 8, trend: 'neutral', trendValue: 'R$ 8.2k', status: 'warning', icon: 'CreditCard' },
-        { label: 'Saúde do Sistema', value: '99.8%', trend: 'neutral', status: 'good', icon: 'Activity' },
+        { label: 'Saúde do Sistema', value: '99.8%', trend: 'neutral', status: 'good', icon: 'ActivityIcon' },
     ];
 };
 

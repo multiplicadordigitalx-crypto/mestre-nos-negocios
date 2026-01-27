@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Camera, Rocket, Robot, TrendingUp, Brain, Activity } from '../../../components/Icons';
+import { Search, Camera, Rocket, Robot, TrendingUp, Brain, ActivityIcon } from '../../../components/Icons';
 import Card from '../../../components/Card';
 
 export const NexusAutonomousSystem: React.FC = () => {
@@ -45,7 +45,7 @@ export const NexusAutonomousSystem: React.FC = () => {
                     <Brain className="w-6 h-6 text-brand-primary" /> Nexus Autônomo <span className="text-[10px] bg-brand-primary text-black px-2 py-0.5 rounded font-bold">LIVE</span>
                 </h3>
                 <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <Activity className="w-4 h-4 text-green-500 animate-pulse" /> Ecossistema Integrado (Funil + Bot + IA)
+                    <ActivityIcon className="w-4 h-4 text-green-500 animate-pulse" /> Ecossistema Integrado (Funil + Bot + IA)
                 </div>
             </div>
 

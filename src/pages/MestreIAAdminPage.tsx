@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Crown, TrendingUp, Users, Zap, Settings, DollarSign, Activity, Save, Download, Trash, PlusCircle, Search, CheckCircle, AlertTriangle, X as XIcon, LockClosed, PieChart, BarChart3, Filter, Clock, Link as LinkIcon, ClipboardCopy, Key, ShoppingBag, CreditCard, PlayCircle, FileText, Database, RefreshCw, ShieldAlert, Coins, UserCog, Table, Pencil, HeartPulse, Server, Globe, ShieldCheck, Brain, Mail as MailIcon, Robot, Film, Image } from '../components/Icons';
+import { Crown, TrendingUp, Users, Zap, Settings, DollarSign, ActivityIcon, Save, Download, Trash, PlusCircle, Search, CheckCircle, AlertTriangle, X as XIcon, LockClosed, PieChart, BarChart3, Filter, Clock, Link as LinkIcon, ClipboardCopy, Key, ShoppingBag, CreditCard, PlayCircle, FileText, Database, RefreshCw, ShieldAlert, Coins, UserCog, Table, Pencil, HeartPulse, Server, Globe, ShieldCheck, Brain, Mail as MailIcon, Robot, Film, Image } from '../components/Icons';
 import Button from '../components/Button';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,7 +28,7 @@ const DetailModal: React.FC<{ isOpen: boolean; onClose: () => void; title: strin
             >
                 <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900/50 rounded-t-2xl flex-shrink-0">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Activity className="w-6 h-6 text-brand-primary" /> {title}
+                        <ActivityIcon className="w-6 h-6 text-brand-primary" /> {title}
                     </h2>
                     <button onClick={onClose}><XIcon className="w-6 h-6 text-gray-400 hover:text-white" /></button>
                 </div>
@@ -193,7 +193,7 @@ const MestreIAAdminPage: React.FC<MestreIAAdminPageProps> = ({ onTestMode, onUse
                 <div className="w-full bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-sm">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-brand-primary" /> Atividade Recente (Tarefas/Hora)
+                            <ActivityIcon className="w-4 h-4 text-brand-primary" /> Atividade Recente (Tarefas/Hora)
                         </h3>
                         <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded border border-green-500/20 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Ao Vivo

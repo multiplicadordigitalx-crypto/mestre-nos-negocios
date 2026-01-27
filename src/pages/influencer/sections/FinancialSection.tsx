@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Influencer } from '../../../types';
 import Card from '../../../components/Card';
 import Button from '../../../components/Button';
-import { Wallet, CheckCircle, Clock, Ban, DollarSign, Users, Link as LinkIcon, Activity, Download } from '../../../components/Icons';
+import { Wallet, CheckCircle, Clock, Ban, DollarSign, Users, Link as LinkIcon, ActivityIcon, Download } from '../../../components/Icons';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 
 export const FinancialSection: React.FC<{ influencer: Influencer, onWithdraw: () => void }> = ({ influencer, onWithdraw }) => {
@@ -38,7 +38,7 @@ export const FinancialSection: React.FC<{ influencer: Influencer, onWithdraw: ()
             <Card className="bg-gray-800 border-gray-700 overflow-hidden mt-8">
                 <div className="p-4 bg-gray-900/50 border-b border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-brand-primary" /> Extrato LucPay
+                        <ActivityIcon className="w-5 h-5 text-brand-primary" /> Extrato LucPay
                     </h3>
                     <Button variant="secondary" className="!py-2 !px-3 !text-xs flex items-center gap-2 w-full sm:w-auto">
                         <Download className="w-3 h-3" /> Baixar CSV

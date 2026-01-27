@@ -12,7 +12,7 @@ const OperationsOverview: React.FC = () => {
     }, []);
 
     const getIcon = (iconName: string) => {
-        const Icon = (Icons as any)[iconName] || Icons.Activity;
+        const Icon = (Icons as any)[iconName] || Icons.ActivityIcon;
         return <Icon className="w-5 h-5 text-white" />;
     };
 

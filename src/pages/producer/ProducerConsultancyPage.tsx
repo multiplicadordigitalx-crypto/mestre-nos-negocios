@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 
-import { Monitor, Zap, AlertTriangle, CheckCircle, TrendingUp, Search, Activity, ArrowRight, ArrowLeft, PlusCircle, LockClosed } from '../../components/Icons';
+import { Monitor, Zap, AlertTriangle, CheckCircle, TrendingUp, Search, ActivityIcon, ArrowRight, ArrowLeft, PlusCircle, LockClosed } from '../../components/Icons';
 import { Course, ProducerWallet } from '../../types/legacy';
 
 import { getProducerWallet, debitWallet, getWinningProductMatch, getToolCosts } from '../../services/mockFirebase';
@@ -219,7 +219,7 @@ const NexusDossier = ({ product, onBack, onStatusUpdate }: { product: Course, on
                 {/* STATUS CARD */}
                 <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-500/30 rounded-2xl p-8 mb-8 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-50">
-                        <Activity className="w-24 h-24 text-green-500/20" />
+                        <ActivityIcon className="w-24 h-24 text-green-500/20" />
                     </div>
                     <div className="relative z-10">
                         <h3 className="text-xl font-bold text-white mb-2">Protocolo de Segurança Ativado</h3>
@@ -431,7 +431,7 @@ const NexusDossier = ({ product, onBack, onStatusUpdate }: { product: Course, on
 
             {/* SIDE-BY-SIDE PROBLEM CARDS - CLEANER BORDERS */}
             <h3 className="text-xl md:text-2xl font-black text-white mb-8 flex items-center gap-3 px-2 md:px-0">
-                <Activity className="text-purple-500" /> Plano de Correção Imediata
+                <ActivityIcon className="text-purple-500" /> Plano de Correção Imediata
             </h3>
 
 
@@ -786,7 +786,7 @@ export const ProducerConsultancyPage: React.FC = () => {
 
                         {(school as any).consultancyStatus === 'monitoring' ? (
                             <Button className="w-full !bg-green-900/20 !text-green-400 border border-green-500/30 group-hover:shadow-[0_0_20px_rgba(34,197,94,0.2)] transition-all">
-                                <Activity className="w-4 h-4 mr-2 animate-pulse" /> Monitoramento: Dia 1/30
+                                <ActivityIcon className="w-4 h-4 mr-2 animate-pulse" /> Monitoramento: Dia 1/30
                             </Button>
                         ) : (
                             <Button className="w-full !bg-red-500/10 !text-red-500 border border-red-500/30 hover:!bg-red-600 hover:!text-white group-hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all animate-pulse-slow">

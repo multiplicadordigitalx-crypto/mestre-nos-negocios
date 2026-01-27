@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Cpu, TrendingUp, DollarSign, Activity, Database, Brain, ShieldCheck, RefreshCw, BarChart3, Target, Users, Trophy } from '../components/Icons';
+import { Cpu, TrendingUp, DollarSign, ActivityIcon, Database, Brain, ShieldCheck, RefreshCw, BarChart3, Target, Users, Trophy } from '../components/Icons';
 import NexusDataCollector from './nexus/components/NexusDataCollector';
 import NexusActionGenerator from './nexus/components/NexusActionGenerator';
 import NexusFinancialAlignment from './nexus/components/NexusFinancialAlignment';
@@ -17,11 +17,11 @@ const NexusCfoAdvisor: React.FC = () => {
     return (
         <Card className="bg-gray-800 border-l-4 border-l-brand-primary p-6 relative overflow-hidden mt-6 shadow-2xl">
             <div className="absolute top-0 right-0 w-40 h-40 bg-brand-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-            
+
             <div className="flex justify-between items-start mb-6 relative z-10">
                 <div>
                     <h3 className="text-xl font-bold text-white flex items-center gap-2 uppercase tracking-wide">
-                        <DollarSign className="w-6 h-6 text-brand-primary"/> Nexus CFO Strategy (Etapa 5)
+                        <DollarSign className="w-6 h-6 text-brand-primary" /> Nexus CFO Strategy (Etapa 5)
                     </h3>
                     <p className="text-gray-400 text-xs mt-1">
                         Otimização de lucro global. A IA analisa margem líquida e sugere ajustes de preço e bônus.
@@ -57,11 +57,11 @@ const NexusCfoAdvisor: React.FC = () => {
             </div>
 
             <div className="mt-6 p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl flex gap-4 items-center">
-                 <Brain className="w-8 h-8 text-purple-400 shrink-0"/>
-                 <div>
-                     <h4 className="text-sm font-bold text-white uppercase">Veredito CFO IA</h4>
-                     <p className="text-xs text-gray-400 italic">"A saúde financeira da plataforma é excepcional. Recomendamos aumentar o limite de créditos do plano 'Pro' para atrair mais usuários para a camada de retenção, onde o custo marginal da IA é menor."</p>
-                 </div>
+                <Brain className="w-8 h-8 text-purple-400 shrink-0" />
+                <div>
+                    <h4 className="text-sm font-bold text-white uppercase">Veredito CFO IA</h4>
+                    <p className="text-xs text-gray-400 italic">"A saúde financeira da plataforma é excepcional. Recomendamos aumentar o limite de créditos do plano 'Pro' para atrair mais usuários para a camada de retenção, onde o custo marginal da IA é menor."</p>
+                </div>
             </div>
         </Card>
     );

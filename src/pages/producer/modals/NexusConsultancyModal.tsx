@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, TrendingUp, AlertTriangle, Monitor, Zap, ArrowRight, Activity, Briefcase, LockClosed, Search, Crosshair, BarChart2 } from '../../../components/Icons';
+import { X, CheckCircle, TrendingUp, AlertTriangle, Monitor, Zap, ArrowRight, ActivityIcon, Briefcase, LockClosed, Search, Crosshair, BarChart2 } from '../../../components/Icons';
 import Button from '../../../components/Button';
 import { ConsultancyReport, ActionItem, ProducerWallet } from '../../../types/legacy';
 import { WinningProductProfile, NexusProductDNA, ConsultancyStage } from '../../../types/nexus';
@@ -231,7 +231,7 @@ export const NexusConsultancyModal: React.FC<NexusConsultancyModalProps> = ({ pr
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700 hover:border-red-500/50 transition-colors">
                             <div className="flex items-center gap-2 mb-4">
-                                <Activity className="text-red-400" />
+                                <ActivityIcon className="text-red-400" />
                                 <h4 className="font-bold text-white">Análise de Emoção (Ads)</h4>
                             </div>
                             <div className="flex items-center justify-between text-sm">

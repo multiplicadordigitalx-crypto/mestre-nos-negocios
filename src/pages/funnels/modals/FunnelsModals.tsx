@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
-import { X as XIcon, Zap, AlertTriangle, PlayCircle, Trash, ShoppingBag, Activity, ShieldCheck } from '../../../components/Icons';
+import { X as XIcon, Zap, AlertTriangle, PlayCircle, Trash, ShoppingBag, ActivityIcon, ShieldCheck } from '../../../components/Icons';
 import { Funnel } from '../types';
 import toast from 'react-hot-toast';
 
@@ -35,7 +35,7 @@ export const MestreFullModal: React.FC<{ isOpen: boolean, onClose: () => void, o
                         <span className={`text-sm font-black ${currentBalance < estimatedDailyCost ? 'text-red-500' : 'text-green-400'}`}>{currentBalance.toFixed(2)} Créditos</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-gray-400 text-xs font-bold uppercase flex items-center gap-1"><Activity className="w-3 h-3" /> Consumo Estimado</span>
+                        <span className="text-gray-400 text-xs font-bold uppercase flex items-center gap-1"><ActivityIcon className="w-3 h-3" /> Consumo Estimado</span>
                         <span className="text-sm font-bold text-yellow-500">~{estimatedDailyCost} Créditos/dia</span>
                     </div>
                     {currentBalance < estimatedDailyCost && (

@@ -2,7 +2,7 @@
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/Card';
-import { DollarSign, Users, TrendingUp, Activity, MessageSquare } from '../../components/Icons';
+import { DollarSign, Users, TrendingUp, ActivityIcon, MessageSquare } from '../../components/Icons';
 
 export const ProducerOverviewPage: React.FC = () => {
     const { user } = useAuth();
@@ -44,7 +44,7 @@ export const ProducerOverviewPage: React.FC = () => {
                     <Card className="bg-gray-900 border-gray-800 p-5 flex flex-col justify-between hover:border-purple-500/50 transition-colors cursor-pointer group">
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-2 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors">
-                                <Activity className="w-6 h-6 text-purple-500" />
+                                <ActivityIcon className="w-6 h-6 text-purple-500" />
                             </div>
                             <span className="text-[10px] bg-purple-500/10 text-purple-500 px-2 py-1 rounded-full font-bold">98%</span>
                         </div>
@@ -100,7 +100,7 @@ export const ProducerOverviewPage: React.FC = () => {
                         </div>
                         <div className="p-4 border-b border-gray-800 hover:bg-gray-800/50 transition-colors flex items-center gap-4">
                             <div className="w-10 h-10 rounded-full bg-red-900/30 flex items-center justify-center border border-red-500/30">
-                                <Activity className="w-5 h-5 text-red-500" />
+                                <ActivityIcon className="w-5 h-5 text-red-500" />
                             </div>
                             <div className="flex-1">
                                 <p className="text-sm text-gray-200">Solicitação de Reembolso</p>

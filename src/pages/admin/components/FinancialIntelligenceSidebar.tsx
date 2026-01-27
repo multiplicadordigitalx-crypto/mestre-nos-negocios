@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Activity, PieChart, DollarSign, Zap, X as XIcon, Users, ChevronLeft, ChevronRight, RefreshCw, ShieldCheck, AlertTriangle } from '../../../components/Icons';
+import { Brain, ActivityIcon, PieChart, DollarSign, Zap, X as XIcon, Users, ChevronLeft, ChevronRight, RefreshCw, ShieldCheck, AlertTriangle } from '../../../components/Icons';
 import Button from '../../../components/Button';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { SupportTicket, Student, Influencer } from '../../../types';
@@ -111,7 +111,7 @@ export const FinancialIntelligenceSidebar: React.FC<FinancialIntelligenceSidebar
                                         <p className="text-white font-bold text-sm">{student.displayName}</p>
                                     </div>
                                     <Button onClick={onShowResults} variant="secondary" className="w-full !py-3 text-xs uppercase font-bold text-white bg-gray-800 hover:bg-gray-700 border border-gray-600 transition-colors">
-                                        <Activity className="w-4 h-4 mr-2 text-brand-primary" /> Ver Progresso
+                                        <ActivityIcon className="w-4 h-4 mr-2 text-brand-primary" /> Ver Progresso
                                     </Button>
                                     <Button onClick={() => onShowFinance(student)} variant="secondary" className="w-full !py-3 text-xs uppercase font-bold text-white !bg-blue-600 hover:!bg-blue-500 border-none transition-colors shadow-lg shadow-blue-900/20">
                                         <PieChart className="w-4 h-4 mr-2" /> Extrato Financeiro

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { Mic, Play, MessageSquare, ChevronLeft, User, Volume2, AlertCircle, Award, Brain, Trophy, Activity, Sparkles, Star } from '../../Icons';
+import { Mic, Play, MessageSquare, ChevronLeft, User, Volume2, AlertCircle, Award, Brain, Trophy, ActivityIcon, Sparkles, Star } from '../../Icons';
 import Button from '../../Button';
 import toast from 'react-hot-toast';
 
@@ -292,7 +292,7 @@ export const AudienceSimulator: React.FC<AudienceSimulatorProps & { navigateTo?:
                                                 <div className="flex items-center justify-between p-3 bg-gray-950 rounded-xl border border-gray-800">
                                                     <div className="flex items-center gap-3">
                                                         <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
-                                                            <Activity className="w-4 h-4" />
+                                                            <ActivityIcon className="w-4 h-4" />
                                                         </div>
                                                         <div>
                                                             <p className="text-[10px] text-gray-500 uppercase font-bold">Audiências</p>

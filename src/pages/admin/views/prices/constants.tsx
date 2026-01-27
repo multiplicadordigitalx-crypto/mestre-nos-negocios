@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { PlansState } from './types';
-import { Brain, MessageSquare, Mic, Share2, Users, Video, Zap, FileText, Globe, GraduationCap, PenTool, Bot, Folder, Search, Scale, Megaphone, Filter, Mail, BookOpen, Target, Activity, HeartPulse, Rocket } from '../../../../components/Icons';
+import { Brain, MessageSquare, Mic, Share2, Users, Video, Zap, FileText, Globe, GraduationCap, PenTool, Bot, Folder, Search, Scale, Megaphone, Filter, Mail, BookOpen, Target, ActivityIcon, HeartPulse, Rocket } from '../../../../components/Icons';
 
 export interface SystemToolExtended {
     id: string;
@@ -152,7 +152,7 @@ export const SYSTEM_MODULES: SystemModuleExtended[] = [
     {
         id: 'consumption_maintenance',
         label: 'Consumo & Manutenção (Aluno)',
-        icon: <Activity className="w-5 h-5 text-red-400" />,
+        icon: <ActivityIcon className="w-5 h-5 text-red-400" />,
         description: 'Custos recorrentes de infraestrutura, armazenamento e consumo de IA pelos alunos.',
         tools: [
             { id: 'maintenance_active_student', label: 'Manutenção Diária por Aluno (Infra)', costUSD: 0.005, baseUnit: "Por Aluno/Dia", billingType: 'internal_cost' },

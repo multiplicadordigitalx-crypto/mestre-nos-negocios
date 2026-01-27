@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Button from '../../../components/Button';
-import { Terminal, ShieldCheck, Server, PlusCircle, Activity, Trash, RefreshCw, LogOut, Zap, Code } from '../../../components/Icons';
+import { Terminal, ShieldCheck, Server, PlusCircle, ActivityIcon, Trash, RefreshCw, LogOut, Zap, Code } from '../../../components/Icons';
 import {
     getWhatsAppInstances,
     saveWhatsAppInstance,

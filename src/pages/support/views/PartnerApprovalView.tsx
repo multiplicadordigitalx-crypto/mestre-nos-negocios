@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Influencer } from '../../../types';
 import Card from '../../../components/Card';
 import Button from '../../../components/Button';
-// Add missing icon imports 'MessageSquare' and 'Activity'
-import { Users, Instagram, Tiktok, Youtube, Check, X as XIcon, Globe, ShieldCheck, AlertTriangle, Info, Facebook, MessageSquare, Activity } from '../../../components/Icons';
+// Add missing icon imports 'MessageSquare' and 'ActivityIcon'
+import { Users, Instagram, Tiktok, Youtube, Check, X as XIcon, Globe, ShieldCheck, AlertTriangle, Info, Facebook, MessageSquare, ActivityIcon } from '../../../components/Icons';
 
 interface PartnerApprovalViewProps {
     requests: Influencer[];
@@ -15,13 +15,13 @@ export const PartnerApprovalView: React.FC<PartnerApprovalViewProps> = ({ reques
     const [showGuide, setShowGuide] = useState(true);
 
     const getSocialIcon = (network: string) => {
-        switch(network.toLowerCase()) {
-            case 'instagram': return <Instagram className="w-4 h-4 text-pink-500"/>;
-            case 'tiktok': return <Tiktok className="w-4 h-4 text-white"/>;
-            case 'youtube': return <Youtube className="w-4 h-4 text-red-500"/>;
-            case 'facebook': return <Facebook className="w-4 h-4 text-blue-500"/>;
+        switch (network.toLowerCase()) {
+            case 'instagram': return <Instagram className="w-4 h-4 text-pink-500" />;
+            case 'tiktok': return <Tiktok className="w-4 h-4 text-white" />;
+            case 'youtube': return <Youtube className="w-4 h-4 text-red-500" />;
+            case 'facebook': return <Facebook className="w-4 h-4 text-blue-500" />;
             case 'kwai': return <span className="w-4 h-4 font-black text-orange-500 bg-white rounded-full flex items-center justify-center text-[10px]">K</span>;
-            default: return <Globe className="w-4 h-4 text-gray-400"/>;
+            default: return <Globe className="w-4 h-4 text-gray-400" />;
         }
     };
 
@@ -30,7 +30,7 @@ export const PartnerApprovalView: React.FC<PartnerApprovalViewProps> = ({ reques
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-                        <ShieldCheck className="w-6 h-6 md:w-8 md:h-8 text-brand-primary"/> Triagem de Novos Parceiros
+                        <ShieldCheck className="w-6 h-6 md:w-8 md:h-8 text-brand-primary" /> Triagem de Novos Parceiros
                     </h2>
                     <p className="text-gray-400 text-sm mt-1">Verificação manual rigorosa para manter a qualidade do ecossistema.</p>
                 </div>
@@ -43,10 +43,10 @@ export const PartnerApprovalView: React.FC<PartnerApprovalViewProps> = ({ reques
             {showGuide && (
                 <div className="bg-blue-900/20 border border-blue-500/30 p-5 rounded-2xl relative shadow-inner">
                     <button onClick={() => setShowGuide(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
-                        <XIcon className="w-4 h-4"/>
+                        <XIcon className="w-4 h-4" />
                     </button>
                     <h4 className="text-blue-300 font-black text-xs uppercase mb-3 flex items-center gap-2 tracking-widest">
-                        <Info className="w-4 h-4"/> Manual de Triagem do Agente
+                        <Info className="w-4 h-4" /> Manual de Triagem do Agente
                     </h4>
                     <ul className="text-[11px] text-gray-300 space-y-2 list-disc pl-4 leading-relaxed font-medium">
                         <li><strong>Verificação de Link:</strong> Clique no link do perfil. Verifique se a conta existe, se tem foto de perfil e se o @ bate com o informado.</li>
@@ -70,11 +70,10 @@ export const PartnerApprovalView: React.FC<PartnerApprovalViewProps> = ({ reques
                         <Card key={req.uid} className="bg-gray-800 border-gray-700 shadow-2xl flex flex-col relative overflow-hidden group">
                             {/* Partner Type Badge */}
                             <div className="absolute top-0 right-0">
-                                <div className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-bl-xl shadow-lg border-l border-b border-white/5 ${
-                                    req.partnershipType === 'Influenciador' 
-                                        ? 'bg-purple-600 text-white' 
-                                        : 'bg-blue-600 text-white'
-                                }`}>
+                                <div className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-bl-xl shadow-lg border-l border-b border-white/5 ${req.partnershipType === 'Influenciador'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-blue-600 text-white'
+                                    }`}>
                                     {req.partnershipType || 'Afiliado'}
                                 </div>
                             </div>
@@ -90,11 +89,11 @@ export const PartnerApprovalView: React.FC<PartnerApprovalViewProps> = ({ reques
                                         <p className="text-[10px] text-gray-500 font-mono mt-1 bg-gray-900 px-2 py-0.5 rounded w-fit border border-gray-700">CPF: {req.cpf}</p>
                                     </div>
                                 </div>
-                                
+
                                 {/* RESUMO DA CONTA - NOVO */}
                                 <div className="bg-black/30 p-4 rounded-xl border border-gray-700 shadow-inner">
                                     <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-2 flex items-center gap-2">
-                                        <MessageSquare className="w-3 h-3"/> Declaração de Presença Digital
+                                        <MessageSquare className="w-3 h-3" /> Declaração de Presença Digital
                                     </p>
                                     <p className="text-xs text-gray-300 italic leading-relaxed">
                                         "{req.accountDescription || 'O parceiro não forneceu uma descrição detalhada.'}"
@@ -103,14 +102,14 @@ export const PartnerApprovalView: React.FC<PartnerApprovalViewProps> = ({ reques
 
                                 <div className="space-y-4">
                                     <h4 className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] border-b border-gray-700 pb-2 flex items-center gap-2">
-                                        <Activity className="w-3 h-3"/> Redes Sociais e Alcance
+                                        <ActivityIcon className="w-3 h-3" /> Redes Sociais e Alcance
                                     </h4>
-                                    
+
                                     <div className="grid grid-cols-1 gap-2">
                                         {Object.entries(req.socialLinks || {}).filter(([_, url]) => !!url).map(([network, url]) => {
                                             const followerKey = `${network}Followers` as keyof typeof req.followers;
                                             const followersCount = req.followers ? req.followers[followerKey] : '-';
-                                            
+
                                             return (
                                                 <div key={network} className="flex flex-col bg-gray-900/80 rounded-xl border border-gray-700 p-3 hover:border-brand-primary/30 transition-colors">
                                                     <div className="flex justify-between items-center mb-1">
@@ -125,7 +124,7 @@ export const PartnerApprovalView: React.FC<PartnerApprovalViewProps> = ({ reques
                                                         )}
                                                     </div>
                                                     <a href={url} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:text-blue-300 underline truncate flex items-center gap-1.5 mt-1.5 font-mono">
-                                                        <Globe className="w-3 h-3"/> {url}
+                                                        <Globe className="w-3 h-3" /> {url}
                                                     </a>
                                                 </div>
                                             );
@@ -135,18 +134,18 @@ export const PartnerApprovalView: React.FC<PartnerApprovalViewProps> = ({ reques
                             </div>
 
                             <div className="p-4 bg-gray-900/50 border-t border-gray-700 flex gap-3">
-                                <Button 
-                                    variant="secondary" 
-                                    onClick={() => onAction(req.uid, 'blocked')} 
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => onAction(req.uid, 'blocked')}
                                     className="flex-1 !py-3 !text-[10px] font-black uppercase text-red-400 border-red-900/40 hover:border-red-500 hover:bg-red-900/20 transition-all"
                                 >
-                                    <XIcon className="w-4 h-4 mr-1.5"/> Rejeitar
+                                    <XIcon className="w-4 h-4 mr-1.5" /> Rejeitar
                                 </Button>
-                                <Button 
-                                    onClick={() => onAction(req.uid, 'active')} 
+                                <Button
+                                    onClick={() => onAction(req.uid, 'active')}
                                     className="flex-1 !py-3 !text-[10px] font-black uppercase !bg-green-600 hover:!bg-green-500 text-white shadow-xl shadow-green-900/20 transition-all"
                                 >
-                                    <Check className="w-4 h-4 mr-1.5"/> Aprovar Parceiro
+                                    <Check className="w-4 h-4 mr-1.5" /> Aprovar Parceiro
                                 </Button>
                             </div>
                         </Card>

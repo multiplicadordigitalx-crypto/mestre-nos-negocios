@@ -5,7 +5,7 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import {
-    Target, Brain, Activity, ShoppingBag,
+    Target, Brain, ActivityIcon, ShoppingBag,
     Facebook, Google, Tiktok, Eye, Zap, Globe,
     CheckCircle, BarChart3, PieChart, Users,
     Search, Rocket, RefreshCw, Crosshair,
@@ -273,7 +273,7 @@ const NexusAdsPage: React.FC<NexusAdsPageProps> = ({ navigateTo }) => {
                     </div>
                     <div className="flex items-center gap-2 md:gap-4 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
                         <div className="bg-red-900/20 border border-red-500/30 px-4 py-2 rounded-xl flex items-center gap-3">
-                            <Activity className="w-5 h-5 text-red-500 animate-pulse" />
+                            <ActivityIcon className="w-5 h-5 text-red-500 animate-pulse" />
                             <div>
                                 <p className="text-[10px] text-red-300 font-bold uppercase">Pixel Eventos (24h)</p>
                                 <p className="text-lg font-black text-white leading-none">12.482</p>
@@ -533,7 +533,7 @@ const NexusAdsPage: React.FC<NexusAdsPageProps> = ({ navigateTo }) => {
                 {/* --- STATUS FOOTER --- */}
                 <div className="fixed bottom-0 left-0 right-0 lg:left-64 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 p-2 px-6 flex justify-between items-center z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
                     <div className="flex items-center gap-4 overflow-x-auto no-scrollbar">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"><Activity className="w-3 h-3" /> Status:</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"><ActivityIcon className="w-3 h-3" /> Status:</span>
                         {PLATFORMS_CONFIG.map(p => {
                             const acc = getPlatformAccount(p.id);
                             if (!acc) return null;

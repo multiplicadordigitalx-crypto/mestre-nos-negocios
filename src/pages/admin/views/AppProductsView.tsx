@@ -9,7 +9,7 @@ import {
     ClipboardCopy, Pencil, Link as LinkIcon, Eye, CheckCircle,
     Clock, X as XIcon, LockClosed, PlusCircle, ShoppingBag, Trophy, ExternalLink,
     DollarSign, BarChart3, Users, Zap, ShieldCheck,
-    Search, Trash, Activity,
+    Search, Trash, ActivityIcon,
     Brain, Crown, Info,
     TrendingUp, PieChart, Whatsapp, Wallet, Target, Star, ArrowRight,
     Filter, AlertTriangle, Film
@@ -338,7 +338,7 @@ const ProductIntelligenceModal: React.FC<ProductIntelligenceModalProps> = ({
                                     </Card>
 
                                     <Card className="p-4 md:p-6 bg-gray-800 border-gray-700">
-                                        <h3 className="text-white font-bold mb-6 flex items-center gap-2"><Activity className="w-5 h-5 text-orange-400" /> Funil de Conversão</h3>
+                                        <h3 className="text-white font-bold mb-6 flex items-center gap-2"><ActivityIcon className="w-5 h-5 text-orange-400" /> Funil de Conversão</h3>
                                         {/* Funnel Details... */}
                                     </Card>
                                 </div>
@@ -500,7 +500,7 @@ const ProductIntelligenceModal: React.FC<ProductIntelligenceModalProps> = ({
                                                 <DnaGoldenQuestion label="1. Ganhos Reais" value={product.dna.sevenGoldenQuestions.moneyGainOrSave} icon={<DollarSign className="w-4 h-4 text-green-500" />} />
                                                 <DnaGoldenQuestion label="2. Tempo Economizado" value={product.dna.sevenGoldenQuestions.timeSaved} icon={<Clock className="w-4 h-4 text-blue-500" />} />
                                                 <DnaGoldenQuestion label="3. Alívio Operacional" value={product.dna.sevenGoldenQuestions.tasksEliminated} icon={<Trash className="w-4 h-4 text-red-500" />} />
-                                                <DnaGoldenQuestion label="4. Erradicação de Dor" value={product.dna.sevenGoldenQuestions.painEliminated} icon={<Activity className="w-4 h-4 text-purple-500" />} />
+                                                <DnaGoldenQuestion label="4. Erradicação de Dor" value={product.dna.sevenGoldenQuestions.painEliminated} icon={<ActivityIcon className="w-4 h-4 text-purple-500" />} />
                                                 <DnaGoldenQuestion label="5. Status & Poder" value={product.dna.sevenGoldenQuestions.statusAndEnvy} icon={<Crown className="w-4 h-4 text-yellow-400" />} />
                                                 <DnaGoldenQuestion label="6. Reconhecimento" value={product.dna.sevenGoldenQuestions.socialPopularity} icon={<Users className="w-4 h-4 text-indigo-400" />} />
                                                 <DnaGoldenQuestion label="7. Vitalidade" value={product.dna.sevenGoldenQuestions.healthAndVibrancy} icon={<CheckCircle className="w-4 h-4 text-green-400" />} />

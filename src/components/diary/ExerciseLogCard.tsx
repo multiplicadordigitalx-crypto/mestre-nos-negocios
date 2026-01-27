@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Dumbbell, Timer, Trophy, Sparkles,
     Trash2, Edit2, Plus, Check, Scan,
-    Search, ChevronRight, Activity, Zap,
+    Search, ChevronRight, ActivityIcon, Zap,
     Target, Clock, ArrowRight, Bluetooth,
     ArrowUpRight, Monitor
 } from "../Icons";
@@ -11,9 +11,9 @@ import Button from "../Button";
 
 // Missing icons for specific sports - using placeholders or generic ones
 const Sword = Trophy;
-const Bike = Activity;
-const Waves = Activity;
-const Music = Activity;
+const Bike = ActivityIcon;
+const Waves = ActivityIcon;
+const Music = ActivityIcon;
 
 const LoadingSpinner = ({ className }: { className?: string }) => (
     <motion.div
@@ -41,8 +41,8 @@ export const ExerciseLogCard: React.FC = () => {
     const [selectedMuscle, setSelectedMuscle] = useState<string>("");
     const [selectedCardio, setSelectedCardio] = useState<string>("Corrida");
     const [selectedCardioVariant, setSelectedCardioVariant] = useState<string>("");
-    const [selectedActivity, setSelectedActivity] = useState<string>("");
-    const [selectedActivityVariant, setSelectedActivityVariant] = useState<string>("");
+    const [selectedActivityIcon, setSelectedActivityIcon] = useState<string>("");
+    const [selectedActivityIconVariant, setSelectedActivityIconVariant] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState<string>("");
 
     // Universal Session Metrics
@@ -434,14 +434,14 @@ export const ExerciseLogCard: React.FC = () => {
                                             <button
                                                 key={item}
                                                 onClick={() => {
-                                                    setSelectedActivity(item);
-                                                    setSelectedActivityVariant("");
+                                                    setSelectedActivityIcon(item);
+                                                    setSelectedActivityIconVariant("");
                                                 }}
-                                                className={`p-4 border rounded-2xl transition-all text-center ${selectedActivity === item ? "bg-purple-500 border-purple-400 text-white shadow-lg" : "bg-gray-950 border-gray-800 text-gray-400 hover:border-brand-primary/50"}`}
+                                                className={`p-4 border rounded-2xl transition-all text-center ${selectedActivityIcon === item ? "bg-purple-500 border-purple-400 text-white shadow-lg" : "bg-gray-950 border-gray-800 text-gray-400 hover:border-brand-primary/50"}`}
                                             >
-                                                <div className={`text-sm font-bold mb-1 ${selectedActivity === item ? "text-white" : "text-gray-300"}`}>{item}</div>
+                                                <div className={`text-sm font-bold mb-1 ${selectedActivityIcon === item ? "text-white" : "text-gray-300"}`}>{item}</div>
                                                 <div className="text-[8px] font-black uppercase text-gray-600">
-                                                    {selectedActivity === item ? "Selecionado" : "Selecionar"}
+                                                    {selectedActivityIcon === item ? "Selecionado" : "Selecionar"}
                                                 </div>
                                             </button>
                                         ))}
@@ -456,7 +456,7 @@ export const ExerciseLogCard: React.FC = () => {
                                     </div>
 
                                     <AnimatePresence>
-                                        {selectedActivity && sportsConfig[selectedActivity] && (
+                                        {selectedActivityIcon && sportsConfig[selectedActivityIcon] && (
                                             <motion.div
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
@@ -464,11 +464,11 @@ export const ExerciseLogCard: React.FC = () => {
                                             >
                                                 <label className="text-[10px] font-black uppercase text-purple-400 tracking-widest px-1">Estilo / Sub-tipo</label>
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                                    {sportsConfig[selectedActivity].map(style => (
+                                                    {sportsConfig[selectedActivityIcon].map(style => (
                                                         <button
                                                             key={style}
-                                                            onClick={() => setSelectedActivityVariant(style)}
-                                                            className={`p-3 rounded-xl text-[10px] font-bold transition-all border ${selectedActivityVariant === style ? "bg-white border-white text-black" : "bg-gray-950 border-gray-800 text-gray-500 hover:border-purple-500/50"}`}
+                                                            onClick={() => setSelectedActivityIconVariant(style)}
+                                                            className={`p-3 rounded-xl text-[10px] font-bold transition-all border ${selectedActivityIconVariant === style ? "bg-white border-white text-black" : "bg-gray-950 border-gray-800 text-gray-500 hover:border-purple-500/50"}`}
                                                         >
                                                             {style}
                                                         </button>
@@ -480,7 +480,7 @@ export const ExerciseLogCard: React.FC = () => {
 
                                     {/* Universal Session Details for Sports */}
                                     <AnimatePresence>
-                                        {selectedActivity && (selectedActivityVariant || !sportsConfig[selectedActivity]) && (
+                                        {selectedActivityIcon && (selectedActivityIconVariant || !sportsConfig[selectedActivityIcon]) && (
                                             <motion.div
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: "auto" }}

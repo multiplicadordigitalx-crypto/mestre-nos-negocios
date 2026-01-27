@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
     Layout, ShoppingCart, PlayCircle, Users,
-    Trophy, MessageSquare, Activity, HeartPulse,
+    Trophy, MessageSquare, ActivityIcon, HeartPulse,
     ArrowLeft, ExternalLink, CheckCircle, Monitor
 } from '../components/Icons';
 import Button from '../components/Button';
@@ -78,7 +78,7 @@ const SCHOOL_PAGES = [
     {
         id: 'biotracker',
         title: 'Bio-Tracker (Nicho Saúde)',
-        icon: Activity,
+        icon: ActivityIcon,
         color: 'text-emerald-400',
         bgColor: 'bg-emerald-500/10',
         borderColor: 'border-emerald-500/20',

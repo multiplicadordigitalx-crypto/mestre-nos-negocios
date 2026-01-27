@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Plus, Search, Users, MessageSquare, Trash2, Edit2,
-    Shield, UserPlus, X, Check, BarChart3, Activity,
+    Shield, UserPlus, X, Check, BarChart3, ActivityIcon,
     Lock, Unlock, Globe, Hash
 } from '../../../components/Icons';
 import {
@@ -152,7 +152,7 @@ const CommunityManagementView: React.FC = () => {
                             <h3 className="text-3xl font-bold text-emerald-400 mt-1">Alta</h3>
                         </div>
                         <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-                            <Activity className="w-6 h-6 text-emerald-400" />
+                            <ActivityIcon className="w-6 h-6 text-emerald-400" />
                         </div>
                     </div>
                 </div>

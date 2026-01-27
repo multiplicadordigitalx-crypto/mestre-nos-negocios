@@ -9,7 +9,7 @@ import {
     PlusCircle, Trash, AlertTriangle, PieChart,
     Percent, Box, ShoppingBag, Copy, Calendar, Tag,
     CheckCircle, Brain, ShieldCheck, Star, Crown, Zap,
-    TrendingUp, Activity, DollarSign, Server, LockClosed, Filter,
+    TrendingUp, ActivityIcon, DollarSign, Server, LockClosed, Filter,
     Megaphone, Link as LinkIcon, Database, ChevronDown, ChevronRight,
     Briefcase, FileText, Check, X
 } from '../../../components/Icons';

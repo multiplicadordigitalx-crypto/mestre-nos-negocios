@@ -4,7 +4,7 @@ import OperationsOverview from '../components/OperationsOverview';
 import EscalationsQueue from '../components/EscalationsQueue';
 import { FinancialSupportView } from './FinancialSupportView';
 import { TeamChatView } from './TeamChatView';
-import { Activity, MessageSquare, Users, Zap, Shield, Lock, Smartphone } from '../../../components/Icons';
+import { ActivityIcon, MessageSquare, Users, Zap, Shield, Lock, Smartphone } from '../../../components/Icons';
 import Button from '../../../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -35,7 +35,7 @@ const OperationsCenterView: React.FC<OperationsCenterViewProps> = ({ user }) => 
                     <span className="text-xs font-bold text-green-300">Notificar App</span>
                 </button>
                 <button className="flex flex-col items-center justify-center p-3 bg-purple-900/20 border border-purple-500/30 rounded-xl hover:bg-purple-900/40 transition-all group">
-                    <Activity className="w-6 h-6 text-purple-500 mb-2 group-hover:scale-110 transition-transform" />
+                    <ActivityIcon className="w-6 h-6 text-purple-500 mb-2 group-hover:scale-110 transition-transform" />
                     <span className="text-xs font-bold text-purple-300">Systema Reset</span>
                 </button>
             </div>
@@ -50,7 +50,7 @@ const OperationsCenterView: React.FC<OperationsCenterViewProps> = ({ user }) => 
                     onClick={() => setActiveTab('monitor')}
                     className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'monitor' ? 'bg-brand-primary text-black shadow-lg shadow-brand-primary/20' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
                 >
-                    <Activity className="w-4 h-4" /> Monitoramento & Escalonamento
+                    <ActivityIcon className="w-4 h-4" /> Monitoramento & Escalonamento
                 </button>
                 <div className="w-px bg-gray-700 mx-1 h-6 self-center"></div>
                 <button

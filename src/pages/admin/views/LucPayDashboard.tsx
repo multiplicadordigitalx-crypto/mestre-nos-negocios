@@ -5,7 +5,7 @@ import Button from '../../../components/Button';
 import {
     CreditCard, Settings, Terminal, ShieldCheck,
     CheckCircle, AlertTriangle, RefreshCw, Key,
-    Link as LinkIcon, DollarSign, Activity, FileText,
+    Link as LinkIcon, DollarSign, ActivityIcon, FileText,
     Server, Globe, LockClosed
 } from '../../../components/Icons';
 import { LucPayService, LucPayGatewayProfile, LucPayAccount, LucPayTransaction } from '../../../services/LucPayService';
@@ -220,7 +220,7 @@ const LucPayDashboard: React.FC = () => {
                         </Card>
 
                         <div className="bg-indigo-900/20 border border-indigo-500/30 p-4 rounded-xl">
-                            <h4 className="flex items-center gap-2 text-indigo-400 font-bold text-xs mb-2"><Activity className="w-4 h-4" /> Roteamento Inteligente</h4>
+                            <h4 className="flex items-center gap-2 text-indigo-400 font-bold text-xs mb-2"><ActivityIcon className="w-4 h-4" /> Roteamento Inteligente</h4>
                             <p className="text-[10px] text-gray-400">
                                 Novas vendas usam a conta <strong>ATIVA</strong>.
                                 Reembolsos usam automaticamente a conta original da transação (via <code>configId</code>), mesmo se estiver inativa.

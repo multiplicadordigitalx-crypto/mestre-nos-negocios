@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import Card from '../../../components/Card';
 import Button from '../../../components/Button';
-import { ShieldCheck, Download, Activity, BarChart3, Trophy, X as XIcon, Search, Calendar, Users, Sparkles, Brain, Clock, Zap, FileText } from '../../../components/Icons';
+import { ShieldCheck, Download, ActivityIcon, BarChart3, Trophy, X as XIcon, Search, Calendar, Users, Sparkles, Brain, Clock, Zap, FileText } from '../../../components/Icons';
 import { motion } from 'framer-motion';
 import RankingSection from '../../../components/RankingSection';
 
@@ -143,7 +143,7 @@ const ProductivityView: React.FC = () => {
                 {/* --- STATS SUMMARY --- */}
                 <div className="bg-gray-900/50 rounded-xl border border-gray-700 p-4 mb-8">
                     <h3 className="text-sm font-bold text-gray-300 uppercase mb-4 flex items-center gap-2">
-                        <Activity className="w-4 h-4" /> Resumo ({filteredStats.length} agentes)
+                        <ActivityIcon className="w-4 h-4" /> Resumo ({filteredStats.length} agentes)
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center md:text-left">
                         <div className="border-r border-gray-700/50 pr-4 last:border-0">

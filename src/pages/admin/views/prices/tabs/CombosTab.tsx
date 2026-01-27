@@ -7,7 +7,7 @@ import Input from '../../../../../components/Input';
 import {
     PlusCircle, Trash, X as XIcon, Zap, DollarSign,
     TrendingUp, ShoppingBag, CheckCircle, Pencil, Star,
-    Crown, Users, Activity, Wallet, Box, Trophy, LockClosed, Brain, Settings
+    Crown, Users, ActivityIcon, Wallet, Box, Trophy, LockClosed, Brain, Settings
 } from '../../../../../components/Icons';
 import { getCreditCombos, saveCreditCombo, deleteCreditCombo } from '../../../../../services/mockFirebase';
 import { CreditCombo } from '../../../../../types';
@@ -158,8 +158,8 @@ export const CombosTab: React.FC = () => {
                                                 <h4 className="text-lg font-black text-white uppercase tracking-tight group-hover:text-brand-primary transition-colors">{combo.name}</h4>
                                                 <div className="flex flex-wrap gap-1 mt-2">
                                                     <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${combo.targetRole === 'all' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                            combo.targetRole === 'influencer' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                                                                'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                                        combo.targetRole === 'influencer' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                                            'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
                                                         }`}>
                                                         {combo.targetRole === 'all' ? 'Global' : combo.targetRole === 'influencer' ? 'Influencer' : 'Aluno'}
                                                     </span>

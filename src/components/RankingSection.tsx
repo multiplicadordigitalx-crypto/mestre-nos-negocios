@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, TrendingUp, Users, Activity, X as XIcon } from './Icons';
+import { Trophy, TrendingUp, Users, ActivityIcon, X as XIcon } from './Icons';
 import Card from './Card';
 import Button from './Button';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -115,7 +115,7 @@ const RankingSection: React.FC<RankingSectionProps> = ({ title = "Rankings de Pe
     return (
         <div className={`space-y-6 ${className}`}>
             <div className="flex items-center gap-2 mb-4">
-                <Activity className="w-6 h-6 text-brand-primary" />
+                <ActivityIcon className="w-6 h-6 text-brand-primary" />
                 <h2 className="text-xl font-bold text-white">{title}</h2>
             </div>
 

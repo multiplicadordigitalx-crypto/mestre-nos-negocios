@@ -5,7 +5,7 @@ import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     DollarSign, Wallet, TrendingUp, CheckCircle, Clock,
-    BarChart3, Activity, X as XIcon, Download, Filter,
+    BarChart3, ActivityIcon, X as XIcon, Download, Filter,
     PieChart, Target, ArrowRight, ShoppingBag, Zap,
     Users, Brain, Trophy, Star, ShieldCheck, LockClosed, CreditCard, FileText
 } from '../components/Icons';
@@ -319,7 +319,7 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ navigateTo }) => {
 
             <Card className="bg-gray-800 border-gray-700 overflow-hidden mt-8">
                 <div className="p-4 border-b border-gray-700 bg-gray-900/50 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2"><Activity className="w-5 h-5 text-brand-primary" /> Extrato Stripe/LucPay</h3>
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2"><ActivityIcon className="w-5 h-5 text-brand-primary" /> Extrato Stripe/LucPay</h3>
                     <select
                         className="bg-gray-900 text-white text-xs rounded border border-gray-700 p-1.5 outline-none"
                         value={filterRole}

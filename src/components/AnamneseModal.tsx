@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Button from './Button';
 import Input from './Input';
-import { X as XIcon, HeartPulse, ShieldCheck, Activity, Brain } from './Icons';
+import { X as XIcon, HeartPulse, ShieldCheck, ActivityIcon, Brain } from './Icons';
 import { Student, AnamneseData } from '../types';
 import { updateStudent } from '../services/userService';
 import { useAuth } from '../hooks/useAuth';
@@ -71,7 +71,7 @@ export const AnamneseModal: React.FC<AnamneseModalProps> = ({ isOpen, onClose, s
                     {step === 1 && (
                         <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="space-y-4">
                             <h4 className="text-white font-bold text-sm uppercase flex items-center gap-2 border-b border-gray-800 pb-2">
-                                <Activity className="w-4 h-4 text-blue-400" /> Dados Biométricos & Físicos
+                                <ActivityIcon className="w-4 h-4 text-blue-400" /> Dados Biométricos & Físicos
                             </h4>
                             <div className="grid grid-cols-2 gap-4">
                                 <Input label="Peso Atual (kg)" value={formData.weight} onChange={e => setFormData({ ...formData, weight: e.target.value })} placeholder="Ex: 70kg" />

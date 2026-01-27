@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Star, Zap, Brain, Target, TrendingUp, BookOpen, Activity, Clock, Mic, Globe } from '../../Icons';
+import { Trophy, Star, Zap, Brain, Target, TrendingUp, BookOpen, ActivityIcon, Clock, Mic, Globe } from '../../Icons';
 import { Languages } from '../../Icons';
 import { useAuth } from '../../../hooks/useAuth';
 
@@ -92,7 +92,7 @@ export const LanguagePerformanceDashboard: React.FC = () => {
                     <StatCard icon={Zap} label="XP Linguístico" value="8.320" subtext="Nível Intermediário" color="yellow" />
                     <StatCard icon={Languages} label="Palavras" value="1.240" subtext="Vocabulário Ativo" color="blue" />
                     <StatCard icon={BookOpen} label="Lições" value="12/40" subtext="Módulo 2" color="green" />
-                    <StatCard icon={Activity} label="Sequência" value="5 Dias" subtext="Mantenha o ritmo!" color="green" />
+                    <StatCard icon={ActivityIcon} label="Sequência" value="5 Dias" subtext="Mantenha o ritmo!" color="green" />
                 </div>
             </div>
 

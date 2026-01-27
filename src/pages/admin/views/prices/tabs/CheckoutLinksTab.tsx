@@ -7,7 +7,7 @@ import Input from '../../../../../components/Input';
 import {
     Link as LinkIcon, PlusCircle, Trash, CreditCard, Zap,
     FileText, ShoppingBag, CheckCircle, LockClosed, Settings,
-    ShieldCheck, Activity, DollarSign, Users, PieChart
+    ShieldCheck, ActivityIcon, DollarSign, Users, PieChart
 } from '../../../../../components/Icons';
 import { CreditCombo } from '../../../../../types';
 import { getCreditCombos, getAdminIntegrations } from '../../../../../services/mockFirebase';
@@ -180,7 +180,7 @@ export const CheckoutLinksTab: React.FC = () => {
                             {/* Inputs */}
                             <div className="w-full md:w-1/3 space-y-4">
                                 <h4 className="text-white font-bold flex items-center gap-2">
-                                    <Activity className="w-5 h-5 text-brand-primary" /> Configurar Taxas da Plataforma
+                                    <ActivityIcon className="w-5 h-5 text-brand-primary" /> Configurar Taxas da Plataforma
                                 </h4>
                                 <p className="text-xs text-gray-400">
                                     Defina sua margem sobre as transações (Application Fee). Isso é adicionado ao custo base do gateway.
@@ -384,7 +384,7 @@ export const CheckoutLinksTab: React.FC = () => {
 
                             <div className="mt-auto bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl flex gap-3 items-start">
                                 <div className="p-1 bg-blue-500/20 rounded-full mt-0.5">
-                                    <Activity className="w-4 h-4 text-blue-400" />
+                                    <ActivityIcon className="w-4 h-4 text-blue-400" />
                                 </div>
                                 <div>
                                     <p className="text-blue-300 font-bold text-sm mb-1">Como funciona o Roteamento?</p>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Users, Star, Activity, Crown, PlusCircle, Search } from '../../components/Icons';
+import { MessageSquare, Users, Star, ActivityIcon, Crown, PlusCircle, Search } from '../../components/Icons';
 import { MuralTab } from './tabs/MuralTab';
 import { EliteTab } from './tabs/EliteTab';
 import ChatPage from '../ChatPage'; // Existing chat component
@@ -13,7 +13,7 @@ const CommunityPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<CommunityTab>('mural');
 
     const tabs = [
-        { id: 'mural', label: 'Mural Social', icon: <Activity className="w-5 h-5" /> },
+        { id: 'mural', label: 'Mural Social', icon: <ActivityIcon className="w-5 h-5" /> },
         { id: 'chat', label: 'Canais de Chat', icon: <MessageSquare className="w-5 h-5" /> },
         { id: 'elite', label: 'Elite Hub', icon: <Crown className="w-5 h-5" /> },
     ];
