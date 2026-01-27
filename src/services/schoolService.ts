@@ -6,6 +6,38 @@ import { db } from './firebase';
 import { SchoolConfig, SupportTeamMember } from '../types/School';
 import { toast } from 'react-hot-toast';
 
+// --- HELPER: Niche Presets ---
+export const getSchoolConfigByNiche = (niche: string): Partial<SchoolConfig> => {
+    // Default Generic
+    let theme = {
+        primaryColor: '#FACC15',
+        secondaryColor: '#111827',
+        logoUrl: '',
+        faviconUrl: ''
+    };
+
+    if (niche?.toLowerCase().includes('fitness')) {
+        theme = { ...theme, primaryColor: '#22c55e' }; // Green
+    } else if (niche?.toLowerCase().includes('law') || niche?.toLowerCase().includes('juridico')) {
+        theme = { ...theme, primaryColor: '#1d4ed8' }; // Blue
+    } else if (niche?.toLowerCase().includes('marketing')) {
+        theme = { ...theme, primaryColor: '#ec4899' }; // Pink
+    }
+
+    return {
+        theme,
+        features: {
+            enableMestreIA: true,
+            enableNexusPlayer: true,
+            enableGamification: true,
+            enableStore: true,
+            enableCommunity: true,
+            enableLiveEvents: true
+        },
+        menuConfig: [] // Defaults will be handled by UI
+    };
+};
+
 export const schoolService = {
     // --- WHITE LABEL RESOLUTION ---
 
