@@ -3,7 +3,7 @@ import {
     collection, doc, getDoc, setDoc, query, where, getDocs, updateDoc, arrayUnion, arrayRemove
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { SchoolConfig, SupportTeamMember } from '../types/School';
+import { SchoolConfig, SupportTeamMember } from '../types/school';
 import { toast } from 'react-hot-toast';
 
 // --- HELPER: Niche Presets ---

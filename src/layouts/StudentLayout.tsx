@@ -11,7 +11,7 @@ import { PainelDoAluno } from '../pages/painel/PainelDoAluno';
 
 import { DynamicOnboardingModal } from '../components/DynamicOnboardingModal';
 import { getSchoolSettings } from '../services/mockFirebase';
-import { SchoolConfig } from '../types/School';
+import { SchoolConfig } from '../types/school';
 import { getAllowedPagesForStudent } from '../config/whiteLabel';
 import { Student } from '../types';
 import { getCoursesByIds } from '../services/mockFirebase'; // Import

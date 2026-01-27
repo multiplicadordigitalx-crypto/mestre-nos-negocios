@@ -23,9 +23,10 @@ import { courseService } from '../../../services/courseService';
 import { uploadFileToStorage } from '../../../services/firebase';
 import { addPublishedCourseToUser } from '../../../services/mockFirebase'; // Legacy user sync, keep for now or replace later
 import { AnimatePresence, motion } from 'framer-motion';
-// import { SchoolSetupModal } from '../../../components/SchoolSetupModal'; // Removed unused
+import { SchoolSetupModal } from '../../../components/SchoolSetupModal';
 import { SchoolToolsSelector, CreditControlCard, ToolSelectionGrid, CostSummaryCard } from '../../../components/SchoolToolsSelector';
 import { PremiumToolId, FinancialModel } from '../../../types/legacy';
+import { SchoolConfig } from '../../../types';
 import { CreditBalanceWidget } from '../../../components/CreditBalanceWidget';
 
 const MotionDiv = motion.div as any;

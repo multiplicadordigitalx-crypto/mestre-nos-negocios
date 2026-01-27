@@ -3,7 +3,7 @@ import {
     collection, addDoc, query, where, orderBy, getDocs, limit, serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { HealthLogEntry, PracticeSession } from '../types/School';
+import { HealthLogEntry, PracticeSession } from '../types/school';
 
 export const specializedService = {
     // --- HEALTH & MIND LOGS ---

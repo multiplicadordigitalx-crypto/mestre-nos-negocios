@@ -4,7 +4,7 @@ import { courseService, productService } from '../services/courseService';
 import { schoolService } from '../services/schoolService';
 import { useAuth } from './useAuth';
 import { AppProduct, Course } from '../types/Course';
-import { SchoolConfig } from '../types/School';
+import { SchoolConfig } from '../types/school';
 import toast from 'react-hot-toast';
 
 // --- HOOK: Managing Schools (Producer Side) ---
