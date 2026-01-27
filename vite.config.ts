@@ -21,12 +21,6 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (id.includes('node_modules')) {
               if (id.includes('firebase')) return 'vendor-firebase';
-              // More specific check for React core packages to avoid circular dependencies
-              if (id.includes('/react/') || id.includes('/react-dom/')) return 'vendor-react';
-              if (id.includes('lucide') || id.includes('framer-motion') || id.includes('headlessui') || id.includes('react-router')) return 'vendor-ui';
-              if (id.includes('jspdf')) return 'vendor-jspdf';
-              if (id.includes('html2canvas')) return 'vendor-html2canvas';
-              if (id.includes('google/genai')) return 'vendor-gemini';
               return 'vendor';
             }
           }
