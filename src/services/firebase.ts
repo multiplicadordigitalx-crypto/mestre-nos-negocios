@@ -196,16 +196,45 @@ export const recalculateStudentSlots = async (uid: string) => {
 };
 
 export const uploadFileToStorage = async (file: File, onProgress: (p: number, s: string) => void): Promise<string> => {
-    // Simulating upload
-    return new Promise((resolve) => {
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 10;
-            onProgress(progress, 'Uploading...');
-            if (progress >= 100) {
-                clearInterval(interval);
-                resolve(URL.createObjectURL(file));
+    if (!storage) {
+        console.warn("Storage not initialized (Mock Mode). Returning fake URL.");
+        // Fallback for development without creds
+        return new Promise((resolve) => {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                onProgress(progress, 'Simulating Upload...');
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    resolve(URL.createObjectURL(file));
+                }
+            }, 100);
+        });
+    }
+
+    const { ref, uploadBytesResumable, getDownloadURL } = await import('firebase/storage');
+
+    // Create a reference to 'course_materials/{timestamp}_{filename}'
+    const fileRef = ref(storage, `course_materials/${Date.now()}_${file.name}`);
+
+    const uploadTask = uploadBytesResumable(fileRef, file);
+
+    return new Promise((resolve, reject) => {
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                let status = 'Enviando...';
+                if (progress === 100) status = 'Processando...';
+                onProgress(progress, status);
+            },
+            (error) => {
+                console.error("Upload error:", error);
+                reject(error);
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                resolve(downloadURL);
             }
-        }, 200);
+        );
     });
 };

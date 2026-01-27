@@ -1,53 +1,87 @@
 
-import { UserRole } from './legacy';
-
-export type SchoolNiche = 'GENERIC' | 'LAW' | 'HEALTH' | 'FINANCE' | 'TECH' | 'MARKETING' | 'OTHER';
-
-export interface SchoolTheme {
-    primaryColor: string;
-    secondaryColor: string;
-    backgroundColor: string; // e.g., dark or light mode default
-    sidebarColor: string;
-    accentColor: string;
-    logoUrl?: string;
-    faviconUrl?: string;
-    fontFamily?: string;
-}
-
-export interface StudentMenuItem {
-    id: string;
-    label: string;
-    icon: string; // Lucide icon name
-    path: string;
-    isEnabled: boolean;
-    roles?: UserRole[]; // If restricted to specific roles
-}
-
-export interface SchoolFeatures {
-    enableMestreIA: boolean;
-    enableNexusPlayer: boolean;
-    enableGamification: boolean;
-    enableStore: boolean; // "Produtos"
-    enableCommunity: boolean;
-    enableLiveEvents: boolean;
-    hasPhysicalKit?: boolean; // If producer sends physical kits (scales, tapes, etc.)
-    customFeatures?: string[]; // e.g., "LegalDocs", "DietTracker"
-}
-
+// --- SCHOOL & WHITE LABEL LAYER ---
 export interface SchoolConfig {
-    id: string;
-    producerId: string;
+    id: string; // Usually the subdomain or a UUID
+    ownerId: string; // The Producer
+
+    // Identity
     name: string;
-    subdomain: string; // e.g., "advocacia.mestrenosnegocios.com"
-    niche: SchoolNiche;
-    theme: SchoolTheme;
-    features: SchoolFeatures;
-    menuConfig: StudentMenuItem[];
-    premiumTools?: any[]; // Allow any structure for now to satisfy mismatch, or define stricter type if known.
-    // Making premiumTools optional to fix assignability errors.
-    welcomeMessage?: string;
-    createdAt: number;
-    updatedAt: number;
+    subdomain: string; // e.g., "joao-fitness" -> joao-fitness.mestrenosnegocios.com
+    customDomain?: string; // e.g., "cursojoao.com.br"
+    domainStatus?: 'pending' | 'active' | 'error';
+
+    // Branding
+    theme: {
+        primaryColor: string;
+        secondaryColor: string;
+        logoUrl?: string;
+        faviconUrl?: string;
+    };
+
+    // Organization
+    supportTeam: SupportTeamMember[];
+    linkedProductIds: string[]; // List of products belonging to this school
+
+    createdAt: string;
 }
 
-// Default presets will be defined in a constant file
+export interface SupportTeamMember {
+    userId: string; // Link to Auth User
+    email: string; // Invitation email
+    name: string;
+    role: 'admin' | 'support' | 'editor';
+    permissions: {
+        canEditContent: boolean;
+        canViewFinance: boolean;
+        canReplyStudents: boolean;
+    };
+    status: 'pending' | 'active' | 'blocked';
+}
+
+// --- SPECIALIZED AI MODULES LAYER ---
+
+// 1. Health & Mind (Diário)
+export interface HealthLogEntry {
+    id: string;
+    studentId: string;
+    date: string; // ISO Date YYYY-MM-DD
+
+    // Body
+    nutrition?: {
+        protein: number;
+        calories: number;
+        waterLitres: number;
+        meals: any[];
+    };
+    activity?: {
+        steps: number;
+        workoutType?: string;
+        durationMinutes: number;
+    };
+
+    // Mind
+    mood?: 'happy' | 'neutral' | 'sad' | 'anxious' | 'angry';
+    sleepHours?: number;
+    gratitude?: string;
+
+    // AI
+    aiFeedback?: string; // Generated insight
+}
+
+// 2. Knowledge Practice (Jurista/Poliglota)
+export interface PracticeSession {
+    id: string;
+    studentId: string;
+    moduleType: 'jurista' | 'poliglota';
+    topic: string; // "Civil Law" or "English - Business"
+
+    messages: {
+        role: 'user' | 'ai';
+        content: string;
+        timestamp: number;
+    }[];
+
+    score?: number; // AI evaluation
+    learnedItems?: string[]; // Vocabulary or Case Laws
+    createdAt: string;
+}

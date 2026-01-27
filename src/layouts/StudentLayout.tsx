@@ -11,11 +11,12 @@ import { PainelDoAluno } from '../pages/painel/PainelDoAluno';
 
 import { DynamicOnboardingModal } from '../components/DynamicOnboardingModal';
 import { getSchoolSettings } from '../services/mockFirebase';
-import { SchoolConfig } from '../types';
+import { SchoolConfig } from '../types/School';
 import { getAllowedPagesForStudent } from '../config/whiteLabel';
 import { Student } from '../types';
 import { getCoursesByIds } from '../services/mockFirebase'; // Import
 import { MentorProvider } from '../context/MentorStateContext';
+import { schoolService } from '../services/schoolService';
 
 export const StudentLayout: React.FC = () => {
     const { user, isImpersonating, stopImpersonation } = useAuth();
@@ -45,14 +46,32 @@ export const StudentLayout: React.FC = () => {
 
     React.useEffect(() => {
         const loadSchool = async () => {
-            // ... existing logic
-            if (user?.uid) {
-                const config = await getSchoolSettings(user.uid);
-                if (config) setSchoolConfig(config);
+            // 1. Detect Subdomain
+            const hostname = window.location.hostname;
+            const isLocal = hostname.includes('localhost');
+            const parts = hostname.split('.');
+
+            // Subdomain logic: "subdomain.domain.com" -> parts[0]
+            // If localhost, we might test with manual overrides or ignore
+            let subdomain = '';
+            if (!isLocal && parts.length > 2) {
+                subdomain = parts[0];
             }
+
+            // 2. Fetch Config
+            if (subdomain && subdomain !== 'www' && subdomain !== 'app') {
+                const config = await schoolService.getSchoolBySubdomain(subdomain);
+                if (config) {
+                    setSchoolConfig(config);
+                    return;
+                }
+            }
+
+            // 3. Fallback: If no subdomain or not found, check if User is a Producer previewing their school?
+            // Or just load Platform Default (null)
         };
         loadSchool();
-    }, [user]);
+    }, []);
 
     // Redirect if current page is not allowed
     // Redirect if current page is not allowed

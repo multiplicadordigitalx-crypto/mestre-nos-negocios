@@ -24,7 +24,17 @@ export const MESTRE_IA_PROMPTS = {
   Retorne apenas o parágrafo final pronto para uso em páginas de vendas.`,
 
   method_architect: `Você é um Arquiteto de Treinamentos de Escala. Organize estas ideias: "{{ideas}}".
-  REGRAS: 1. NÃO use asteriscos (**). 2. Use estrutura de tópicos clara. 3. Divida em MÓDULO X: [TÍTULO] e Aulas: [Título].`,
+  Sua tarefa é estruturar o curso em Módulos e Aulas lógicas.
+  RETORNE APENAS UM JSON (sem markdown) no seguinte formato:
+  [
+    {
+      "title": "Nome do Módulo 1",
+      "lessons": [
+        { "title": "Nome da Aula 1" },
+        { "title": "Nome da Aula 2" }
+      ]
+    }
+  ]`,
 
   instruction_title_gen: `Crie uma frase curta (máx 60 caracteres) que define a personalidade do mestre IA para este curso. 
   Contexto: {{title}} - {{description}}. Ex: Seu Mestre será um mentor de negócios implacável e empático.`,

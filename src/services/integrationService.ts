@@ -240,24 +240,33 @@ export const saveWhatsAppInstance = async (instance: WhatsAppInstance) => {
             ...instance,
             updatedAt: new Date()
         }, { merge: true });
-    } catch (error) {
-        console.warn("Firestore write failed, using localStorage fallback:", error);
+    } catch (error: any) {
+        if (error.code === 'permission-denied') {
+            console.info("Firestore write blocked (Permissions), using localStorage fallback (WhatsApp)");
+        } else {
+            console.warn("Firestore write failed, using localStorage fallback:", error);
+        }
+
         // Fallback for Mock Mode
         const instances = await getWhatsAppInstances(instance.engine);
         const idx = instances.findIndex(i => i.id === instance.id);
         if (idx !== -1) instances[idx] = instance;
         else instances.push(instance);
         localStorage.setItem(`mock_${WHATSAPP_COLLECTION}`, JSON.stringify(instances));
-
-        // Also update specific engine mock if needed, but the main getter uses the collection key
+        console.info("Saved instance to localStorage (Mock Mode)");
     }
 };
 
 export const deleteWhatsAppInstance = async (id: string) => {
     try {
         await deleteDoc(doc(db, WHATSAPP_COLLECTION, id));
-    } catch (error) {
-        console.warn("Firestore delete failed, cleaning up localStorage fallback:", error);
+    } catch (error: any) {
+        if (error.code === 'permission-denied') {
+            console.info("Firestore delete blocked (Permissions), cleaning up localStorage fallback (WhatsApp)");
+        } else {
+            console.warn("Firestore delete failed, cleaning up localStorage fallback:", error);
+        }
+
         // Fallback for Mock Mode
         const stored = localStorage.getItem(`mock_${WHATSAPP_COLLECTION}`);
         if (stored) {

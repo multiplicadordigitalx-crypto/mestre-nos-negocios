@@ -3,10 +3,39 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Smile, Meh, Frown, Angry, CheckCircle, Send } from '../Icons';
 import Button from '../Button';
+import { useAuth } from '../../hooks/useAuth';
+import { specializedService } from '../../services/specializedModulesService';
+import toast from 'react-hot-toast';
 
 export const MoodTrackerCard: React.FC = () => {
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
     const [story, setStory] = useState('');
+    const { user } = useAuth();
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = async () => {
+        if (!selectedMood) {
+            toast.error("Selecione como se sente!");
+            return;
+        }
+        if (!user?.uid) return;
+
+        setIsSaving(true);
+        try {
+            await specializedService.logHealthEntry(user.uid, {
+                date: new Date().toISOString().split('T')[0],
+                mood: selectedMood as any, // Cast specific string to enum if strict
+                gratitude: story // Using story field as general notes/gratitude
+            });
+            toast.success("Humor registrado com sucesso!");
+            setStory('');
+            setSelectedMood(null);
+        } catch (error) {
+            toast.error("Erro ao salvar.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const moods = [
         { id: 'terrible', icon: Angry, color: 'text-red-500', label: 'Terrível' },
@@ -61,8 +90,12 @@ export const MoodTrackerCard: React.FC = () => {
                     </div>
 
                     <div className="mt-8 flex justify-end">
-                        <Button className="!bg-purple-600 !text-white font-black uppercase px-12 py-4 rounded-2xl shadow-xl shadow-purple-900/30 hover:scale-105 transition-transform">
-                            <Send className="w-4 h-4 mr-2" /> Registrar Humor
+                        <Button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="!bg-purple-600 !text-white font-black uppercase px-12 py-4 rounded-2xl shadow-xl shadow-purple-900/30 hover:scale-105 transition-transform"
+                        >
+                            <Send className="w-4 h-4 mr-2" /> {isSaving ? "Salvando..." : "Registrar Humor"}
                         </Button>
                     </div>
                 </div>

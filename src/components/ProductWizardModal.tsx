@@ -14,7 +14,8 @@ import {
 import { LoadingSpinner } from './LoadingSpinner';
 import toast from 'react-hot-toast';
 import { AppProduct, ProducerBankData, User, CheckoutLink, Course, ProductPlan, CoProducerInfo, SchoolSettings, CourseCategory } from '../types';
-import { saveAppProduct, getCourses, consumeCredits, inviteCoProducer } from '../services/mockFirebase';
+import { getCourses, consumeCredits, inviteCoProducer } from '../services/mockFirebase';
+import { productService } from '../services/courseService';
 import { updateUserProducerData } from '../services/userService';
 import { publishProduct } from '../services/firebase';
 import { AICreditGate } from './AICreditGate';
@@ -1089,8 +1090,14 @@ export const ProductWizardModal: React.FC<ProductWizardModalProps> = ({
         }
 
         try {
-            await publishProduct(finalProduct); // Using new service function
-            onSuccess(finalProduct);
+            // 1. Save Product to Firestore (Real)
+            await productService.saveProduct(finalProduct);
+
+            // 2. Publish (Optional / Vercel Trigger)
+            // if (finalProduct.status === 'active') { await publishProduct(finalProduct); }
+
+            toast.success("Produto salvo com sucesso!");
+            console.log("Prod Salvo:", finalProduct);
             onClose();
             toast.success("Ativo Lançado no Ecossistema!");
         } catch (e: any) {

@@ -13,13 +13,16 @@ import {
     ChevronUp, ChevronDown, Video, Upload, HardDrive, Download, ExternalLink
 } from '../../../components/Icons';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
-import { Course, CourseCategory, FinancialViability, SchoolSettings, StudentPage } from '../../../types';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
-import { consumeCredits, getToolCosts, uploadFileToStorage, getCourses, saveCourse, deleteCourse, addPublishedCourseToUser } from '../../../services/mockFirebase';
 import { callMestreIA, generateCourseCoverImage } from '../../../services/mestreIaService';
-import { AnimatePresence, motion } from 'framer-motion';
+import { getToolCosts, NICHOS_BY_CATEGORY, CATEGORY_CONTEXT } from '../../../services/mockFirebase'; // Keeping static data mocks
 import { useCreditGuard } from '../../../hooks/useCreditGuard';
+import { Course, FinancialViability } from '../../../types';
+import { courseService } from '../../../services/courseService';
+import { uploadFileToStorage } from '../../../services/firebase';
+import { addPublishedCourseToUser } from '../../../services/mockFirebase'; // Legacy user sync, keep for now or replace later
+import { AnimatePresence, motion } from 'framer-motion';
 import { SchoolSetupModal } from '../../../components/SchoolSetupModal';
 import { SchoolToolsSelector, CreditControlCard, ToolSelectionGrid, CostSummaryCard } from '../../../components/SchoolToolsSelector';
 import { PremiumToolId, FinancialModel } from '../../../types/legacy';
@@ -403,6 +406,7 @@ const Step4TraditionalContent: React.FC<{
     const handleFileUpload = async (modId: string, itemId: string, file: File, type: 'lesson' | 'material') => {
         try {
             setUploadingItems(prev => ({ ...prev, [itemId]: 1 }));
+            // Use real Firebase Storage
             const url = await uploadFileToStorage(file, (progress) => {
                 setUploadingItems(prev => ({ ...prev, [itemId]: progress }));
             });
@@ -1639,7 +1643,11 @@ export const StudentCourseCreatorView: React.FC<StudentCourseCreatorViewProps> =
         slug: ''
     });
 
-    useEffect(() => { if (user) setCourses(getStudentCourses(user.uid)); }, [user]);
+    useEffect(() => {
+        if (user) {
+            courseService.listCourses(user.uid).then(setCourses).catch(console.error);
+        }
+    }, [user]);
 
     useEffect(() => {
         const processNextInQueue = async () => {
@@ -1773,6 +1781,44 @@ export const StudentCourseCreatorView: React.FC<StudentCourseCreatorViewProps> =
         const links = addedLinks.join(', ');
         const res = await callMestreIA('method_architect', { ideas: `${data.description}\n\nArquivos: ${fileNames}\nLinks: ${links}` });
 
+        try {
+            // Parse AI JSON Output for Modules
+            let jsonStr = res.output;
+            if (jsonStr.includes('```json')) {
+                jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '');
+            }
+            const aiModules = JSON.parse(jsonStr);
+
+            // Map to our structure
+            const newModules = aiModules.map((m: any, idx: number) => ({
+                id: `mod-ai-${Date.now()}-${idx}`,
+                title: m.title,
+                lessons: (m.lessons || []).map((l: any, lIdx: number) => ({
+                    id: `less-ai-${Date.now()}-${idx}-${lIdx}`,
+                    title: l.title,
+                    type: 'video',
+                    videoUrl: '',
+                    description: ''
+                })),
+                materials: [],
+                quizzes: []
+            }));
+
+            setData({
+                ...data,
+                knowledgeIdeas: "Estrutura gerada automaticamente.",
+                modules: newModules,
+                totalModules: newModules.length
+            });
+            toast.success("Estrutura do Curso Gerada com Sucesso!", { icon: "🧠" });
+
+        } catch (e) {
+            console.error("Erro parsing AI modules:", e);
+            toast.error("Erro ao processar estrutura da IA. Tente refinar a descrição.");
+            // Fallback: put text in knowledgeIdeas
+            setData({ ...data, knowledgeIdeas: res.output });
+        }
+
         // --- NEXUS INTELLIGENCE: Tool Suggestion Logic (Simulated) ---
         // Analyze content context to suggest tools
         const context = (data.description + ' ' + data.niche + ' ' + fileNames).toLowerCase();
@@ -1854,17 +1900,29 @@ export const StudentCourseCreatorView: React.FC<StudentCourseCreatorViewProps> =
     }, [data.modules]);
 
     const handleFinalSave = async () => {
-        const current = getStudentCourses(user!.uid);
-        const finalData = { ...data, isPublished: true };
-        saveStudentCourses(user!.uid, [...current, finalData]);
-        setCourses([...current, finalData]);
+        if (!user) return;
 
-        // Sync with User Profile for Sidebar visibility
-        await addPublishedCourseToUser(user!.uid, finalData.id);
-        await refreshUser();
+        try {
+            const finalData = { ...data, ownerId: user.uid, isPublished: true };
 
-        setIsWizardOpen(false);
-        toast.success("CURSO CRIADO E DISPONÍVEL NO PORTAL!");
+            // 1. Save deep structure (Product + Course + Modules + Lessons)
+            // We use publishCourse to handle the batch save of modules/lessons
+            await courseService.publishCourse(finalData, data.modules || []);
+
+            // Refresh local list
+            const updatedCourses = await courseService.listCourses(user.uid);
+            setCourses(updatedCourses);
+
+            // Sync with User Profile for Sidebar visibility (Legacy/Mock logic)
+            await addPublishedCourseToUser(user.uid, finalData.id);
+            await refreshUser();
+
+            setIsWizardOpen(false);
+            toast.success("CURSO CRIADO E DISPONÍVEL NO PORTAL!");
+        } catch (err) {
+            console.error(err);
+            toast.error("Erro ao salvar curso. Tente novamente.");
+        }
     };
 
     const toggleTherapyComponent = (compId: string) => {
