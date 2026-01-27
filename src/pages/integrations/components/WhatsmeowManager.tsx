@@ -13,7 +13,7 @@ import { CreateInstanceModal } from '../modals/CreateInstanceModal';
 
 export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) => {
     const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
-    const [serverUrl, setServerUrl] = useState(import.meta.env.VITE_WHATSMEOW_SERVER_URL || 'http://localhost:3001'); // Default to local for testing
+    const [serverUrl, setServerUrl] = useState(localStorage.getItem('whatsmeow_server_url') || import.meta.env.VITE_WHATSMEOW_SERVER_URL || 'http://localhost:3001'); // Default to local for testing
     const [apiKey, setApiKey] = useState(localStorage.getItem('whatsmeow_api_key') || import.meta.env.VITE_WHATSMEOW_API_KEY || '');
     const [isSavingUrl, setIsSavingUrl] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -24,19 +24,29 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
         loadData();
         // Force refresh API Key from Env if available (fixes stale localStorage)
         const envKey = import.meta.env.VITE_WHATSMEOW_API_KEY;
+        const envUrl = import.meta.env.VITE_WHATSMEOW_SERVER_URL;
+
         if (envKey && apiKey !== envKey) {
             setApiKey(envKey);
             localStorage.setItem('whatsmeow_api_key', envKey);
         }
+        // Restore URL if missing
+        const savedUrl = localStorage.getItem('whatsmeow_server_url');
+        if (savedUrl) setServerUrl(savedUrl);
+
     }, []);
 
     const loadData = async () => {
         try {
             const data = await getWhatsAppInstances('whatsmeow');
             setInstances(data || []);
+
             const savedKey = localStorage.getItem('whatsmeow_api_key');
             if (savedKey) setApiKey(savedKey);
-            // TODO: Load saved URL from Firestore if needed
+
+            const savedUrl = localStorage.getItem('whatsmeow_server_url');
+            if (savedUrl) setServerUrl(savedUrl);
+
         } catch (error) {
             console.error("Error loading Whatsmeow data:", error);
         }
@@ -46,6 +56,7 @@ export const WhatsmeowManager: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) =
         setIsSavingUrl(true);
         try {
             localStorage.setItem('whatsmeow_api_key', apiKey);
+            localStorage.setItem('whatsmeow_server_url', serverUrl);
             // Simulate saving global config for WhatsApp
             toast.success("Configurações salvas!");
             setIsEditMode(false);
