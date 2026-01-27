@@ -8,12 +8,14 @@ export interface EmailOptions {
 
 export const sendEmail = async (options: EmailOptions) => {
     const { to, subject, html } = options;
-    const SERVER_URL = 'http://localhost:3001'; // Local Go Backend
+    // Use relative path for Vercel Proxy (Production) or localhost for Dev if configured
+    const API_BASE = import.meta.env.VITE_API_URL || '/api';
+    const SERVER_URL = `${API_BASE}/send-email`; // Maps to api/send-email.ts
 
     try {
         console.log('📨 Enviando via Backend Proxy:', { to, subject });
 
-        const response = await fetch(`${SERVER_URL}/api/emails/send`, {
+        const response = await fetch(SERVER_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
