@@ -63,6 +63,22 @@ export interface ProductDNA {
     generatedAt: string;
 }
 
+export interface CheckoutLink {
+    id: string;
+    label: string;
+    url: string;
+    price?: number;
+    billingType?: string;
+}
+
+export interface CoProducerInfo {
+    userId?: string;
+    email: string;
+    percentage: number;
+    status: 'pending' | 'active' | 'rejected';
+    invitedAt: string;
+}
+
 // --- CONTENT DELIVERY LAYER (The "Classroom") ---
 // Only exists if deliverableType === 'course' AND contentSourceType === 'internal'
 

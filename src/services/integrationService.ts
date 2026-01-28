@@ -3,6 +3,9 @@ import { db, auth } from './firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc, query, where, getDoc } from 'firebase/firestore';
 import { WhatsAppInstance } from '../types/legacy';
 
+const WEBHOOKS_COLLECTION = 'webhooks';
+const SOCIAL_COLLECTION = 'social_integrations';
+
 export interface PaymentGateway {
     id: string;
     provider: string;

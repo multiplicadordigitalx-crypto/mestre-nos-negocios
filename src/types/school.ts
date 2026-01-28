@@ -1,5 +1,33 @@
 
 // --- SCHOOL & WHITE LABEL LAYER ---
+// --- SCHOOL & WHITE LABEL LAYER ---
+
+export type SchoolNiche = 'fitness' | 'finance' | 'law' | 'marketing' | 'tech' | 'other';
+
+export interface SchoolTheme {
+    primaryColor: string;
+    secondaryColor: string;
+    logoUrl?: string;
+    faviconUrl?: string;
+}
+
+export interface SchoolFeatures {
+    enableMestreIA: boolean;
+    enableNexusPlayer: boolean;
+    enableGamification: boolean;
+    enableStore: boolean;
+    enableCommunity: boolean;
+    enableLiveEvents: boolean;
+}
+
+export interface StudentMenuItem {
+    id: string;
+    label: string;
+    path: string;
+    icon?: string;
+    allowedRoles?: string[];
+}
+
 export interface SchoolConfig {
     id: string; // Usually the subdomain or a UUID
     ownerId: string; // The Producer
@@ -9,31 +37,20 @@ export interface SchoolConfig {
     subdomain: string; // e.g., "joao-fitness" -> joao-fitness.mestrenosnegocios.com
     customDomain?: string; // e.g., "cursojoao.com.br"
     domainStatus?: 'pending' | 'active' | 'error';
+    niche?: SchoolNiche;
 
     // Branding
-    theme: {
-        primaryColor: string;
-        secondaryColor: string;
-        logoUrl?: string;
-        faviconUrl?: string;
-    };
+    theme: SchoolTheme;
 
     // Organization
     supportTeam: SupportTeamMember[];
     linkedProductIds: string[]; // List of products belonging to this school
 
     // Features & Modules
-    features?: {
-        enableMestreIA: boolean;
-        enableNexusPlayer: boolean;
-        enableGamification: boolean;
-        enableStore: boolean;
-        enableCommunity: boolean;
-        enableLiveEvents: boolean;
-    };
+    features?: SchoolFeatures;
 
     // Navigation
-    menuConfig?: any[]; // Typed as StudentMenuItem[] but preventing circular dependency for now
+    menuConfig?: StudentMenuItem[];
 
     createdAt: string;
     updatedAt?: string;

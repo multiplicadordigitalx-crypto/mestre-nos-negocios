@@ -295,7 +295,6 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                 src={audioSrc}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
-                onLoadedMetadata={handleLoadedMetadata}
                 onEnded={() => {
                     setIsPlaying(false);
                     if (user) {

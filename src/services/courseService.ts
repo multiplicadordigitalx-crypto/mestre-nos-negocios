@@ -210,7 +210,7 @@ export const courseService = {
             console.error("Error publishing course:", error);
             throw error;
         }
-    }
+    },
     // Enroll Student in Course
     async enrollStudent(studentId: string, courseId: string): Promise<void> {
         try {
