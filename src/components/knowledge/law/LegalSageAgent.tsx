@@ -13,6 +13,7 @@ import { consumeCredits } from '../../../services/mockFirebase';
 import { InsufficientFundsAlert } from '../language/InsufficientFundsAlert';
 
 import { StudentPage } from '../../../types';
+import { specializedService } from '../../../services/specializedModulesService';
 
 interface LegalSageAgentProps {
     onBack: () => void;
@@ -241,6 +242,20 @@ b) O pagamento das verbas rescisórias...
                 setStep(4); // Finished State
                 toast.success("Processo gerado com sucesso!");
             }, 4000);
+
+            // Log Session asynchronously
+            await specializedService.savePracticeSession(user.uid, {
+                moduleType: 'jurista',
+                activityType: 'sage_agent',
+                title: `Peça: ${specialty || 'Geral'}`,
+                score: 100,
+                durationSeconds: 120, // Estimated
+                details: {
+                    specialty,
+                    caseDescription,
+                    cost: EXECUTION_COST
+                }
+            });
         }
     };
 

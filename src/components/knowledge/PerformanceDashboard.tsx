@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Star, Zap, Brain, Target, TrendingUp, BookOpen, ActivityIcon, Lock, CheckCircle, BarChart2, Clock } from '../Icons';
 import { useAuth } from '../../hooks/useAuth';
+import { useEffect } from 'react';
+import { specializedService } from '../../services/specializedModulesService';
 
 const StatCard = ({ icon: Icon, label, value, subtext, color }: any) => (
     <div className="bg-gray-800/50 border border-gray-700/50 p-4 rounded-2xl flex items-center gap-4">
@@ -47,6 +49,20 @@ const EvolutionBar = ({ label, initial, current, max = 100 }: any) => (
 export const PerformanceDashboard = () => {
     const { user } = useAuth();
     const [activeSection, setActiveSection] = useState<'sabedoria' | 'pratica'>('sabedoria');
+    const [stats, setStats] = useState({ count: 0, avgScore: 0 });
+
+    useEffect(() => {
+        if (user) {
+            specializedService.getRecentSessions(user.uid, 'jurista', 50).then(sessions => {
+                const count = sessions.length;
+                const totalScore = sessions.reduce((acc, s) => acc + (s.score || 0), 0);
+                setStats({
+                    count,
+                    avgScore: count > 0 ? (totalScore / count) : 0
+                });
+            });
+        }
+    }, [user]);
 
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in">
@@ -260,11 +276,11 @@ export const PerformanceDashboard = () => {
                         {/* Essay Corrector Stats */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="bg-gray-800/50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border border-gray-700/50">
-                                <span className="text-3xl font-black text-white mb-1">12</span>
+                                <span className="text-3xl font-black text-white mb-1">{stats.count}</span>
                                 <span className="text-[10px] text-gray-400 uppercase tracking-wider">Peças Enviadas</span>
                             </div>
                             <div className="bg-gray-800/50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border border-gray-700/50">
-                                <span className="text-3xl font-black text-green-500 mb-1">8.2</span>
+                                <span className="text-3xl font-black text-green-500 mb-1">{stats.avgScore.toFixed(1)}</span>
                                 <span className="text-[10px] text-gray-400 uppercase tracking-wider">Nota Média</span>
                             </div>
                             <div className="bg-gray-800/50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border border-gray-700/50">

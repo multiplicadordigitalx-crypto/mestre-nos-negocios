@@ -19,6 +19,7 @@ import { CreditBalanceWidget } from '@/components/CreditBalanceWidget';
 import { useMentorState } from '@/context/MentorStateContext';
 import { LessonCheckpoint } from '@/types/legacy';
 import { NEXUS_TOOLS } from '@/services/ToolRegistry';
+import { specializedService } from '@/services/specializedModulesService';
 
 
 
@@ -60,7 +61,81 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
     // Theme State
     const [currentTheme, setCurrentTheme] = useState(COURSE_THEMES.TECH);
     const [isPlayerExpanded, setIsPlayerExpanded] = useState(false);
-    const [activeTab, setActiveTab] = useState<'mentor' | 'quiz'>('mentor');
+    const [activeTab, setActiveTab] = useState<'player' | 'mentor' | 'quiz'>('player'); // Default to Player (Immersive)
+
+    // ... (keep existing code)
+
+    {/* Floating Tab Switcher (Main Stage) */ }
+    <div className={`hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-30 gap-1 p-1 rounded-full backdrop-blur-md border shadow-lg transition-colors duration-300 ${isLightMode ? 'bg-white/60 border-gray-200' : 'bg-black/60 border-white/10'}`}>
+        <button
+            onClick={() => setActiveTab('player')}
+            className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wide transition-all ${activeTab === 'player'
+                ? (isLightMode ? 'bg-gray-900 text-white shadow-lg scale-105' : 'bg-white text-black shadow-lg scale-105')
+                : (isLightMode ? 'text-gray-500 hover:text-gray-900 hover:bg-black/5' : 'text-gray-400 hover:text-white hover:bg-white/10')
+                }`}
+        >
+            Nexus Player
+        </button>
+        <button
+            onClick={() => setActiveTab('mentor')}
+            className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wide transition-all ${activeTab === 'mentor'
+                ? (isLightMode ? 'bg-gray-900 text-white shadow-lg scale-105' : 'bg-white text-black shadow-lg scale-105')
+                : (isLightMode ? 'text-gray-500 hover:text-gray-900 hover:bg-black/5' : 'text-gray-400 hover:text-white hover:bg-white/10')
+                }`}
+        >
+            Mentor IA
+        </button>
+        <button
+            onClick={() => setActiveTab('quiz')}
+        // ... (keep existing styles)
+        >
+            Quiz
+        </button>
+    </div>
+
+    {/* Content Area Switcher */ }
+    <div className="flex-1 overflow-hidden relative flex flex-col">
+        {activeTab === 'player' ? (
+            <div className="flex-1 relative flex items-center justify-center">
+                {/* LARGE IMMERSIVE VISUALIZER FOR PLAYER TAB */}
+                <ReactiveAudioVisualizer
+                    audioElement={activeSource === 'AI' ? (aiAudioElement || undefined) : (audioElement || undefined)}
+                    isPlaying={isPlaying || activeSource === 'AI'}
+                    mode={visualizerMode}
+                    primaryColor={currentTheme.primary}
+                    secondaryColor={currentTheme.secondary}
+                    theme={isLightMode ? 'light' : 'dark'}
+                    scale={2.0} // Larger scale for main stage
+                />
+                <div className="absolute bottom-10 flex flex-col items-center gap-4">
+                    <h2 className={`text-2xl font-black uppercase tracking-widest ${themeTextMain}`}>
+                        {activeSource === 'AI' ? 'Mentor Falando...' : 'Ouvindo...'}
+                    </h2>
+                    {/* Voice Trigger Button */}
+                    <button
+                        onClick={() => {
+                            if (!isSupported) return toast.error("Seu navegador não suporta voz.");
+                            if (isListening) stopListening();
+                            else startListening();
+                        }}
+                        className={`p-6 rounded-full transition-all ${isListening ? 'bg-red-500 animate-pulse shadow-[0_0_30px_rgba(239,68,68,0.5)]' : 'bg-white/10 hover:bg-white/20 border border-white/20'}`}
+                    >
+                        <Mic className={`w-8 h-8 ${isListening ? 'text-white' : themeTextMain}`} />
+                    </button>
+                </div>
+            </div>
+        ) : activeTab === 'mentor' ? (
+            // ... Existing GrokChatInterface ...
+            <GrokChatInterface
+            // ... props
+            />
+        ) : (
+            // ... Existing QuizInterface ...
+            <QuizInterface
+            // ... props
+            />
+        )}
+    </div>
     const [quizScore, setQuizScore] = useState(0);
     const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
 
@@ -220,7 +295,25 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                 src={audioSrc}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
-                onEnded={() => setIsPlaying(false)}
+                onLoadedMetadata={handleLoadedMetadata}
+                onEnded={() => {
+                    setIsPlaying(false);
+                    if (user) {
+                        specializedService.savePracticeSession(user.uid, {
+                            moduleType: 'nexus_player',
+                            activityType: 'voice_immersive_session',
+                            title: lesson.title,
+                            score: 100, // Completion score
+                            durationSeconds: duration,
+                            details: {
+                                courseId: course.id,
+                                lessonId: lesson.id,
+                                mode: 'reactive_voice'
+                            }
+                        });
+                        toast.success("Aula concluída! Progresso salvo.");
+                    }
+                }}
                 crossOrigin="anonymous"
             />
 

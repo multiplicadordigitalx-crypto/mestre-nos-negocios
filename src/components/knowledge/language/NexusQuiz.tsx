@@ -8,6 +8,7 @@ import { consumeCredits } from '../../../services/mockFirebase';
 import { InsufficientFundsAlert } from './InsufficientFundsAlert';
 
 import { StudentPage } from '../../../types';
+import { specializedService } from '../../../services/specializedModulesService';
 
 interface NexusQuizProps {
     onBack: () => void;
@@ -131,6 +132,22 @@ export const NexusQuiz: React.FC<NexusQuizProps> = ({ onBack, navigateTo }) => {
             setIsAnswered(false);
         } else {
             setGameState('RESULT');
+            // Log Session
+            if (user) {
+                specializedService.savePracticeSession(user.uid, {
+                    moduleType: 'poliglota',
+                    activityType: 'nexus_quiz',
+                    title: `Nexus Quiz - ${selectedObjective}`,
+                    score: score * 10,
+                    durationSeconds: questionCount * 30, // Estimate
+                    details: {
+                        level: selectedLevel,
+                        focus: selectedFocus,
+                        correct: score,
+                        total: questionCount
+                    }
+                });
+            }
         }
     };
 

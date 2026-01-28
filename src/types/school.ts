@@ -86,16 +86,20 @@ export interface HealthLogEntry {
 export interface PracticeSession {
     id: string;
     studentId: string;
-    moduleType: 'jurista' | 'poliglota';
-    topic: string; // "Civil Law" or "English - Business"
+    moduleType: 'jurista' | 'poliglota' | 'nexus_player';
+    topic?: string;
+    title?: string;
+    activityType?: string; // 'sage_agent', 'quiz', 'audience', etc.
 
-    messages: {
+    messages?: {
         role: 'user' | 'ai';
         content: string;
         timestamp: number;
     }[];
 
-    score?: number; // AI evaluation
-    learnedItems?: string[]; // Vocabulary or Case Laws
-    createdAt: string;
+    score?: number;
+    durationSeconds?: number;
+    details?: any; // Flexible payload for specific tools (OCR, inputs, etc)
+    learnedItems?: string[];
+    createdAt: any; // Allow ServerTimestamp or string
 }

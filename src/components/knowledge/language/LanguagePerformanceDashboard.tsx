@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Trophy, Star, Zap, Brain, Target, TrendingUp, BookOpen, ActivityIcon, Clock, Mic, Globe } from '../../Icons';
 import { Languages } from '../../Icons';
 import { useAuth } from '../../../hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { specializedService } from '../../../services/specializedModulesService';
 
 
 const StatCard = ({ icon: Icon, label, value, subtext, color }: any) => (
@@ -46,7 +48,19 @@ const EvolutionBar = ({ label, initial, current, max = 100 }: any) => (
 
 export const LanguagePerformanceDashboard: React.FC = () => {
     const { user } = useAuth();
+
     const [activeSection, setActiveSection] = useState<'imersao' | 'pratica'>('imersao');
+    const [stats, setStats] = useState({ count: 0, totalXP: 0 });
+
+    useEffect(() => {
+        if (user) {
+            specializedService.getRecentSessions(user.uid, 'poliglota', 100).then(sessions => {
+                const count = sessions.length;
+                const totalXP = sessions.reduce((acc, s) => acc + (s.score || 0), 0);
+                setStats({ count, totalXP });
+            });
+        }
+    }, [user]);
 
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in">
@@ -89,9 +103,9 @@ export const LanguagePerformanceDashboard: React.FC = () => {
 
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <StatCard icon={Zap} label="XP Linguístico" value="8.320" subtext="Nível Intermediário" color="yellow" />
-                    <StatCard icon={Languages} label="Palavras" value="1.240" subtext="Vocabulário Ativo" color="blue" />
-                    <StatCard icon={BookOpen} label="Lições" value="12/40" subtext="Módulo 2" color="green" />
+                    <StatCard icon={Zap} label="XP Linguístico" value={stats.totalXP} subtext="Nível Intermediário" color="yellow" />
+                    <StatCard icon={Languages} label="Palavras" value={Math.floor(stats.totalXP / 5)} subtext="Vocabulário Ativo" color="blue" />
+                    <StatCard icon={BookOpen} label="Lições" value={`${stats.count}/40`} subtext="Módulo 2" color="green" />
                     <StatCard icon={ActivityIcon} label="Sequência" value="5 Dias" subtext="Mantenha o ritmo!" color="green" />
                 </div>
             </div>

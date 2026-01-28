@@ -1,7 +1,7 @@
 
 import {
     collection, var_getDoc, getDocs, setDoc, doc, query, where,
-    updateDoc, deleteDoc, orderBy, limit, addDoc
+    updateDoc, deleteDoc, orderBy, limit, addDoc, arrayUnion
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { AppProduct, Course, CourseModule, CourseLesson } from '../types/Course';
@@ -208,6 +208,18 @@ export const courseService = {
 
         } catch (error) {
             console.error("Error publishing course:", error);
+            throw error;
+        }
+    }
+    // Enroll Student in Course
+    async enrollStudent(studentId: string, courseId: string): Promise<void> {
+        try {
+            const userRef = doc(db, 'users', studentId);
+            await updateDoc(userRef, {
+                purchasedCourses: arrayUnion(courseId)
+            });
+        } catch (error) {
+            console.error("Error enrolling student:", error);
             throw error;
         }
     }

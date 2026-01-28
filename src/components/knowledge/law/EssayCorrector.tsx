@@ -6,6 +6,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { consumeCredits } from '../../../services/mockFirebase';
 import { InsufficientFundsAlert } from '../language/InsufficientFundsAlert';
 import { StudentPage } from '../../../types';
+import { specializedService } from '../../../services/specializedModulesService';
 
 interface EssayCorrectorProps {
     onBack: () => void;
@@ -80,6 +81,19 @@ export const EssayCorrector: React.FC<EssayCorrectorProps> = ({ onBack, navigate
                 });
                 toast.success("Correção finalizada!");
             }, 3000);
+
+            // Log Session
+            specializedService.savePracticeSession(user.uid, {
+                moduleType: 'jurista',
+                activityType: 'essay_corrector',
+                title: 'Correção de Peça',
+                score: 8.5,
+                durationSeconds: 300,
+                details: {
+                    textLength: text.length,
+                    cost: COST_PER_ESSAY
+                }
+            });
         };
 
         startDebit();

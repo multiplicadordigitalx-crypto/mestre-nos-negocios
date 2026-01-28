@@ -21,7 +21,7 @@ import { useCreditGuard } from '../../../hooks/useCreditGuard';
 import { Course, FinancialViability } from '../../../types';
 import { courseService } from '../../../services/courseService';
 import { uploadFileToStorage } from '../../../services/firebase';
-import { addPublishedCourseToUser } from '../../../services/mockFirebase'; // Legacy user sync, keep for now or replace later
+// import { addPublishedCourseToUser } from '../../../services/mockFirebase'; // REMOVED: Using real courseService.enrollStudent
 import { AnimatePresence, motion } from 'framer-motion';
 import { SchoolSetupModal } from '../../../components/SchoolSetupModal';
 import { SchoolToolsSelector, CreditControlCard, ToolSelectionGrid, CostSummaryCard } from '../../../components/SchoolToolsSelector';
@@ -514,23 +514,44 @@ const Step4TraditionalContent: React.FC<{
 
         await triggerAITask('quiz_generator', async () => {
             try {
-                const ideas = `Gere um quiz de ${qtyQuestions} perguntas para o módulo "${mod?.title}" com base nos temas: ${(mod?.lessons || []).map((l: any) => l.title).join(', ')}. Cada questão deve ter ${qtyOptions} alternativas.`;
-                const response = await callMestreIA('method_architect', { ideas });
+                // Prepare context from lessons
+                const context = (mod?.lessons || []).map((l: any) => l.title).join(', ');
 
-                // Simulate AI generation with requested parameters
-                const mockQuestions = Array.from({ length: qtyQuestions }).map((_, i) => ({
-                    id: `q${Date.now()}-${i}`,
-                    text: `Questão ${i + 1} gerada por IA sobre ${mod?.title}?`,
-                    options: Array.from({ length: qtyOptions }).map((_, j) => `Opção ${String.fromCharCode(65 + j)}`),
-                    correctOptionIndex: 0
+                // Call AI with proper prompt inputs
+                const response = await callMestreIA('quiz_generator', {
+                    context,
+                    qty: qtyQuestions,
+                    opts: qtyOptions
+                });
+
+                // Parse AI Response
+                let jsonText = response.output;
+                if (jsonText.includes('```json')) jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '').trim();
+                if (jsonText.includes('```')) jsonText = jsonText.replace(/```/g, '').trim();
+
+                const aiQuestions = JSON.parse(jsonText);
+
+                // Validation/Sanitization (Ensure IDs are unique)
+                const finalQuestions = aiQuestions.map((q: any, i: number) => ({
+                    id: `q-ai-${Date.now()}-${i}`,
+                    text: q.text,
+                    options: q.options || [],
+                    correctOptionIndex: q.correctOptionIndex || 0
                 }));
 
-                const newQuiz = { id: `quiz-${Date.now()}`, title: `Quiz IA: ${mod?.title}`, questions: mockQuestions };
+                const newQuiz = {
+                    id: `quiz-${Date.now()}`,
+                    title: `Quiz IA: ${mod?.title}`,
+                    questions: finalQuestions
+                };
+
                 const currentQuizzes = mod?.quizzes || (mod?.quiz ? [mod.quiz] : []);
                 updateModule(modId, { quizzes: [...currentQuizzes, newQuiz], quiz: null });
-                toast.success("Quiz gerado com sucesso!");
+
+                toast.success(`Quiz gerado com ${finalQuestions.length} questões!`);
             } catch (e) {
-                toast.error("Erro ao gerar quiz.");
+                console.error("Quiz Gen Error:", e);
+                toast.error("Erro ao gerar quiz. Tente novamente.");
             }
         }, 15 + (qtyQuestions * 2));
     };
@@ -1780,7 +1801,37 @@ export const StudentCourseCreatorView: React.FC<StudentCourseCreatorViewProps> =
     const handleGenerateSummary = async () => {
         const fileNames = fileQueue.map(f => f.file.name).join(', ');
         const links = addedLinks.join(', ');
-        const res = await callMestreIA('method_architect', { ideas: `${data.description}\n\nArquivos: ${fileNames}\nLinks: ${links}` });
+
+        // Prepare attachments from fileQueue
+        const attachments: { base64: string, mimeType: string }[] = [];
+
+        if (fileQueue.length > 0) {
+            const toastId = toast.loading("Processando arquivos para leitura IA...");
+            try {
+                for (const item of fileQueue) {
+                    const base64 = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(item.file);
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = error => reject(error);
+                    });
+                    attachments.push({
+                        base64: base64, // callMestreIA strips the prefix if needed, or we can keep it
+                        mimeType: item.file.type || 'application/pdf'
+                    });
+                }
+                toast.dismiss(toastId);
+            } catch (err) {
+                console.error("Error reading files:", err);
+                toast.error("Erro ao ler arquivos. Tente novamente.", { id: toastId });
+                return;
+            }
+        }
+
+        const res = await callMestreIA('method_architect',
+            { ideas: `${data.description}\n\nArquivos Anexados: ${fileNames}\nLinks Referência: ${links}` },
+            attachments
+        );
 
         try {
             // Parse AI JSON Output for Modules
@@ -1914,8 +1965,8 @@ export const StudentCourseCreatorView: React.FC<StudentCourseCreatorViewProps> =
             const updatedCourses = await courseService.listCourses(user.uid);
             setCourses(updatedCourses);
 
-            // Sync with User Profile for Sidebar visibility (Legacy/Mock logic)
-            await addPublishedCourseToUser(user.uid, finalData.id);
+            // Sync with User Profile for Sidebar visibility
+            await courseService.enrollStudent(user.uid, finalData.id);
             await refreshUser();
 
             setIsWizardOpen(false);

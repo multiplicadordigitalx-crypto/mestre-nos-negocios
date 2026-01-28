@@ -36,6 +36,22 @@ export const MESTRE_IA_PROMPTS = {
     }
   ]`,
 
+  quiz_generator: `Atue como um Professor Especialista.
+  Contexto do Módulo: "{{context}}"
+  Quantidade: {{qty}} perguntas.
+  Alternativas por pergunta: {{opts}}.
+  
+  Sua tarefa: Criar um quiz técnico e desafiador sobre os temas citados.
+  RETORNE APENAS UM JSON ARRAY (sem markdown) neste formato exato:
+  [
+    {
+      "id": "q1",
+      "text": "Enunciado da pergunta",
+      "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
+      "correctOptionIndex": 0
+    }
+  ]`,
+
   instruction_title_gen: `Crie uma frase curta (máx 60 caracteres) que define a personalidade do mestre IA para este curso. 
   Contexto: {{title}} - {{description}}. Ex: Seu Mestre será um mentor de negócios implacável e empático.`,
 
