@@ -239,7 +239,7 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({ student, viewer
                         </div>
                     </div>
                 </Card>
-            </div >
+            </div>
 
             {isAdmin && onAction && (
                 <div className="p-6 border-t border-gray-700 bg-gray-900/80 flex flex-wrap gap-3 shrink-0">
@@ -254,7 +254,7 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({ student, viewer
                     </Button>
                 </div>
             )}
-        </div >
+        </div>
     );
 };
 

@@ -80,7 +80,7 @@ export class StudioService {
         let scriptText = "";
         try {
             scriptText = await AiProxyService.generateContent([{ role: 'user', content: scriptPrompt }], {
-                model: 'gemini-1.5-flash',
+                model: 'gemini-flash-latest',
                 toolId: 'ugc_script_gen'
             }) || "Produto incrível, mudou minha vida!";
 

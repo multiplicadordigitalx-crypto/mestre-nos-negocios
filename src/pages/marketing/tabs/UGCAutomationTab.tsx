@@ -7,14 +7,14 @@ import { FileText, Camera, Rocket, Smartphone, PlayCircle, CheckCircle, RefreshC
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { callMestreIA } from '../../../services/mestreIaService';
 import toast from 'react-hot-toast';
-import { SharedAccount } from '../../../types';
+import { MarketingAccount } from '../../../types';
 import { ConnectAccountModal } from '../components/ConnectAccountModal';
 
 interface UGCAutomationTabProps {
     initialScript?: string | null;
-    accounts: SharedAccount[];
-    onAddAccount: (acc: SharedAccount) => void;
-    onUpdateAccounts: (accounts: SharedAccount[]) => void;
+    accounts: MarketingAccount[];
+    onAddAccount: (acc: MarketingAccount) => void;
+    onUpdateAccounts: (accounts: MarketingAccount[]) => void;
 }
 
 export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScript, accounts, onAddAccount, onUpdateAccounts }) => {
@@ -27,8 +27,12 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
     const [accountSearchTerm, setAccountSearchTerm] = useState('');
     const [productSearchTerm, setProductSearchTerm] = useState('');
 
-    // Card 11 Inputs
-    const [niche, setNiche] = useState('');
+    // Card 13 Inputs (Manual Distribution)
+    const [selectedFormat, setSelectedFormat] = useState<'vertical' | 'horizontal'>('vertical');
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [selectedDistributionProduct, setSelectedDistributionProduct] = useState<string>('');
+    const [isDistributing, setIsDistributing] = useState(false);
     const [product, setProduct] = useState('');
 
     useEffect(() => {
@@ -74,53 +78,77 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
         setLoading(false);
     };
 
-    const handlePost = async () => {
-        // Group accounts by product for logic
-        const productsWithAccounts: Record<string, SharedAccount[]> = {};
-        accounts.forEach(acc => {
-            const p = acc.product || 'Sem Produto';
-            if (!productsWithAccounts[p]) productsWithAccounts[p] = [];
-            productsWithAccounts[p].push(acc);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setUploadedFile(file);
+            const url = URL.createObjectURL(file);
+            setPreviewUrl(url);
+        }
+    };
+
+    const handleManualDistribution = async () => {
+        if (!uploadedFile) return toast.error("Por favor, faça upload de um vídeo ou imagem.");
+        if (!selectedDistributionProduct) return toast.error("Selecione um produto para distribuir.");
+
+        setIsDistributing(true);
+
+        // Filter accounts for the selected product
+        const targetAccounts = accounts.filter(acc =>
+            (acc.product || 'Sem Produto') === selectedDistributionProduct
+        );
+
+        if (targetAccounts.length === 0) {
+            setIsDistributing(false);
+            return toast.error("Nenhuma conta encontrada para este produto.");
+        }
+
+        // Set initial status to posting for target accounts
+        const newAccountsState = accounts.map(acc => {
+            if ((acc.product || 'Sem Produto') === selectedDistributionProduct) {
+                return { ...acc, postingStatus: 'posting' as const };
+            }
+            return acc;
         });
+        onUpdateAccounts(newAccountsState);
 
-        // First status change to 'posting'
-        const postingAccounts: SharedAccount[] = accounts.map(a => ({
-            ...a,
-            postingStatus: 'posting' as const
-        }));
-        onUpdateAccounts(postingAccounts);
+        toast.success(`Iniciando distribuição para ${targetAccounts.length} contas de ${selectedDistributionProduct}...`);
 
-        // Simulated distribution logic: Iterate through products then their accounts
-        for (const productName of Object.keys(productsWithAccounts)) {
-            console.log(`🚀 Iniciando distribuição para o produto: ${productName}`);
-            const productAccounts = productsWithAccounts[productName];
+        // Simulate distribution
+        for (const acc of targetAccounts) {
+            await new Promise(r => setTimeout(r, 2000)); // Simulate upload/post time
 
-            for (const acc of productAccounts) {
-                await new Promise(r => setTimeout(r, 1500));
+            // Update individual account status to success
+            const currentAccounts = [...newAccountsState]; // Note: In real app use functional update from prop if possible or fetch
+            // optimizing here for the local ref match
 
-                // Get most recent accounts state to avoid race conditions
-                // Note: In a real app we'd use a functional update or a more robust state management
-                const currentAllAccounts = [...postingAccounts];
-                const index = currentAllAccounts.findIndex(a => a.id === acc.id);
+            // We need to call onUpdateAccounts with the LATEST full state. 
+            // Since we don't have a functional setter from props, we just simulate the progression 
+            // based on our local 'newAccountsState' variable which we mutate or copy.
+            // A better way is to update the specific item in the parent. 
+            // For now, let's just trigger the callback with the full list updated.
 
-                if (index !== -1) {
-                    currentAllAccounts[index] = {
-                        ...currentAllAccounts[index],
-                        postingStatus: 'success' as const
-                    };
-                    onUpdateAccounts(currentAllAccounts);
-                    // Sync our local loop reference
-                    postingAccounts[index] = currentAllAccounts[index];
-                }
+            const accIndex = newAccountsState.findIndex(a => a.id === acc.id);
+            if (accIndex !== -1) {
+                newAccountsState[accIndex] = { ...newAccountsState[accIndex], postingStatus: 'success' };
+                onUpdateAccounts([...newAccountsState]); // Create new ref
             }
         }
 
-        toast.success("Postagem concluída em todas as contas e produtos!");
+        setIsDistributing(false);
+        toast.success("Distribuição Completa!");
     };
 
-    const handleConnectAccount = (data: any) => {
-        const newAcc: SharedAccount = {
-            id: Date.now(),
+    const handleConnectAccount = async (data: any) => {
+        // Since Modal requires async and now handles saving (or we handle saving here if passed up)
+        // Ideally we assume data is already saved OR we save it here if not.
+        // But for this refactor, we just update the UI state as the Modal saves via prop if configured,
+        // OR the modal sends data here and we add it. Await is crucial for the modal's loading state.
+
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate work if needed
+
+        const newAcc: MarketingAccount = {
+            id: Date.now().toString(),
             username: data.username,
             platform: data.platform,
             status: 'ONLINE',
@@ -283,177 +311,164 @@ export const UGCAutomationTab: React.FC<UGCAutomationTabProps> = ({ initialScrip
                 </div>
             )}
 
-            {/* CARD 13 VIEW */}
+            {/* CARD 13 VIEW - MANUAL DISTRIBUTION */}
             {step === 3 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="p-6 bg-gray-800">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                <Rocket className="w-6 h-6 text-purple-500" /> Distribuição Automática
-                            </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* LEFT COLUMN: UPLOAD & CONFIG */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <Card className="p-6 bg-gray-800 border border-gray-700">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <Rocket className="w-6 h-6 text-purple-500" /> Distribuição Manual
+                                </h3>
+                                <Button
+                                    onClick={() => setIsConnectModalOpen(true)}
+                                    className="!py-1.5 !px-3 !text-xs !bg-blue-600 hover:!bg-blue-500"
+                                >
+                                    + Add Conta
+                                </Button>
+                            </div>
+
+                            {/* 1. FORMAT SELECTOR */}
+                            <div className="mb-8">
+                                <label className="block text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">1. Escolha o Formato</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        onClick={() => setSelectedFormat('vertical')}
+                                        className={`p-6 rounded-xl border-2 flex flex-col items-center justify-center gap-3 transition-all ${selectedFormat === 'vertical' ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.2)]' : 'bg-gray-900 border-gray-700 hover:border-gray-600'}`}
+                                    >
+                                        <Smartphone className={`w-8 h-8 ${selectedFormat === 'vertical' ? 'text-purple-400' : 'text-gray-500'}`} />
+                                        <div className="text-center">
+                                            <p className={`font-bold ${selectedFormat === 'vertical' ? 'text-white' : 'text-gray-400'}`}>Vertical (9:16)</p>
+                                            <p className="text-[10px] text-gray-500">TikTok, Reels, Shorts</p>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setSelectedFormat('horizontal')}
+                                        className={`p-6 rounded-xl border-2 flex flex-col items-center justify-center gap-3 transition-all ${selectedFormat === 'horizontal' ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.2)]' : 'bg-gray-900 border-gray-700 hover:border-gray-600'}`}
+                                    >
+                                        <Film className={`w-8 h-8 ${selectedFormat === 'horizontal' ? 'text-blue-400' : 'text-gray-500'}`} />
+                                        <div className="text-center">
+                                            <p className={`font-bold ${selectedFormat === 'horizontal' ? 'text-white' : 'text-gray-400'}`}>Horizontal (16:9)</p>
+                                            <p className="text-[10px] text-gray-500">YouTube, Facebook Feed</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 2. UPLOAD AREA */}
+                            <div className="mb-8">
+                                <label className="block text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">2. Upload do Material</label>
+                                <div className="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center hover:border-brand-primary transition-colors bg-gray-900/50 relative">
+                                    <input
+                                        type="file"
+                                        accept="image/*,video/*"
+                                        onChange={handleFileChange}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    />
+                                    {!previewUrl ? (
+                                        <div className="pointer-events-none">
+                                            <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-500">
+                                                {selectedFormat === 'vertical' ? <Smartphone className="w-8 h-8" /> : <Film className="w-8 h-8" />}
+                                            </div>
+                                            <p className="text-gray-300 font-bold">Arraste e solte ou clique para selecionar</p>
+                                            <p className="text-sm text-gray-500 mt-2">Suporta MP4, MOV, JPG, PNG</p>
+                                        </div>
+                                    ) : (
+                                        <div className="relative z-10 pointer-events-none">
+                                            <div className="text-green-400 flex flex-col items-center gap-2">
+                                                <CheckCircle className="w-10 h-10" />
+                                                <p className="font-bold">Arquivo Carregado!</p>
+                                                <p className="text-xs text-gray-400 max-w-[200px] truncate">{uploadedFile?.name}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 3. PRODUCT SELECTOR & ACTION */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">3. Selecione o Produto para Distribuição</label>
+                                <select
+                                    value={selectedDistributionProduct}
+                                    onChange={(e) => setSelectedDistributionProduct(e.target.value)}
+                                    className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                                >
+                                    <option value="" disabled>Selecione um produto...</option>
+                                    {Array.from(new Set(accounts.map(a => a.product || 'Sem Produto'))).map(p => (
+                                        <option key={p} value={p}>{p} ({accounts.filter(a => (a.product || 'Sem Produto') === p).length} contas)</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <Button
-                                onClick={() => setIsConnectModalOpen(true)}
-                                className="!py-1.5 !px-3 !text-xs !bg-blue-600 hover:!bg-blue-500"
+                                onClick={handleManualDistribution}
+                                disabled={isDistributing || !uploadedFile || !selectedDistributionProduct}
+                                isLoading={isDistributing}
+                                className="w-full !py-4 text-lg font-black uppercase !bg-purple-600 hover:!bg-purple-500 shadow-xl shadow-purple-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                + Add Conta
+                                {isDistributing ? 'Distribuindo...' : '🚀 Iniciar Distribuição em Massa'}
                             </Button>
-                        </div>
-                        <p className="text-sm text-gray-400 mb-4">
-                            Contas validadas e prontas para postagem. O Card 13 selecionou os melhores horários.
-                        </p>
 
-                        {/* Global Product Search */}
-                        <div className="relative mb-4">
-                            <input
-                                type="text"
-                                placeholder="🔍 Pesquisar Produto (ex: Método Seca Barriga)..."
-                                value={productSearchTerm}
-                                onChange={(e) => setProductSearchTerm(e.target.value)}
-                                className="w-full bg-gray-900 border border-gray-700 rounded-lg py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-brand-primary outline-none transition-all placeholder:text-gray-600"
-                            />
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <Box className="w-4 h-4 text-gray-500" />
-                            </div>
-                        </div>
+                        </Card>
+                    </div>
 
-                        <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
-                            {(Object.entries(
-                                accounts.reduce((grid, acc) => {
-                                    const p = acc.product || 'Sem Produto';
-                                    if (!grid[p]) grid[p] = [];
-                                    grid[p].push(acc);
-                                    return grid;
-                                }, {} as Record<string, SharedAccount[]>)
-                            ) as [string, SharedAccount[]][]).filter(([productName]) =>
-                                productName.toLowerCase().includes(productSearchTerm.toLowerCase())
-                            ).map(([productName, productAccounts]) => {
-                                const postedCount = productAccounts.filter(a => a.postingStatus === 'success').length;
-                                const totalCount = productAccounts.length;
-                                const progressPercent = Math.round((postedCount / totalCount) * 100);
-
-                                return (
-                                    <div key={productName} className="space-y-2">
-                                        <button
-                                            onClick={() => {
-                                                setExpandedProduct(expandedProduct === productName ? null : productName);
-                                                setAccountSearchTerm(''); // Clear search on toggle
-                                            }}
-                                            className={`w-full p-3 rounded-lg border transition-all ${expandedProduct === productName ? 'bg-brand-primary/10 border-brand-primary/50' : 'bg-gray-900 border-gray-700 hover:border-gray-500'}`}
-                                        >
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-1.5 bg-gray-800 rounded">
-                                                        <Box className={`w-4 h-4 ${expandedProduct === productName ? 'text-brand-primary' : 'text-gray-500'}`} />
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <p className="text-sm font-bold text-white">{productName}</p>
-                                                        <p className="text-[10px] text-gray-500">{totalCount} conta{totalCount !== 1 ? 's' : ''} vinculada{totalCount !== 1 ? 's' : ''}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="text-right hidden sm:block">
-                                                        <p className="text-[10px] font-bold text-white">{progressPercent}%</p>
-                                                        <p className="text-[8px] text-gray-500 uppercase">{postedCount}/{totalCount} Postados</p>
-                                                    </div>
-                                                    <div className={`transition-transform duration-200 ${expandedProduct === productName ? 'rotate-180' : ''}`}>
-                                                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {/* Product Progress Bar */}
-                                            <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-brand-primary transition-all duration-500 ease-out"
-                                                    style={{ width: `${progressPercent}%` }}
-                                                ></div>
-                                            </div>
-                                        </button>
-
-                                        {expandedProduct === productName && (
-                                            <div className="ml-2 space-y-3 animate-slide-down bg-gray-900/40 p-3 rounded-lg border border-gray-800/50">
-                                                {/* Internal Search */}
-                                                <div className="relative">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Buscar conta..."
-                                                        value={accountSearchTerm}
-                                                        onChange={(e) => setAccountSearchTerm(e.target.value)}
-                                                        className="w-full bg-black/40 border border-gray-800 rounded-md py-1.5 pl-8 pr-3 text-[10px] text-white focus:ring-1 focus:ring-brand-primary outline-none"
-                                                    />
-                                                    <svg className="w-3 h-3 text-gray-600 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                    </svg>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                    {productAccounts
-                                                        .filter(acc => acc.username.toLowerCase().includes(accountSearchTerm.toLowerCase()))
-                                                        .map(acc => (
-                                                            <div key={acc.id} className="bg-gray-900/80 p-2.5 rounded-lg border border-gray-800 flex justify-between items-center hover:border-gray-700 transition-colors">
-                                                                <div className="flex items-center gap-2 max-w-[70%]">
-                                                                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white ${acc.platform === 'TikTok' ? 'bg-black border border-gray-600' :
-                                                                        acc.platform === 'Instagram' ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600' :
-                                                                            acc.platform === 'Kwai' ? 'bg-orange-500' : 'bg-red-600'
-                                                                        }`}>
-                                                                        {acc.platform[0]}
-                                                                    </div>
-                                                                    <div className="truncate">
-                                                                        <p className="font-bold text-white text-[10px] truncate">{acc.username}</p>
-                                                                        <p className="text-[8px] text-gray-500 flex items-center gap-1 uppercase">
-                                                                            {acc.platform}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="text-right flex-shrink-0">
-                                                                    {acc.postingStatus === 'idle' && (
-                                                                        <span className="text-[8px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20 font-bold">AGUARDANDO</span>
-                                                                    )}
-                                                                    {acc.postingStatus === 'posting' && (
-                                                                        <div className="flex items-center gap-1.5 text-[8px] text-blue-400 font-bold">
-                                                                            <div className="w-2 h-2 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                                                                            <span>ENVIANDO</span>
-                                                                        </div>
-                                                                    )}
-                                                                    {acc.postingStatus === 'success' && (
-                                                                        <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30 font-bold flex items-center gap-1">
-                                                                            <CheckCircle className="w-2.5 h-2.5" /> OK
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                                {productAccounts.filter(acc => acc.username.toLowerCase().includes(accountSearchTerm.toLowerCase())).length === 0 && (
-                                                    <p className="text-center text-[9px] text-gray-600 font-mono py-2">Nenhuma conta encontrada para "{accountSearchTerm}"</p>
-                                                )}
-                                            </div>
-                                        )}
+                    {/* RIGHT COLUMN: PREVIEW & STATUS */}
+                    <div className="lg:col-span-1 space-y-6">
+                        {/* Preview Card */}
+                        <div className="bg-gray-900 p-6 rounded-xl border border-gray-700 h-fit">
+                            <h4 className="text-gray-400 text-xs font-bold uppercase mb-4 center flex justify-between">
+                                <span>Preview</span>
+                                <span className="text-purple-400 text-[10px]">{selectedFormat.toUpperCase()}</span>
+                            </h4>
+                            <div className={`bg-black rounded-lg mx-auto overflow-hidden relative border border-gray-800 shadow-inner flex items-center justify-center ${selectedFormat === 'vertical' ? 'aspect-[9/16] w-[200px]' : 'aspect-[16/9] w-full'}`}>
+                                {previewUrl ? (
+                                    uploadedFile?.type.startsWith('image') ?
+                                        <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" /> :
+                                        <video src={previewUrl} className="w-full h-full object-cover" autoPlay muted loop />
+                                ) : (
+                                    <div className="text-gray-600 flex flex-col items-center">
+                                        <PlayCircle className="w-10 h-10 opacity-20 mb-2" />
+                                        <span className="text-[10px]">Aguardando Upload</span>
                                     </div>
-                                );
-                            })}
+                                )}
+                            </div>
+                            {selectedDistributionProduct && (
+                                <div className="mt-4 pt-4 border-t border-gray-800">
+                                    <p className="text-xs text-gray-400 text-center">Será postado em:</p>
+                                    <p className="text-center font-bold text-white text-sm mt-1">{accounts.filter(a => (a.product || 'Sem Produto') === selectedDistributionProduct).length} Contas vinculadas</p>
+                                </div>
+                            )}
                         </div>
 
-                        <Button
-                            onClick={handlePost}
-                            disabled={accounts.some(a => a.postingStatus === 'posting' || a.postingStatus === 'success')}
-                            className="w-full !py-4 font-black !bg-green-600 hover:!bg-green-500 shadow-lg shadow-green-900/20"
-                        >
-                            CONFIRMAR POSTAGEM EM {accounts.length} CONTAS
-                        </Button>
-                    </Card>
-                    <div className="bg-gray-900 p-6 rounded-xl border border-gray-700">
-                        <h4 className="text-gray-400 text-xs font-bold uppercase mb-4">Preview do Post</h4>
-                        <div className="bg-black rounded-lg p-4 font-mono text-xs text-gray-300 relative flex flex-col items-center">
-                            <div className="w-full max-w-[200px] aspect-[9/16] bg-gray-800 rounded mb-4 flex items-center justify-center border border-gray-700 shadow-inner">
-                                <PlayCircle className="w-10 h-10 text-gray-600" />
+                        {/* Distribution List */}
+                        {selectedDistributionProduct && (
+                            <div className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden max-h-[400px] flex flex-col">
+                                <div className="p-3 bg-gray-800/50 border-b border-gray-700">
+                                    <p className="text-xs font-bold text-gray-300">Status da Fila</p>
+                                </div>
+                                <div className="overflow-y-auto p-2 custom-scrollbar space-y-2 flex-1">
+                                    {accounts
+                                        .filter(acc => (acc.product || 'Sem Produto') === selectedDistributionProduct)
+                                        .map(acc => (
+                                            <div key={acc.id} className="flex items-center justify-between p-2 bg-gray-800/30 rounded border border-gray-700/50">
+                                                <div className="flex items-center gap-2 overflow-hidden">
+                                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0 ${acc.platform === 'TikTok' ? 'bg-black' : 'bg-pink-600'}`}>
+                                                        {acc.platform[0]}
+                                                    </div>
+                                                    <span className="text-[10px] text-gray-300 truncate">{acc.username}</span>
+                                                </div>
+                                                <div>
+                                                    {acc.postingStatus === 'posting' && <LoadingSpinner size="sm" />}
+                                                    {acc.postingStatus === 'success' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                                                    {(!acc.postingStatus || acc.postingStatus === 'idle') && <span className="w-2 h-2 rounded-full bg-gray-600"></span>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
                             </div>
-                            <p className="mb-2">Eu limpava casa dos outros... hoje quem limpa a minha sou eu ✨</p>
-                            <p className="mb-2">Print real do que caiu hoje enquanto eu tava no banho 🙌</p>
-                            <p className="text-blue-400 mb-4">Link na bio antes que acabe!</p>
-                            <p className="text-gray-500">#MestreDosNegocios #TransformacaoReal #RendaExtra #MaesQueEmpreendem</p>
-                        </div>
+                        )}
                     </div>
                 </div>
             )}

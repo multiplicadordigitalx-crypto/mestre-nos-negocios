@@ -384,8 +384,8 @@ export const ProducerTeamMemberModal: React.FC<ProducerTeamMemberModalProps> = (
                         </Button>
                     </div>
                 </form >
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

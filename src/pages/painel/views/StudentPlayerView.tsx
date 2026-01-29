@@ -687,7 +687,7 @@ export const StudentPlayerView: React.FC<StudentPlayerViewProps> = ({ onBack, le
                 />
             </div>
 
-        </div >
+        </div>
     );
 };
 

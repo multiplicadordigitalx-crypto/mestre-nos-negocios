@@ -661,6 +661,6 @@ export const ToolPricingTab: React.FC = () => {
                     </div>
                 )
             }
-        </div >
+        </div>
     );
 };

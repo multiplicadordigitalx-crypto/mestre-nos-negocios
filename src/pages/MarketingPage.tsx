@@ -1,6 +1,6 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { Megaphone, BarChart3, Film, Camera, Robot, Phone } from '../components/Icons';
 import { DashboardTab } from './marketing/tabs/DashboardTab';
 import { ViralCreativesTab } from './marketing/tabs/ViralCreativesTab';
@@ -8,14 +8,12 @@ import { UGCAutomationTab } from './marketing/tabs/UGCAutomationTab';
 import { BotAutomationTab } from './marketing/tabs/BotAutomationTab';
 import { WhatsAppEvolutionTab } from './marketing/tabs/WhatsAppEvolutionTab';
 import { NexusStudioTab } from './marketing/tabs/NexusStudioTab';
-import { SharedAccount } from '../types';
-import toast from 'react-hot-toast';
+import { MarketingTab, MarketingAccount, StudentPage } from '../types'; // Updated imports
+import { getMarketingAccounts, saveMarketingAccount, deleteMarketingAccount } from '../services/marketingService'; // Secure Service
 import { useAuth } from '../hooks/useAuth';
 import { MestreFullModal } from './funnels/modals/FunnelsModals';
 import { CreditBalanceWidget } from '../components/CreditBalanceWidget';
-import { StudentPage } from '../types';
 
-type MarketingTab = 'dashboard' | 'ugc_automation' | 'bot_automation' | 'viral_creatives' | 'whatsapp' | 'nexus_studio';
 
 const ALL_TABS: { id: MarketingTab; label: string; description: string; icon: any; color: string; bgColor: string }[] = [
     { id: 'dashboard', label: 'Dashboard', description: 'Visão em tempo real', icon: BarChart3, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
@@ -37,16 +35,76 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ navigateTo }) => {
     const [showFullModeModal, setShowFullModeModal] = useState(false);
     const [ugcTransferData, setUgcTransferData] = useState<string | null>(null);
 
-    const [sharedAccounts, setSharedAccounts] = useState<SharedAccount[]>([
-        { id: 1, username: '@ana.nordeste', platform: 'TikTok', status: 'ONLINE', followers: '1.4M seg', responseTime: '6s', postingStatus: 'idle', product: 'Mestre 15X' },
-        { id: 2, username: '@marcos.sp', platform: 'Instagram', status: 'ONLINE', followers: '890k seg', responseTime: '7s', postingStatus: 'idle', product: 'Mentoria Elite' },
-    ]);
+    // --- SECURE ACCOUNTS STATE (VAULT) ---
+    // Instead of local mock state, we now fetch this from the authenticated user's Vault
+    const [sharedAccounts, setSharedAccounts] = useState<MarketingAccount[]>([]);
+    const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
 
-    const handleAddAccount = (acc: SharedAccount) => { setSharedAccounts(prev => [...prev, acc]); };
-    const handleUpdateAccounts = (newAccounts: SharedAccount[]) => { setSharedAccounts(newAccounts); };
+    useEffect(() => {
+        loadAccounts();
+    }, []);
+
+    const loadAccounts = async () => {
+        setIsLoadingAccounts(true);
+        try {
+            const accounts = await getMarketingAccounts();
+            setSharedAccounts(accounts);
+        } catch (error) {
+            console.error("Failed to load marketing accounts", error);
+            // toast.error("Erro ao carregar contas conectadas");
+        } finally {
+            setIsLoadingAccounts(false);
+        }
+    };
+
+    const handleAddAccount = async (account: MarketingAccount) => {
+        // Optimistic UI update not recommended for sensitive actions,
+        // but we can add locally for speed while verifying in background if needed.
+        // Here we just reload or append.
+
+        // This function is often called by the Modal.
+        // Ideally the Modal calls 'saveMarketingAccount' directly,
+        // but if it passes data back here, we save it.
+
+        // However, to keep password secure, the Modal should ideally save it
+        // OR we save it here immediately.
+
+        try {
+            console.log("Adding Account via Page Handler...", account);
+            // Ensure unique ID if not present
+            const newAccount = { ...account, id: account.id || Date.now().toString(), updatedAt: new Date() };
+
+            // Save to Secure Vault
+            await saveMarketingAccount(newAccount);
+
+            // Reload list
+            await loadAccounts();
+            toast.success("Conta conectada com segurança!");
+        } catch (error) {
+            console.error("Save error:", error);
+            toast.error("Erro ao salvar no Vault Seguro.");
+        }
+    };
+
+    const handleUpdateAccounts = (updatedAccounts: MarketingAccount[]) => {
+        // This is mostly used for bulk updates or removal in the old code.
+        // We'll deprecate bulk full-replace behavior in favor of atomic operations.
+        setSharedAccounts(updatedAccounts);
+    };
+
     const handleTransferToUGC = (script: string) => { setUgcTransferData(script); setActiveTab('ugc_automation'); };
 
-    const handleRemoveAccount = (id: number) => { setSharedAccounts(prev => prev.filter(acc => acc.id !== id)); };
+    const handleRemoveAccount = async (accountId: string) => {
+        if (confirm('Tem certeza que deseja desconectar esta conta?')) {
+            try {
+                await deleteMarketingAccount(accountId);
+                setSharedAccounts(prev => prev.filter(a => a.id !== accountId));
+                toast.success("Conta removida.");
+            } catch (error) {
+                toast.error("Erro ao remover conta.");
+            }
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-900 text-gray-200 p-4 md:p-8 animate-fade-in">
@@ -118,7 +176,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ navigateTo }) => {
                     toast.success("MODO MESTRE FULL ATIVADO! A MÁQUINA ESTÁ VIVA.", { icon: '⚡' });
                 }}
             />
-        </div >
+        </div>
     );
 };
 

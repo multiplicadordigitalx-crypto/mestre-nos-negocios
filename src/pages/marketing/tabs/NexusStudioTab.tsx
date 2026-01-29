@@ -203,7 +203,7 @@ export const NexusStudioTab: React.FC = () => {
                         <Wand2 className="w-4 h-4 mr-2" /> Gerar Vídeo 60s
                     </Button>
                 </Card>
-            </div >
+            </div>
 
             {/* RIGHT: Preview & Result */}
             <div className="col-span-1 lg:col-span-7">
@@ -266,7 +266,7 @@ export const NexusStudioTab: React.FC = () => {
                         </div>
                     )}
             </div>
-        </div >
+        </div>
     );
 };
 

@@ -1,7 +1,43 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from '../_utils/firebaseAdmin';
-import { AI_COSTS } from '../_utils/aiCost';
-import * as admin from 'firebase-admin';
+import * as _admin from 'firebase-admin';
+// Fix for ESM/CJS interop in Vercel
+const admin = (_admin as any).default || _admin;
+
+// --- INLINED CONSTANTS ---
+const AI_COSTS = {
+    gemini: {
+        perRequestBase: 2 // custo fixo por requisição
+    }
+};
+
+// --- INLINED FIREBASE INIT ---
+if (!admin.apps?.length) {
+    try {
+        const privateKey = process.env.FIREBASE_PRIVATE_KEY
+            ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+            : undefined;
+
+        console.log(`[ChatHandler] Init Firebase. Proj=${!!process.env.FIREBASE_PROJECT_ID} Email=${!!process.env.FIREBASE_CLIENT_EMAIL} Key=${!!privateKey}`);
+
+        if (process.env.FIREBASE_PROJECT_ID && privateKey && process.env.FIREBASE_CLIENT_EMAIL) {
+            admin.initializeApp({
+                credential: admin.credential.cert({
+                    projectId: process.env.FIREBASE_PROJECT_ID,
+                    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                    privateKey: privateKey,
+                }),
+            });
+            console.log('🔥 [ChatHandler] Firebase Admin Initialized');
+        } else {
+            console.warn('⚠️ [ChatHandler] Firebase Admin missing vars. Trying default init...');
+            admin.initializeApp();
+        }
+    } catch (error) {
+        console.error('❌ [ChatHandler] Firebase admin initialization error:', error);
+    }
+}
+
+const db = admin.firestore();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Credentials', "true");
@@ -22,12 +58,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const { messages, contents: directContents, uid, toolId } = req.body;
-    const apiKey = process.env.VITE_GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
+    console.log(`[ChatHandler] Request received. UID=${uid}, Tool=${toolId}`);
 
     if (!apiKey) {
         console.error("Missing Gemini API Key on Server");
         return res.status(500).json({ error: 'Server misconfiguration (Missing API Key)' });
     }
+
+    // DEBUG: Log key details (safe)
+    console.log(`[ChatHandler] Using API Key: ${apiKey.substring(0, 5)}... (Length: ${apiKey.length})`);
+    console.log(`[ChatHandler] Target Model: ${req.body.model || 'gemini-1.5-flash'}`);
 
     if (!uid) {
         return res.status(400).json({ error: 'Missing User ID' });
@@ -35,10 +77,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         // 1. Check Balance Transactions
+        console.log('[ChatHandler] Checking Firestore Balance...'); // LOG ADDED
         const predictedCost = AI_COSTS.gemini.perRequestBase;
 
         let userRef = db.collection('users').doc(uid);
         const userDoc = await userRef.get();
+        console.log(`[ChatHandler] User Doc exists: ${userDoc.exists}`); // LOG ADDED
+
         if (!userDoc.exists) {
             userRef = db.collection('students').doc(uid);
         }
@@ -49,6 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             const data = doc.data();
             const balance = data?.creditBalance || 0;
+            console.log(`[ChatHandler] Current Balance: ${balance}`); // LOG ADDED
 
             if (balance < predictedCost && !data?.hasMestreIA) {
                 throw new Error("Insufficient Funds");
@@ -68,9 +114,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 timestamp: admin.firestore.FieldValue.serverTimestamp()
             });
         });
+        console.log('[ChatHandler] Balance deducted. Calling Gemini...'); // LOG ADDED
 
         // 2. Call Gemini API
-        // Prioritize 'contents' (multimodal format), fallback to 'messages' (chat format)
         let finalContents = directContents;
 
         if (!finalContents && messages) {
@@ -84,8 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'No content provided' });
         }
 
-        // Use gemini-1.5-flash as default efficient model
-        const model = req.body.model || 'gemini-1.5-flash';
+        const model = req.body.model || 'gemini-flash-latest';
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
             method: 'POST',
@@ -109,7 +154,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error("Gemini Proxy Error:", error);
         return res.status(error.message === 'Insufficient Funds' ? 403 : 500).json({
-            error: error.message
+            // Ensure error is JSON
+            error: error.message || "Unknown error"
         });
     }
 }

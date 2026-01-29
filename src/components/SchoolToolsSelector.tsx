@@ -313,7 +313,7 @@ export const ToolSelectionGrid: React.FC<{
                 ))}
             </div>
 
-        </div >
+        </div>
     );
 };
 

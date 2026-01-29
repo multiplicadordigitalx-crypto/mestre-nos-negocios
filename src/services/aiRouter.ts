@@ -39,7 +39,7 @@ Retorne exatamente neste formato JSON:
 
   try {
     const text = await AiProxyService.generateContent([{ role: 'user', content: prompt }], {
-      model: 'gemini-1.5-flash',
+      model: 'gemini-flash-latest',
       toolId: 'mestre_ia_router'
     });
 

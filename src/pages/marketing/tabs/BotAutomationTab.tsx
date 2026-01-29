@@ -3,7 +3,7 @@ import Card from '../../../components/Card';
 import Button from '../../../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, PlusCircle, Brain, TrendingUp, Box, CheckCircle, Clock, AlertTriangle, Trash, MessageCircle, Instagram, Tiktok, Search, ActivityIcon, Link as LinkIcon, Copy, ChevronDown, ChevronRight, Users, Server, Terminal, Shield, Lock, FileText, Zap } from '../../../components/Icons';
-import { SharedAccount } from '../../../types';
+import { MarketingAccount } from '../../../types';
 import { ConnectAccountModal } from '../components/ConnectAccountModal';
 import { getAppProducts, getProductDNA } from '../../../services/mockFirebase';
 import toast from 'react-hot-toast';
@@ -17,9 +17,9 @@ interface SalesLink {
 }
 
 interface BotAutomationTabProps {
-    accounts: SharedAccount[];
-    onAddAccount: (acc: SharedAccount) => void;
-    onRemoveAccount: (id: number) => void;
+    accounts: MarketingAccount[];
+    onAddAccount: (acc: MarketingAccount) => void;
+    onRemoveAccount: (id: string) => void;
 }
 
 interface BotLog {
@@ -173,8 +173,8 @@ export const BotAutomationTab: React.FC<BotAutomationTabProps> = ({ accounts, on
 
 
     const handleConnectAccount = async (data: any) => {
-        const newAcc: SharedAccount = {
-            id: Date.now(),
+        const newAcc: MarketingAccount = {
+            id: Date.now().toString(), // Ensure string ID
             username: data.username,
             platform: data.platform,
             status: 'ONLINE',
@@ -183,6 +183,8 @@ export const BotAutomationTab: React.FC<BotAutomationTabProps> = ({ accounts, on
             postingStatus: 'idle',
             product: data.product
         };
+        // In a real app, the modal calls saveMarketingAccount via the parent or directly.
+        // If we want to update the UI optimistically or after save:
         onAddAccount(newAcc);
 
         // AUTO-GENERATE LINKS & DNA

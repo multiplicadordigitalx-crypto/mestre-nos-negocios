@@ -493,3 +493,27 @@ export const saveSocialApi = async (integration: SocialApiIntegration) => {
 export const deleteSocialApi = async (id: string) => {
     await deleteDoc(doc(db, SOCIAL_COLLECTION, id));
 };
+export interface EvolutionConfig {
+    serverUrl: string;
+    globalKey: string;
+    updatedAt: any;
+}
+
+export const getEvolutionConfig = async (): Promise<EvolutionConfig | null> => {
+    try {
+        const docRef = doc(db, CONFIGS_COLLECTION, 'evolution_api');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data() as EvolutionConfig;
+        }
+        return null;
+    } catch (error) {
+        console.warn("Error fetching Evolution Config:", error);
+        return null;
+    }
+};
+
+export const saveEvolutionConfig = async (config: EvolutionConfig) => {
+    const docRef = doc(db, CONFIGS_COLLECTION, 'evolution_api');
+    await setDoc(docRef, { ...config, updatedAt: new Date() }, { merge: true });
+};

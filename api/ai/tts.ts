@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const { text, voiceId = '21m00Tcm4TlvDq8ikWAM', uid } = req.body;
-    const apiKey = process.env.VITE_ELEVENLABS_API_KEY;
+    const apiKey = process.env.ELEVENLABS_API_KEY || process.env.VITE_ELEVENLABS_API_KEY;
 
     if (!apiKey) {
         console.error("Missing ElevenLabs API Key");

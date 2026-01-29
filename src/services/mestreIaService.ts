@@ -45,7 +45,7 @@ export async function getNexusSupportAdvice(context: {
         `;
 
         const text = await AiProxyService.generateContent([{ role: 'user', content: prompt }], {
-            model: 'gemini-1.5-flash',
+            model: 'gemini-flash-latest',
             toolId: 'nexus_support'
         });
 
@@ -71,7 +71,7 @@ export async function getSalesCoachTips(salesPersonName: string, performanceData
         `;
 
         const text = await AiProxyService.generateContent([{ role: 'user', content: prompt }], {
-            model: 'gemini-1.5-flash',
+            model: 'gemini-flash-latest',
             toolId: 'sales_coach'
         });
 
@@ -129,8 +129,8 @@ export async function callMestreIA(flowId: string, inputs: FlowInput, attachment
     const finalPrompt = `${extraContext}\n\n${interpolatePrompt(promptTemplate, inputs)}`;
 
     try {
-        // Use gemini-1.5-flash as it is more stable in proxy than pro-preview for now
-        const modelName = flowId === 'mestre_dos_negocios' ? 'gemini-1.5-flash' : 'gemini-1.5-flash';
+        // Use gemini-flash-latest for stability
+        const modelName = flowId === 'mestre_dos_negocios' ? 'gemini-flash-latest' : 'gemini-flash-latest';
 
         // Construct content parts
         const contents = [];
@@ -188,7 +188,7 @@ export async function generateCourseCoverImage(inputs: { title: string, niche: s
     const descriptionPrompt = interpolatePrompt(MESTRE_IA_PROMPTS.course_cover_designer, promptInputs);
 
     const visualDescription = await AiProxyService.generateContent([{ role: 'user', content: descriptionPrompt }], {
-        model: 'gemini-1.5-flash',
+        model: 'gemini-flash-latest',
         toolId: 'course_cover_desc'
     });
 
@@ -222,7 +222,7 @@ export async function generateQuizFromContent(transcript: string) {
 
     try {
         const text = await AiProxyService.generateContent([{ role: 'user', content: prompt }], {
-            model: 'gemini-1.5-flash',
+            model: 'gemini-flash-latest',
             toolId: 'quiz_gen'
         });
 

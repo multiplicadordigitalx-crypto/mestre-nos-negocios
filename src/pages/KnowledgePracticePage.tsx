@@ -161,7 +161,7 @@ export const KnowledgePracticePage: React.FC<KnowledgePracticePageProps> = ({ in
             </AnimatePresence>
 
             {/* Modal removed in favor of central recharge page */}
-        </div >
+        </div>
     );
 };
 

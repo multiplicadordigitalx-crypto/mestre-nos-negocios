@@ -36,7 +36,7 @@ export const LanguageAnalysisService = {
             const text = await AiProxyService.generateContent(
                 [{ role: 'user', content: systemPrompt + "\n\nTRANSCRIPT: " + transcript }],
                 {
-                    model: 'gemini-1.5-flash',
+                    model: 'gemini-flash-latest',
                     toolId: 'language_analysis'
                 }
             );

@@ -19,7 +19,7 @@ export const AiProxyService = {
         if (!user) throw new Error("Usuário não autenticado");
 
         const toolId = options.toolId || 'mestre_ia_chat';
-        const model = options.model || 'gemini-1.5-flash';
+        const model = options.model || 'gemini-flash-latest';
 
         let body: any = {
             uid: user.uid,

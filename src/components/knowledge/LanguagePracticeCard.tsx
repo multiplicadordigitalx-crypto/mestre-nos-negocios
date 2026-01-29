@@ -166,6 +166,6 @@ export const LanguagePracticeCard: React.FC<LanguagePracticeCardProps> = ({ navi
             </div>
 
 
-        </div >
+        </div>
     );
 };

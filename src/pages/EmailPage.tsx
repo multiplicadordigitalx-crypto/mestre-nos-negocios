@@ -847,7 +847,7 @@ const EmailPage: React.FC<EmailPageProps> = ({ navigateTo }) => {
                 isOpen={isServiceConfigOpen}
                 onClose={() => setIsServiceConfigOpen(false)}
             />
-        </div >
+        </div>
     );
 };
 

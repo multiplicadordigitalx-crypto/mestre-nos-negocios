@@ -19,6 +19,7 @@ const ForgotPasswordPage = React.lazy(() => import('../pages/ForgotPasswordPage'
 const AffiliateInvitePage = React.lazy(() => import('../pages/AffiliateInvitePage'));
 const BonusSchoolsPreview = React.lazy(() => import('../pages/BonusSchoolsPreview').then(m => ({ default: m.BonusSchoolsPreview })));
 const StripeConnectCallback = React.lazy(() => import('../pages/StripeConnectCallback').then(m => ({ default: m.StripeConnectCallback })));
+const DebugCourseBuilder = React.lazy(() => import('../pages/DebugCourseBuilder').then(m => ({ default: m.DebugCourseBuilder })));
 
 // Lazy Load Layouts
 const StudentLayout = React.lazy(() => import('../layouts/StudentLayout').then(m => ({ default: m.StudentLayout })));
@@ -95,6 +96,10 @@ export function AppRoutes() {
 
                 if (location.pathname === '/connect/callback') {
                     return <StripeConnectCallback />;
+                }
+
+                if (location.pathname === '/debug-course') {
+                    return <DebugCourseBuilder />;
                 }
 
                 if (viewMode === 'affiliate_invite') {

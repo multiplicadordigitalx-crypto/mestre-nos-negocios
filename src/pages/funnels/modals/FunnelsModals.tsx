@@ -113,7 +113,7 @@ export const MestreFullModal: React.FC<{ isOpen: boolean, onClose: () => void, o
                     </Button>
                 </div>
             </motion.div >
-        </div >
+        </div>
     );
 };
 

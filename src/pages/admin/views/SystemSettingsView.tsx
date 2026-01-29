@@ -212,7 +212,7 @@ const SystemSettingsView: React.FC = () => {
                     <AdminProfileView />
                 </div>
             )}
-        </div >
+        </div>
     );
 };
 

@@ -38,6 +38,19 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
         try {
             const data = await getWhatsAppInstances(whatsAppEngine);
             setWaInstances(data || []);
+
+            // Load Evolution Config
+            if (whatsAppEngine === 'evolution') {
+                import('../../../services/integrationService').then(async ({ getEvolutionConfig }) => {
+                    const config = await getEvolutionConfig();
+                    if (config) {
+                        setEvolutionConfig({
+                            serverUrl: config.serverUrl,
+                            globalKey: config.globalKey
+                        });
+                    }
+                });
+            }
         } catch (error) {
             console.error("Error loading WhatsApp instances:", error);
             const toastId = "whatsapp-load-error";
@@ -238,6 +251,7 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
                                                 className="w-full bg-gray-800 border border-gray-600 rounded-lg p-2.5 text-white text-sm font-mono focus:border-green-500 outline-none"
                                                 value={evolutionConfig.serverUrl}
                                                 onChange={e => setEvolutionConfig({ ...evolutionConfig, serverUrl: e.target.value })}
+                                                placeholder="https://api.seudominio.com"
                                             />
                                         </div>
                                         <div>
@@ -247,12 +261,30 @@ export const WhatsAppView: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
                                                 className="w-full bg-gray-800 border border-gray-600 rounded-lg p-2.5 text-white text-sm font-mono focus:border-green-500 outline-none"
                                                 value={evolutionConfig.globalKey}
                                                 onChange={e => setEvolutionConfig({ ...evolutionConfig, globalKey: e.target.value })}
+                                                placeholder="Sua Global API Key"
                                             />
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex items-end">
-                                    <Button className="!bg-green-600 hover:!bg-green-500 shadow-lg shadow-green-900/20 text-sm h-10 w-full md:w-auto">
+                                    <Button
+                                        onClick={async () => {
+                                            const toastId = toast.loading("Salvando configurações...");
+                                            try {
+                                                // Import dynamically to avoid circular dependencies if any, though standard import is fine here
+                                                const { saveEvolutionConfig } = await import('../../../services/integrationService');
+                                                await saveEvolutionConfig({
+                                                    ...evolutionConfig,
+                                                    updatedAt: new Date()
+                                                });
+                                                toast.success("Configuração Salva!", { id: toastId });
+                                            } catch (error) {
+                                                console.error(error);
+                                                toast.error("Erro ao salvar.", { id: toastId });
+                                            }
+                                        }}
+                                        className="!bg-green-600 hover:!bg-green-500 shadow-lg shadow-green-900/20 text-sm h-10 w-full md:w-auto"
+                                    >
                                         Salvar Configuração
                                     </Button>
                                 </div>

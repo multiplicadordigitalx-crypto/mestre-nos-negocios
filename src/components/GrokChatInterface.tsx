@@ -420,7 +420,7 @@ export const GrokChatInterface = React.forwardRef<GrokChatHandle, GrokChatProps>
                     <p className="text-[9px] text-gray-600 uppercase tracking-widest">Mentor IA pode cometer erros. Verifique informações importantes.</p>
                 </div>
             </div>
-        </div >
+        </div>
     );
 });
 

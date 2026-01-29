@@ -803,6 +803,6 @@ export const CultureExplorer: React.FC<{ onBack?: () => void; navigateTo?: (page
 
             {/* Recharge Modal */}
 
-        </div >
+        </div>
     );
 };

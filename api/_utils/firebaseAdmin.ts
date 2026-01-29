@@ -6,6 +6,8 @@ if (!admin.apps.length) {
             ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
             : undefined;
 
+        console.log(`[Init] Checking Creds: ProjectID=${!!process.env.FIREBASE_PROJECT_ID}, Email=${!!process.env.FIREBASE_CLIENT_EMAIL}, Key=${!!privateKey}`);
+
         if (process.env.FIREBASE_PROJECT_ID && privateKey && process.env.FIREBASE_CLIENT_EMAIL) {
             admin.initializeApp({
                 credential: admin.credential.cert({
@@ -14,12 +16,14 @@ if (!admin.apps.length) {
                     privateKey: privateKey,
                 }),
             });
-            console.log('🔥 Firebase Admin Initialized');
+            console.log('🔥 Firebase Admin Initialized with CERT');
         } else {
-            console.warn('⚠️ Firebase Admin credentials missing in environment variables.');
+            console.warn('⚠️ Firebase Admin missing vars. Trying default init...');
+            // Fallback for some local environments or if using GOOGLE_APPLICATION_CREDENTIALS
+            admin.initializeApp();
         }
     } catch (error) {
-        console.error('Firebase admin initialization error', error);
+        console.error('❌ Firebase admin initialization error:', error);
     }
 }
 

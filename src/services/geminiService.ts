@@ -1,7 +1,7 @@
 import { AiProxyService } from "./aiProxyService";
 import { GeminiMessage } from "../types";
 
-const model = 'gemini-1.5-flash';
+const model = 'gemini-flash-latest';
 const systemInstruction = `Você é o "Coach IA 15X", um mentor de negócios de classe mundial. Sua missão é fornecer conselhos práticos, estratégicos e inspiradores para ajudar empreendedores a escalar seus negócios em 15 vezes. Use uma linguagem clara, direta e motivadora. Seja conciso mas poderoso.`;
 
 export async function* getBusinessAdviceStream(

@@ -996,7 +996,7 @@ const Step4TraditionalContent: React.FC<{
                     <Button onClick={onNext} disabled={!data.modules?.length} className="!px-12 !py-4 shadow-xl uppercase font-black text-[10px] tracking-widest !bg-green-600">Salvar e Avançar</Button>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 
